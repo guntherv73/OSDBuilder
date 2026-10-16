@@ -106,6 +106,7 @@ param (
 )
 $ErrorActionPreference = 'Stop'
 if ($DefaultLanguage -notin $Languages) {throw "-DefaultLanguage $DefaultLanguage must be one of -Languages $($Languages -join ', ')"}
+if ($EnableNetFX3 -and $SkipNetFX3) {throw "-EnableNetFX3 and -SkipNetFX3 cannot be used together, .NET Framework 3.5 is enabled by default"}
 if ($RegionalFormat) {
     try {$RegionalFormat = ([System.Globalization.CultureInfo]::GetCultureInfo($RegionalFormat)).Name}
     catch {throw "-RegionalFormat $RegionalFormat is not a valid locale name"}

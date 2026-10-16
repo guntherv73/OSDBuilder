@@ -1,3 +1,31 @@
+function Invoke-OSDBuilderWinget {
+    <#
+    .SYNOPSIS
+    Runs winget.exe and returns the ExitCode, and the Output with -CaptureOutput
+
+    .DESCRIPTION
+    Without -CaptureOutput the winget output (progress, Microsoft Entra ID authentication) is written to the console
+    Throws when winget.exe is not installed
+    #>
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true)]
+        [string[]]$Arguments,
+
+        [switch]$CaptureOutput
+    )
+    $Winget = Get-Command -Name 'winget.exe' -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($null -eq $Winget) {
+        throw 'winget.exe was not found, install the App Installer from the Microsoft Store'
+    }
+    $Output = $null
+    if ($CaptureOutput) {$Output = & $Winget.Source @Arguments 2>&1 | Out-String}
+    else {& $Winget.Source @Arguments | Out-Host}
+    [PSCustomObject]@{
+        ExitCode    = $LASTEXITCODE
+        Output      = $Output
+    }
+}
 function Get-OSDBuilderLocalExperiencePackRelease {
     <#
     .SYNOPSIS
@@ -103,13 +131,12 @@ function Save-OSDBuilderLocalExperiencePack {
     #=================================================
     #   winget
     #=================================================
-    $Winget = Get-Command -Name 'winget.exe' -ErrorAction SilentlyContinue | Select-Object -First 1
-    if ($null -eq $Winget) {
-        Write-Warning "Local Experience Packs: winget.exe was not found, install the App Installer from the Microsoft Store"
+    try {$WingetHelp = Invoke-OSDBuilderWinget -Arguments @('download', '--help') -CaptureOutput}
+    catch {
+        Write-Warning "Local Experience Packs: $($_.Exception.Message)"
         Return
     }
-    $WingetHelp = (& $Winget.Source download --help 2>&1 | Out-String)
-    if ($WingetHelp -notmatch '--os-version') {
+    if ([string]$WingetHelp.Output -notmatch '--os-version') {
         Write-Warning "Local Experience Packs: winget download does not support --os-version, update the App Installer"
         Write-Warning "Without --os-version winget downloads the LXP of the newest Windows build, which does not match $Release"
         Return
@@ -146,7 +173,8 @@ function Save-OSDBuilderLocalExperiencePack {
         #=================================================
         if ((Test-Path $AppxDestination) -and (Test-Path $LicenseDestination)) {
             $Existing = $null
-            try {$Existing = Get-OSDBuilderAppxManifest -Path $AppxDestination -ErrorAction Stop} catch {}
+            try {$Existing = Get-OSDBuilderAppxManifest -Path $AppxDestination -ErrorAction Stop}
+            catch {Write-Verbose "Unable to read $AppxDestination, it is downloaded again"}
             if ($Existing -and ([version]$Existing.Version -ge $Expected.Version)) {
                 Write-Host -ForegroundColor DarkGray "    $($Existing.Version) is already downloaded"
                 Continue
@@ -166,9 +194,9 @@ function Save-OSDBuilderLocalExperiencePack {
             '--accept-package-agreements', '--accept-source-agreements'
         )
         if ($AuthenticationAccount) {$Arguments += @('--authentication-account', $AuthenticationAccount)}
-        & $Winget.Source @Arguments
-        if ($LASTEXITCODE -ne 0) {
-            Write-Warning "Local Experience Packs: winget download failed for $Tag with exit code $LASTEXITCODE"
+        $WingetDownload = Invoke-OSDBuilderWinget -Arguments $Arguments
+        if ($WingetDownload.ExitCode -ne 0) {
+            Write-Warning "Local Experience Packs: winget download failed for $Tag with exit code $($WingetDownload.ExitCode)"
             Continue
         }
         #=================================================
@@ -181,7 +209,8 @@ function Save-OSDBuilderLocalExperiencePack {
         if ($null -eq $License) {Write-Warning "Local Experience Packs: winget did not download the license for $Tag, the Entra ID account needs the License Administrator role"; Continue}
 
         $Manifest = $null
-        try {$Manifest = Get-OSDBuilderAppxManifest -Path $Appx.FullName -ErrorAction Stop} catch {}
+        try {$Manifest = Get-OSDBuilderAppxManifest -Path $Appx.FullName -ErrorAction Stop}
+        catch {Write-Verbose "Unable to read the AppxManifest of $($Appx.FullName)"}
         if (($null -eq $Manifest) -or ($Manifest.Name -ne "Microsoft.LanguageExperiencePack$Tag")) {
             Write-Warning "Local Experience Packs: $($Appx.Name) is not the Local Experience Pack of $Tag"
             Continue
