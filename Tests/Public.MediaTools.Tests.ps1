@@ -269,7 +269,7 @@ Describe 'New-OSDBuilderUSB' {
             [PSCustomObject]@{Number = 2; Size = 64GB; BusType = 'USB'}
             [PSCustomObject]@{Number = 3; Size = 16GB; BusType = 'USB'}
         }
-        Mock Out-GridView {$InputObject}
+        Mock Out-GridView {$InputObject | Where-Object {$_}}
         #The Storage cmdlets take CimInstances on Windows, the tests pipe PSCustomObjects
         Mock Clear-Disk {$InputObject} -RemoveParameterType InputObject
         Mock New-Partition {[PSCustomObject]@{DiskNumber = $InputObject.Number; PartitionNumber = 1}} -RemoveParameterType InputObject
@@ -288,7 +288,7 @@ Describe 'New-OSDBuilderUSB' {
         Should -Invoke New-Partition -Times 1 -Exactly -ParameterFilter {$UseMaximumSize -and $IsActive -and $AssignDriveLetter}
         Should -Invoke Format-Volume -Times 1 -Exactly -ParameterFilter {($FileSystem -eq 'FAT32') -and ($NewFileSystemLabel -eq 'OSDBuilder')}
         Should -Invoke Set-Location -Times 1 -Exactly -ParameterFilter {$Path -eq "$($Media.FullName)\OS\boot"}
-        Should -Invoke bootsect.exe -Times 1 -Exactly -ParameterFilter {($RemainingArguments -join ' ') -eq '/nt60 U:'}
+        Should -Invoke bootsect.exe -Times 1 -Exactly -ParameterFilter {((@($InputObject) + @($RemainingArguments)) -join ' ') -eq '/nt60 U:'}
         Should -Invoke Copy-Item -Times 1 -Exactly -ParameterFilter {($Path -eq "$($Media.FullName)\OS\*") -and ($Destination -eq 'U:') -and $Recurse}
     }
 
@@ -308,7 +308,7 @@ Describe 'New-OSDBuilderUSB' {
     }
 
     It 'warns and formats nothing when no USB drive is selected' {
-        Mock Out-GridView {$InputObject} -ParameterFilter {$Title -like '*create an USB*'}
+        Mock Out-GridView {$InputObject | Where-Object {$_}} -ParameterFilter {$Title -like '*create an USB*'}
         Mock Out-GridView {} -ParameterFilter {$Title -like '*USB Drive to FORMAT*'}
         $Warnings = (New-OSDBuilderUSB -FullName $Media.FullName 6>$null 3>&1) -join "`n"
         $Warnings | Should -BeLike '*No USB Drive was Found or Selected*'
@@ -337,7 +337,7 @@ Describe 'New-OSDBuilderVHD' {
         Mock Get-Module {[PSCustomObject]@{Name = 'Hyper-V'}} -ParameterFilter {$Name -eq 'Hyper-V'}
         Mock Get-OSMedia {$Media}
         Mock Get-OSBuilds {}
-        Mock Out-GridView {$InputObject}
+        Mock Out-GridView {$InputObject | Where-Object {$_}}
         Mock New-VHD {}
         Mock Mount-DiskImage {}
         Mock Dismount-DiskImage {}
@@ -380,8 +380,8 @@ Describe 'New-OSDBuilderVHD' {
         Should -Invoke Resize-Partition -Times 1 -Exactly -ParameterFilter {($PartitionNumber -eq 3) -and ($Size -eq (49GB - 984MB))}
         Should -Invoke Add-PartitionAccessPath -Times 2 -Exactly -ParameterFilter {$AssignDriveLetter}
         Should -Invoke Expand-WindowsImage -Times 1 -Exactly -ParameterFilter {($ImagePath -eq "$($Media.FullName)\OS\Sources\Install.wim") -and ($Index -eq 1) -and ($ApplyPath -eq 'W:\')}
-        Should -Invoke cmd -Times 1 -Exactly -ParameterFilter {($RemainingArguments -join ' ') -eq '/c W:\Windows\system32\bcdboot W:\Windows /s S: /f ALL'}
-        Should -Invoke cmd -Times 1 -Exactly -ParameterFilter {($RemainingArguments -join ' ') -eq "/c diskpart.exe /s $env:Temp\OSDBuilderVHD.txt"}
+        Should -Invoke cmd -Times 1 -Exactly -ParameterFilter {((@($InputObject) + @($RemainingArguments)) -join ' ') -eq '/c W:\Windows\system32\bcdboot W:\Windows /s S: /f ALL'}
+        Should -Invoke cmd -Times 1 -Exactly -ParameterFilter {((@($InputObject) + @($RemainingArguments)) -join ' ') -eq "/c diskpart.exe /s $env:Temp\OSDBuilderVHD.txt"}
         Get-Content -Path (Join-Path $env:Temp 'OSDBuilderVHD.txt') | Should -Be @(
             'Select Disk 7', 'Select Partition 1', 'Set ID=c12a7328-f81f-11d2-ba4b-00a0c93ec93b OVERRIDE', 'GPT Attributes=0x8000000000000000'
         )
@@ -409,7 +409,7 @@ Describe 'New-OSDBuilderVHD' {
         Should -Invoke Format-Volume -Times 1 -Exactly -ParameterFilter {($FileSystem -eq 'NTFS') -and ($NewFileSystemLabel -eq 'OSDisk')}
         Should -Invoke Add-PartitionAccessPath -Times 1 -Exactly -ParameterFilter {($DiskNumber -eq '7') -and ($PartitionNumber -eq 1) -and $AssignDriveLetter}
         Should -Invoke Expand-WindowsImage -Times 1 -Exactly -ParameterFilter {$ApplyPath -eq 'V:\'}
-        Should -Invoke cmd -Times 1 -Exactly -ParameterFilter {($RemainingArguments -join ' ') -eq '/c V:\Windows\system32\bcdboot V:\Windows /s V:'}
+        Should -Invoke cmd -Times 1 -Exactly -ParameterFilter {((@($InputObject) + @($RemainingArguments)) -join ' ') -eq '/c V:\Windows\system32\bcdboot V:\Windows /s V:'}
         Should -Invoke cmd -Times 1 -Exactly
         Should -Invoke Resize-Partition -Times 0 -Exactly
         Should -Invoke Dismount-DiskImage -Times 1 -Exactly -ParameterFilter {$ImagePath -eq $VhdFile}
@@ -439,7 +439,7 @@ Describe 'New-OSDBuilderVHD' {
 
     It 'selects the media in Out-GridView without -FullName' {
         New-OSDBuilderVHD 6>$null
-        Should -Invoke Out-GridView -Times 1 -Exactly -ParameterFilter {($OutputMode -eq 'Single') -and ($Title -like '*create an VHD*')}
+        Should -Invoke Out-GridView -ParameterFilter {($InputObject.FullName -eq $Media.FullName) -and ($OutputMode -eq 'Single') -and ($Title -like '*create an VHD*')}
         Should -Invoke New-VHD -Times 1 -Exactly -ParameterFilter {$Path -eq "$($Media.FullName)\VHD\OSDBuilder.vhdx"}
     }
 
@@ -492,7 +492,7 @@ Describe 'Show-OSDBuilderInfo' {
             [PSCustomObject]@{PackageName = 'Package_for_RollupFix~31bf3856ad364e35~amd64~~26100.2.1.1'; PackageState = 4}
         ) | Export-Clixml -Path (Join-Path $Xml 'Get-WindowsPackage.xml')
         Mock Get-OSMedia {$Media}
-        Mock Out-GridView {$InputObject}
+        Mock Out-GridView {$InputObject | Where-Object {$_}}
     }
 
     It 'shows the Appx packages, capabilities, optional features, packages and the Windows image of the media' {

@@ -88,7 +88,7 @@ Describe 'New-OSBuildTask' {
         Mock Get-OSDBuilder {}
         Mock Block-StandardUser {}
         Mock Get-OSMedia {}
-        Mock Out-GridView {$script:GridInput += $InputObject; $InputObject}
+        Mock Out-GridView {$script:GridInput += $InputObject; if ($script:GridInput.Count -eq 1) {$InputObject}}
         Mock Get-WindowsImage {[PSCustomObject]@{Version = '10.0.26200.6899'; MinorVersion = 0; SPBuild = 6899; SPLevel = 0; ImageBootable = $false; WIMBoot = $false}}
         Mock Get-IsContentPacksEnabled {$true}
         Mock Get-TaskContentIsoExtract {}
@@ -130,7 +130,7 @@ Describe 'New-OSBuildTask' {
 
         It 'reads the switch defaults from $global:SetOSDBuilder' {
             $global:SetOSDBuilder = @{NewOSBuildTaskEnableNetFX3 = $true; NewOSBuildTaskCustomName = 'Default Name'}
-            try {New-OSBuildTask -TaskName 'Contoso' -OSMedia $OSMedia 6>$null | Out-Null}
+            try {New-OSBuildTask -TaskName 'Contoso' -OSMedia $OSMedia 6>$null 3>$null | Out-Null}
             finally {$global:SetOSDBuilder = @{}}
             $Task = Get-TestTask
             $Task.EnableNetFX3 | Should -Be 'True'
@@ -174,7 +174,7 @@ Describe 'New-OSBuildTask' {
         }
 
         It 'writes empty selections and language settings without switches' {
-            New-OSBuildTask -TaskName 'Contoso' -OSMedia $OSMedia 6>$null | Out-Null
+            New-OSBuildTask -TaskName 'Contoso' -OSMedia $OSMedia 6>$null 3>$null | Out-Null
 
             $Task = Get-TestTask
             $Task.EnableNetFX3 | Should -Be 'False'
@@ -198,29 +198,29 @@ Describe 'New-OSBuildTask' {
         }
 
         It 'saves a Template in the Templates directory' {
-            New-OSBuildTask -TaskName 'Contoso' -OSMedia $OSMedia -SaveAs Template 6>$null | Out-Null
+            New-OSBuildTask -TaskName 'Contoso' -OSMedia $OSMedia -SaveAs Template 6>$null 3>$null | Out-Null
             (Get-TestTask -Folder $global:SetOSDBuilderPathTemplates).TaskName | Should -Be 'Contoso'
             Join-Path $global:SetOSDBuilderPathTasks 'OSBuild Contoso.json' | Should -Not -Exist
         }
 
         It 'accepts the OSMedia from the pipeline' {
-            $OSMedia | New-OSBuildTask -TaskName 'Contoso' 6>$null | Out-Null
+            $OSMedia | New-OSBuildTask -TaskName 'Contoso' 6>$null 3>$null | Out-Null
             (Get-TestTask).OSMGuid | Should -Be $OSMedia.OSMGuid
         }
 
         It 'accepts an OSImport as OSMedia' {
             $OSImport = New-TestOSMedia -Name 'Windows 11 Enterprise x64 25H2 26200.6584' -MediaType 'OSImport'
-            New-OSBuildTask -TaskName 'Contoso' -OSMedia $OSImport 6>$null | Out-Null
+            New-OSBuildTask -TaskName 'Contoso' -OSMedia $OSImport 6>$null 3>$null | Out-Null
             (Get-TestTask).Name | Should -Be 'Windows 11 Enterprise x64 25H2 26200.6584'
         }
 
         It 'reads the Windows Image of the OSMedia install.wim' {
-            New-OSBuildTask -TaskName 'Contoso' -OSMedia $OSMedia 6>$null | Out-Null
+            New-OSBuildTask -TaskName 'Contoso' -OSMedia $OSMedia 6>$null 3>$null | Out-Null
             Should -Invoke Get-WindowsImage -Times 1 -Exactly -ParameterFilter {($ImagePath -eq "$($OSMedia.FullName)\OS\sources\install.wim") -and ($Index -eq 1)}
         }
 
         It 'initializes OSDBuilder and blocks standard users' {
-            New-OSBuildTask -TaskName 'Contoso' -OSMedia $OSMedia 6>$null | Out-Null
+            New-OSBuildTask -TaskName 'Contoso' -OSMedia $OSMedia 6>$null 3>$null | Out-Null
             Should -Invoke Get-OSDBuilder -Times 1 -Exactly -ParameterFilter {$CreatePaths -and $HideDetails}
             Should -Invoke Block-StandardUser -Times 1 -Exactly
         }
@@ -248,7 +248,7 @@ Describe 'New-OSBuildTask' {
         }
 
         It 'selects the OSMedia in Out-GridView from Get-OSMedia' {
-            New-OSBuildTask -TaskName 'Contoso' 6>$null | Out-Null
+            New-OSBuildTask -TaskName 'Contoso' 6>$null 3>$null | Out-Null
             Should -Invoke Get-OSMedia -Times 1 -Exactly -ParameterFilter {($Revision -eq 'OK') -and ($OSMajorVersion -eq 10)}
             Should -Invoke Out-GridView -ParameterFilter {$OutputMode -eq 'Single'}
             $script:GridInput.Count | Should -Be $script:AllOSMedia.Count
@@ -275,7 +275,7 @@ Describe 'New-OSBuildTask' {
             @{TaskName = 'Contoso 24H2'; Expected = @('x64 24H2')}
             @{TaskName = 'Contoso 26H2'; Expected = @('x64 26H2')}
         ) {
-            New-OSBuildTask -TaskName $TaskName 6>$null | Out-Null
+            New-OSBuildTask -TaskName $TaskName 6>$null 3>$null | Out-Null
             @($script:GridInput.Name) | Should -Be $Expected
             (Get-TestTask -Name $TaskName).Name | Should -Be $Expected[0]
         }
@@ -299,13 +299,13 @@ Describe 'New-OSBuildTask' {
     Context 'ReleaseId' {
         It 'reads the DisplayVersion from CurrentVersion.xml when the OSMedia has no ReleaseId' {
             $OSMedia = New-TestOSMedia -ReleaseId $null -CurrentVersion @{ReleaseId = '2009'; DisplayVersion = '22H2'}
-            New-OSBuildTask -TaskName 'Contoso' -OSMedia $OSMedia 6>$null | Out-Null
+            New-OSBuildTask -TaskName 'Contoso' -OSMedia $OSMedia 6>$null 3>$null | Out-Null
             (Get-TestTask).ReleaseId | Should -Be '22H2'
         }
 
         It 'reads the ReleaseId from CurrentVersion.xml without DisplayVersion' {
             $OSMedia = New-TestOSMedia -ReleaseId $null -CurrentVersion @{ReleaseId = '1809'}
-            New-OSBuildTask -TaskName 'Contoso' -OSMedia $OSMedia 6>$null | Out-Null
+            New-OSBuildTask -TaskName 'Contoso' -OSMedia $OSMedia 6>$null 3>$null | Out-Null
             (Get-TestTask).ReleaseId | Should -Be '1809'
         }
 
@@ -315,7 +315,7 @@ Describe 'New-OSBuildTask' {
             @{Build = '16299'; ReleaseId = '1709'}, @{Build = '17134'; ReleaseId = '1803'}, @{Build = '17763'; ReleaseId = '1809'}
         ) {
             $OSMedia = New-TestOSMedia -ReleaseId $null -Build $Build
-            New-OSBuildTask -TaskName 'Contoso' -OSMedia $OSMedia 6>$null | Out-Null
+            New-OSBuildTask -TaskName 'Contoso' -OSMedia $OSMedia 6>$null 3>$null | Out-Null
             (Get-TestTask).ReleaseId | Should -Be $ReleaseId
         }
     }
