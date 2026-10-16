@@ -35,6 +35,9 @@ jobs:
       - name: PowerShell version
         run: $PSVersionTable | Format-Table -AutoSize | Out-String -Width 200
 
+      - name: Install Pester and PSScriptAnalyzer
+        run: ./Tests/Invoke-OSDBuilderTests.ps1 -InstallDependencies
+
       - name: PSScriptAnalyzer, Pester and code coverage
         run: ./Tests/Invoke-OSDBuilderTests.ps1 -CI
 

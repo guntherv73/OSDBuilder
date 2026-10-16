@@ -38,6 +38,10 @@ param (
     #Lint, code coverage, test result files and exit code
     [switch]$CI,
 
+    #Installs Pester and PSScriptAnalyzer and exits, run it in its own process before the tests
+    #Installing and importing Pester in the same process fails when another Pester version is loaded
+    [switch]$InstallDependencies,
+
     #Minimum code coverage of Private and Public in percent for -CI
     [ValidateRange(0, 100)]
     [int]$MinimumCoverage = 90
@@ -61,6 +65,23 @@ function Import-RequiredModule ([string]$Name, [version]$Version) {
     }
     Remove-Module -Name $Name -ErrorAction SilentlyContinue
     Import-Module -Name $Name -RequiredVersion $Version -Force
+}
+
+if ($InstallDependencies) {
+    foreach ($Module in @(@{Name = 'Pester'; Version = '5.7.1'}, @{Name = 'PSScriptAnalyzer'; Version = '1.24.0'})) {
+        if (-not (Get-Module -Name $Module.Name -ListAvailable | Where-Object {$_.Version -eq $Module.Version})) {
+            Write-Host "Installing $($Module.Name) $($Module.Version) for the current user" -ForegroundColor Cyan
+            if (($PSVersionTable.PSEdition -eq 'Desktop') -and -not (Get-PackageProvider -Name NuGet -ListAvailable -ErrorAction SilentlyContinue)) {
+                Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Scope CurrentUser -Force | Out-Null
+            }
+            $InstallParams = @{Name = $Module.Name; RequiredVersion = $Module.Version; Scope = 'CurrentUser'; Force = $true}
+            $InstallModule = Get-Command -Name Install-Module
+            if ($InstallModule.Parameters.ContainsKey('SkipPublisherCheck')) {$InstallParams.SkipPublisherCheck = $true}
+            if ($InstallModule.Parameters.ContainsKey('AllowClobber')) {$InstallParams.AllowClobber = $true}
+            Install-Module @InstallParams
+        }
+    }
+    exit 0
 }
 
 $Failed = 0

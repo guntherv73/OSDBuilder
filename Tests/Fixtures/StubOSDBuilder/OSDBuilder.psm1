@@ -34,6 +34,8 @@ function Import-OSMedia {
 }
 
 function Mount-DiskImage {
+    #The stub replaces the Storage cmdlet for the example script
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidOverwritingBuiltInCmdlets', '')]
     param ($ImagePath, $StorageType, [switch]$PassThru)
     Add-StubLog "Mount-DiskImage $ImagePath"
     if ($global:OSDBuilderStubImport -and $global:OSDBuilderStubImport.ContainsKey($ImagePath)) {
@@ -43,11 +45,15 @@ function Mount-DiskImage {
 }
 
 function Get-Volume {
+    #The stub replaces the Storage cmdlet for the example script
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidOverwritingBuiltInCmdlets', '')]
     param ([Parameter(ValueFromPipeline = $true)]$DiskImage)
     process {[PSCustomObject]@{DriveLetter = 'E'}}
 }
 
 function Dismount-DiskImage {
+    #The stub replaces the Storage cmdlet for the example script
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidOverwritingBuiltInCmdlets', '')]
     param ($ImagePath)
 }
 
