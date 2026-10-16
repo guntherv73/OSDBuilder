@@ -1056,7 +1056,7 @@ function Add-ContentPackOSLanguageFeatures {
     #   Basic must be installed before Fonts, OCR, Handwriting, TextToSpeech and Speech
     #   Language Features are added with Add-WindowsCapability when a Features on Demand repository is available
     #======================================================================================
-    $OSLanguageFeaturesFiles = Get-ChildItem "$ContentPackContent\*" -Include *.cab -File -Recurse | Sort-Object -Property @{Expression = {Get-OSDBuilderLanguageFeatureOrder -Name $_.Name}}, Name | Select-Object Name, FullName, DirectoryName
+    $OSLanguageFeaturesFiles = Get-ChildItem -Path "$ContentPackContent" -Include *.cab -File -Recurse | Sort-Object -Property @{Expression = {Get-OSDBuilderLanguageFeatureOrder -Name $_.Name}}, Name | Select-Object Name, FullName, DirectoryName
     $CapabilitySource = @(Get-OSDBuilderCapabilitySource -OSMedia ([PSCustomObject]@{OperatingSystem = $UpdateOS; ReleaseId = $ReleaseId; InstallationType = $OSInstallationType}))
 
     foreach ($OSLanguageFeaturesFile in $OSLanguageFeaturesFiles) {
@@ -1173,7 +1173,7 @@ function Add-ContentPackOSPackages {
     #======================================================================================
     #   Import
     #======================================================================================
-    $OSPackagesFiles = Get-ChildItem "$ContentPackContent\*" -Include *.cab -File -Recurse | Sort-Object Name | Select-Object Name, FullName
+    $OSPackagesFiles = Get-ChildItem -Path "$ContentPackContent" -Include *.cab -File -Recurse | Sort-Object Name | Select-Object Name, FullName
 
     foreach ($item in $OSPackagesFiles) {
         $CurrentLog = "$Info\logs\$((Get-Date).ToString('yyyy-MM-dd-HHmmss'))-ContentPackOSPackages-$($item.Name).log"
