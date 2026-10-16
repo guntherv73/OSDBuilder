@@ -5,6 +5,12 @@ BeforeDiscovery {
         ForEach-Object {@{Name = $_.FullName.Substring($RepoRoot.Length + 1); FullName = $_.FullName}}
     $Manifest = Import-PowerShellDataFile -Path (Join-Path $RepoRoot 'OSDBuilder.psd1')
     $ExportedFunctions = $Manifest.FunctionsToExport | ForEach-Object {@{Name = $_}}
+
+    #Every function of the module and the Describe blocks of the tests
+    $ModuleFunctions = foreach ($Script in (Get-ChildItem -Path (Join-Path $RepoRoot 'Private'), (Join-Path $RepoRoot 'Public') -Filter '*.ps1' -File)) {
+        $Ast = [System.Management.Automation.Language.Parser]::ParseFile($Script.FullName, [ref]$null, [ref]$null)
+        $Ast.FindAll({$args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst]}, $false) | ForEach-Object {@{Name = $_.Name; File = $Script.Name}}
+    }
 }
 
 BeforeAll {
@@ -49,6 +55,21 @@ Describe 'Module manifest' {
 Describe 'Module import' {
     It 'refuses to import on macOS and Linux' -Skip:($PSVersionTable.PSEdition -eq 'Desktop' -or $IsWindows) {
         {Import-Module (Join-Path $RepoRoot 'OSDBuilder.psm1') -Force -ErrorAction Stop} | Should -Throw '*requires Windows*'
+    }
+}
+
+Describe 'Test coverage of the functions' {
+    BeforeAll {
+        $DescribedNames = foreach ($TestFile in (Get-ChildItem -Path $PSScriptRoot -Filter '*.Tests.ps1' -File)) {
+            $Ast = [System.Management.Automation.Language.Parser]::ParseFile($TestFile.FullName, [ref]$null, [ref]$null)
+            $Ast.FindAll({($args[0] -is [System.Management.Automation.Language.CommandAst]) -and ($args[0].GetCommandName() -eq 'Describe')}, $true) | ForEach-Object {
+                $_.CommandElements[1].Extent.Text.Trim("'", '"')
+            }
+        }
+    }
+
+    It '<Name> (<File>) has a Describe block' -ForEach $ModuleFunctions {
+        $DescribedNames | Should -Contain $Name
     }
 }
 

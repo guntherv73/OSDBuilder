@@ -16,7 +16,7 @@ The tests mock DISM, Appx, winget and the web requests, no Windows image, admini
 .EXAMPLE
 .\Tests\Invoke-OSDBuilderTests.ps1 -CI
 Runs PSScriptAnalyzer, the tests and the code coverage, writes Tests\TestResults.xml and Tests\Coverage.xml
-and exits with 1 when a test fails, PSScriptAnalyzer reports a finding or the code coverage is below -MinimumCoverage
+and exits with 1 when a test fails, PSScriptAnalyzer reports a finding or the code coverage of Private and Public is below -MinimumCoverage (90 %)
 #>
 [CmdletBinding()]
 param (
@@ -29,7 +29,7 @@ param (
     #Filter the tests by tag
     [string[]]$Tag,
 
-    #Measures the code coverage of the Private functions
+    #Measures the code coverage of Private and Public
     [switch]$CodeCoverage,
 
     #Runs PSScriptAnalyzer with PSScriptAnalyzerSettings.psd1
@@ -38,9 +38,9 @@ param (
     #Lint, code coverage, test result files and exit code
     [switch]$CI,
 
-    #Minimum code coverage in percent for -CI
+    #Minimum code coverage of Private and Public in percent for -CI
     [ValidateRange(0, 100)]
-    [int]$MinimumCoverage = 75
+    [int]$MinimumCoverage = 90
 )
 $RepoRoot = Split-Path -Path $PSScriptRoot -Parent
 [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
@@ -105,7 +105,7 @@ if ($CI) {
 }
 if ($CodeCoverage -or $CI) {
     $Configuration.CodeCoverage.Enabled = $true
-    $Configuration.CodeCoverage.Path = @(Get-ChildItem -Path (Join-Path $RepoRoot 'Private') -Filter '*.ps1' -File | Where-Object {$_.Name -ne 'AllFunctions.ps1'} | Select-Object -ExpandProperty FullName)
+    $Configuration.CodeCoverage.Path = @(Get-ChildItem -Path (Join-Path $RepoRoot 'Private'), (Join-Path $RepoRoot 'Public') -Filter '*.ps1' -File | Select-Object -ExpandProperty FullName)
     $Configuration.CodeCoverage.OutputPath = Join-Path $PSScriptRoot 'Coverage.xml'
     $Configuration.CodeCoverage.CoveragePercentTarget = $MinimumCoverage
 }

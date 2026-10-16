@@ -4,8 +4,8 @@ Shared test setup, dot-source it in the BeforeAll block of every *.Tests.ps1 fil
 
 .DESCRIPTION
 - $RepoRoot and $FixturesPath
-- Placeholder commands for the Windows only DISM, Appx and Storage cmdlets and the OSD module, so Pester can mock them on every platform
-  (on Windows the real cmdlets exist and are mocked directly)
+- Placeholder commands for the Windows only cmdlets, the OSD module commands and Windows programs, so Pester can mock them
+  on every platform (on Windows the real cmdlets exist and are mocked directly)
 - Import-OSDBuilderPrivate returns the Private scripts, dot-source them in the test scope:
   foreach ($Script in (Get-OSDBuilderPrivateScript)) {. $Script}
 - New-TestAppx creates an .appx (zip with an AppxManifest.xml) for the Appx manifest tests
@@ -14,34 +14,81 @@ $RepoRoot = Split-Path -Path $PSScriptRoot -Parent
 $FixturesPath = Join-Path $PSScriptRoot 'Fixtures'
 
 #=================================================
-#   Windows only commands
-#   Defined only when the command does not exist, the parameters are the ones the module uses
+#   Commands that are not available on every platform
+#   Windows only cmdlets (DISM, Appx, Storage, Hyper-V, BITS, Out-GridView), OSD module commands and Windows programs
+#   A placeholder is defined only when the command does not exist, so Pester can mock it on Windows, macOS and Linux
+#   The parameters are the ones the module uses, so -ParameterFilter works on every platform
+#   Every placeholder accepts pipeline input ($InputObject) and positional arguments ($RemainingArguments)
 #=================================================
-$WindowsOnlyCommands = [ordered]@{
-    'Add-WindowsPackage'                = 'param($Path, $PackagePath, $LogPath, [switch]$IgnoreCheck, [switch]$PreventPending)'
-    'Get-WindowsPackage'                = 'param($Path, $PackageName, $PackagePath, $LogPath)'
-    'Add-WindowsCapability'             = 'param($Path, $Name, [string[]]$Source, $LogPath, [switch]$LimitAccess)'
-    'Get-WindowsCapability'             = 'param($Path, $Name, $LogPath, [switch]$LimitAccess)'
-    'Enable-WindowsOptionalFeature'     = 'param($Path, $FeatureName, [switch]$All, [switch]$LimitAccess, [string[]]$Source, $LogPath)'
-    'Get-WindowsOptionalFeature'        = 'param($Path, $FeatureName, $LogPath)'
-    'Add-AppxProvisionedPackage'        = 'param($Path, $PackagePath, $LicensePath, [string[]]$DependencyPackagePath, [switch]$SkipLicense, $LogPath, $Regions)'
-    'Get-AppxProvisionedPackage'        = 'param($Path, $LogPath)'
-    'Remove-AppxProvisionedPackage'     = 'param($Path, $PackageName, $LogPath)'
-    'Mount-DiskImage'                   = 'param($ImagePath, $StorageType, [switch]$PassThru)'
-    'Dismount-DiskImage'                = 'param($ImagePath)'
-    'Get-Volume'                        = 'param([Parameter(ValueFromPipeline = $true)]$DiskImage)'
-    'Start-BitsTransfer'                = 'param($Source, $Destination, $DisplayName)'
-    #OSD module (RequiredModules), not installed for the tests
-    'Get-SessionsXml'                   = 'param($Path, $KBNumber)'
-    'Test-WindowsPackageCAB'            = 'param($Path, $PackagePath)'
-    'Get-RegCurrentVersion'             = 'param($Path, $Property)'
-    'Get-WindowsUpdateManifests'        = 'param()'
+$PlaceholderCommands = [ordered]@{
+    'Add-AppxProvisionedPackage' = '$DependencyPackagePath, $LicensePath, $LogPath, $PackagePath, $Path, $Regions, [switch]$SkipLicense'
+    'Add-PartitionAccessPath' = '[switch]$AssignDriveLetter, $DiskNumber, $PartitionNumber'
+    'Add-WindowsCapability' = '[switch]$LimitAccess, $LogPath, $Name, $Path, $Source'
+    'Add-WindowsDriver' = '$Driver, [switch]$ForceUnsigned, $LogPath, $Path, [switch]$Recurse'
+    'Add-WindowsPackage' = '[switch]$IgnoreCheck, $LogPath, $PackagePath, $Path, [switch]$PreventPending'
+    'Add-WindowsPackageSSU' = '$LogPath, $PackagePath, $Path'
+    'Block-NoCurl' = ''
+    'Block-PowerShellVersionLt5' = ''
+    'Block-StandardUser' = ''
+    'Block-WindowsVersionNe10' = ''
+    'Block-WinPE' = ''
+    'Clear-Disk' = '$Confirm, [switch]$PassThru, [switch]$RemoveData, [switch]$RemoveOEM'
+    'Disable-WindowsOptionalFeature' = '$FeatureName, $LogPath, $Path'
+    'Dismount-DiskImage' = '$ImagePath'
+    'Dismount-WindowsImage' = '[switch]$Discard, $LogPath, $Path, [switch]$Save'
+    'Enable-PEWindowsImagePSGallery' = '$Path'
+    'Enable-WindowsOptionalFeature' = '[switch]$All, $FeatureName, [switch]$LimitAccess, $LogPath, $Path, $Source'
+    'Expand-WindowsImage' = '$ApplyPath, $ImagePath, $Index'
+    'Export-WindowsImage' = '[switch]$CheckIntegrity, $CompressionType, $DestinationImagePath, $DestinationName, $LogPath, [switch]$Setbootable, $SourceImagePath, $SourceIndex'
+    'Format-Volume' = '$Confirm, $FileSystem, $NewFileSystemLabel'
+    'Get-AdkPaths' = '$Arch'
+    'Get-AppxProvisionedPackage' = '$Path'
+    'Get-Disk' = ''
+    'Get-DiskImage' = '$ImagePath'
+    'Get-OSDCatalogIntelWirelessDriver' = ''
+    'Get-OSDCloudOperatingSystems' = '$OSArch'
+    'Get-Partition' = '$DiskNumber, $PartitionNumber'
+    'Get-PartitionSupportedSize' = '$DiskNumber, $PartitionNumber'
+    'Get-RegCurrentVersion' = '$Path, $Property'
+    'Get-SessionsXml' = '$KBNumber, $Path'
+    'Get-Volume' = ''
+    'Get-WindowsCapability' = '[switch]$LimitAccess, $Name, $Path'
+    'Get-WindowsImage' = '$ImagePath, $Index, [switch]$Mounted'
+    'Get-WindowsImageContent' = '$ImagePath, $Index'
+    'Get-WindowsOptionalFeature' = '$FeatureName, $Path'
+    'Get-WindowsPackage' = '$PackageName, $PackagePath, $Path'
+    'Get-WindowsUpdateManifests' = ''
+    'Initialize-Disk' = '$Number, $PartitionStyle'
+    'Mount-DiskImage' = '$ImagePath, [switch]$PassThru, $StorageType'
+    'Mount-WindowsImage' = '$ImagePath, $Index, $LogPath, $Path, [switch]$ReadOnly'
+    'New-Partition' = '[switch]$AssignDriveLetter, $DiskNumber, $GptType, [switch]$IsActive, $Size, [switch]$UseMaximumSize'
+    'New-VHD' = '[switch]$Dynamic, $Path, $SizeBytes'
+    'Out-GridView' = '$OutputMode, [switch]$PassThru, $Title'
+    'Remove-AppxProvisionedPackage' = '$LogPath, $PackageName, $Path'
+    'Remove-WindowsCapability' = '$LogPath, $Name, $Path'
+    'Remove-WindowsPackage' = '$LogPath, $PackageName, $Path'
+    'Resize-Partition' = '$DiskNumber, $PartitionNumber, $Size'
+    'Save-WebFile' = '$SourceUrl'
+    'Save-WindowsImage' = '$LogPath, $Path'
+    'Set-WindowsImageExecutionPolicy' = '$ExecutionPolicy, $Path'
+    'Start-BitsTransfer' = '$Destination, $DisplayName, $Source'
+    'Test-WebConnection' = '$Uri'
+    'Test-WindowsPackageCAB' = '$PackagePath, $Path'
+    'Use-WindowsUnattend' = '$LogPath, $Path, $UnattendPath'
 }
-foreach ($Name in $WindowsOnlyCommands.Keys) {
-    if (-not (Get-Command -Name $Name -ErrorAction SilentlyContinue)) {
-        $Body = "$($WindowsOnlyCommands[$Name]) throw '$Name is not available on this platform, mock it in the test'"
-        Set-Item -Path "function:global:$Name" -Value ([scriptblock]::Create($Body))
-    }
+#Windows programs, called with positional arguments, always replaced in the tests
+$PlaceholderPrograms = @(
+    'bootsect.exe', 'cmd', 'curl.exe', 'dism', 'expand.exe', 'robocopy'
+)
+foreach ($Name in @($PlaceholderCommands.Keys) + $PlaceholderPrograms) {
+    #Windows programs are always replaced, a test never starts robocopy or dism, functions are found before programs
+    if (($Name -notin $PlaceholderPrograms) -and (Get-Command -Name $Name -ErrorAction SilentlyContinue)) {Continue}
+    $Parameters = @()
+    if ($PlaceholderCommands.Contains($Name) -and $PlaceholderCommands[$Name]) {$Parameters += $PlaceholderCommands[$Name]}
+    $Parameters += '[Parameter(ValueFromPipeline = $true)]$InputObject'
+    $Parameters += '[Parameter(ValueFromRemainingArguments = $true)]$RemainingArguments'
+    $Body = "[CmdletBinding()] param ($($Parameters -join ', ')) process {throw '$Name is not available on this platform, mock it in the test'}"
+    Set-Item -Path "function:global:$Name" -Value ([scriptblock]::Create($Body))
 }
 
 #OSDBuilder functions that only write the output header
