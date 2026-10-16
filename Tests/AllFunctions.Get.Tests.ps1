@@ -18,8 +18,10 @@ BeforeAll {
         }
     }
 
-    #Content paths are Windows paths, Get-ChildItem is mocked with the objects of a Windows file system
-    $ContentRoot = 'C:\OSDBuilder\Content'
+    #Get-ChildItem is mocked with the objects of a Windows file system below $ContentRoot
+    #$ContentRoot exists, so Pester can resolve the dynamic parameters of the FileSystem provider (-Directory) on every platform
+    $ContentRoot = Join-Path $TestDrive 'Content'
+    New-Item -Path $ContentRoot -ItemType Directory -Force | Out-Null
     function New-ContentItem {
         param ([string]$FullName, [int]$Length = 1024)
         [PSCustomObject]@{
@@ -659,8 +661,8 @@ Describe 'Get-TaskContentAddFeatureOnDemand' {
             New-ContentItem "$Lof\LanguageExperiencePack.de-DE.Neutral.appx"
             New-ContentItem "$Lof\de-de\lp.cab"
             New-ContentItem "$Lof\metadata\DesktopTargetCompDB_Neutral.xml.cab"
-            New-ContentItem "$Lof\Rsat.ActiveDirectory.DS-LDS.Tools~~~~0.0.1.0.cab"
-            New-ContentItem "$Lof\Rsat.WSUS.Tools~~~~0.0.1.0.cab"
+            New-ContentItem "$Lof\Microsoft-Windows-ActiveDirectory-DS-LDS-Tools-FoD-Package~31bf3856ad364e35~amd64~~.cab"
+            New-ContentItem "$Lof\Microsoft-Windows-WSUS-Tools-FoD-Package~31bf3856ad364e35~amd64~~.cab"
             New-ContentItem 'IsoExtract\Windows 10 2004 x64 FOD\Microsoft-Windows-NetFx3-OnDemand-Package~31bf3856ad364e35~amd64~~.cab'
             New-ContentItem 'IsoExtract\Windows Server 2025 24H2 Languages and Optional Features\Microsoft-Windows-Server-AppCompat-FoD-Package~31bf3856ad364e35~amd64~~.cab'
         )
@@ -702,7 +704,7 @@ Describe 'Get-TaskContentAddFeatureOnDemand' {
         $ContentIsoExtract = @(
             New-ContentItem 'IsoExtract\Windows 10 1809 x86 FOD\Microsoft-Windows-NetFx3-OnDemand-Package~31bf3856ad364e35~x86~~.cab'
             New-ContentItem 'IsoExtract\Windows 10 1809 x64 FOD\Microsoft-Windows-NetFx3-OnDemand-Package~31bf3856ad364e35~amd64~~.cab'
-            New-ContentItem 'IsoExtract\Windows 10 1809 x86 FOD\Rsat.Dns.Tools~~~~0.0.1.0.cab'
+            New-ContentItem 'IsoExtract\Windows 10 1809 x86 FOD\Microsoft-Windows-DNS-Tools-FoD-Package~31bf3856ad364e35~x86~~.cab'
         )
         Get-TaskContentAddFeatureOnDemand 6>$null | Out-Null
         $script:GridView.FullName | Should -Be @('IsoExtract\Windows 10 1809 x86 FOD\Microsoft-Windows-NetFx3-OnDemand-Package~31bf3856ad364e35~x86~~.cab')
@@ -710,9 +712,9 @@ Describe 'Get-TaskContentAddFeatureOnDemand' {
 
     It 'keeps RSAT of Windows 10 1803 and older' {
         $OSMedia = [PSCustomObject]@{OperatingSystem = 'Windows 10'; InstallationType = 'Client'; Arch = 'x64'; ReleaseId = '1803'}
-        $ContentIsoExtract = @(New-ContentItem 'IsoExtract\Windows 10 1803 x64 FOD\Rsat.Dns.Tools~~~~0.0.1.0.cab')
+        $ContentIsoExtract = @(New-ContentItem 'IsoExtract\Windows 10 1803 x64 FOD\Microsoft-Windows-DNS-Tools-FoD-Package~31bf3856ad364e35~amd64~~.cab')
         Get-TaskContentAddFeatureOnDemand 6>$null | Out-Null
-        $script:GridView.Name | Should -Be @('Rsat.Dns.Tools~~~~0.0.1.0.cab')
+        $script:GridView.Name | Should -Be @('Microsoft-Windows-DNS-Tools-FoD-Package~31bf3856ad364e35~amd64~~.cab')
     }
 
     It 'warns when there are no Features on Demand' {
