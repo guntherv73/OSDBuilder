@@ -775,8 +775,7 @@ Describe 'Add-ContentPackPEADK' {
             Should -Invoke Add-WindowsPackage -Times 0 -Exactly -ParameterFilter {$PackagePath -like '*Setup.cab'}
         }
 
-        # KnownBug: AllFunctions.ps1:1441 assigns the packages of the directory ($ADKFiles) to $ADKFilesSub, the language packages of the subdirectories are not added to a WinRE source and the others are added twice
-        It 'adds lp.cab and the packages of the subdirectories except Setup to a WinRE source' -Skip {
+        It 'adds lp.cab and the packages of the subdirectories except Setup to a WinRE source' {
             $SourceWim = 'WinRE'
             Add-ContentPackPEADK -ContentPackContent $Content 6>$null
             @(Get-Added 'C:\Mount' | Select-Object -Skip 3)[0] | Should -Be 'lp.cab'
@@ -835,8 +834,7 @@ Describe 'Add-ContentPackPEDaRT' {
         }
     }
 
-    # KnownBug: AllFunctions.ps1:1650-1651,1657-1658 copy DartConfig.dat to WinSE when WinRE is mounted and to WinRE when WinSE is mounted
-    It 'copies DartConfig.dat to WinRE when only WinRE is mounted' -Skip {
+    It 'copies DartConfig.dat to WinRE when only WinRE is mounted' {
         $MountWinPE = $null; $MountWinSE = $null
         Add-ContentPackPEDaRT -ContentPackContent $Content 6>$null
         Get-Content (Join-Path $MountWinRE 'Windows/System32/DartConfig.dat') | Should -Be 'DartConfig8'

@@ -27,7 +27,7 @@ function Add-ContentADKWinPE {
         }
     }
 
-    $WinPEADKPE = $WinPEADKPE | Where-Object {$_.Name -notlike "*WinPE-NetFx*"}
+    $WinPEADKPE = $WinPEADKPE | Where-Object {$_ -notlike "*WinPE-NetFx*"}
     foreach ($PackagePath in $WinPEADKPE) {
         if ($PackagePath -like "*WinPE-PowerShell*") {
             $CurrentLog = "$PEInfo\logs\$((Get-Date).ToString('yyyy-MM-dd-HHmmss'))-Add-ContentADKWinPE.log"
@@ -42,7 +42,7 @@ function Add-ContentADKWinPE {
         }
     }
 
-    $WinPEADKPE = $WinPEADKPE | Where-Object {$_.Name -notlike "*WinPE-PowerShell*"}
+    $WinPEADKPE = $WinPEADKPE | Where-Object {$_ -notlike "*WinPE-PowerShell*"}
     foreach ($PackagePath in $WinPEADKPE) {
         Write-Host -ForegroundColor Gray "  $SetOSDBuilderPathContent\$PackagePath"
         $CurrentLog = "$PEInfo\logs\$((Get-Date).ToString('yyyy-MM-dd-HHmmss'))-Add-ContentADKWinPE.log"
@@ -87,7 +87,7 @@ function Add-ContentADKWinRE {
         }
     }
 
-    $WinPEADKRE = $WinPEADKRE | Where-Object {$_.Name -notlike "*WinPE-NetFx*"}
+    $WinPEADKRE = $WinPEADKRE | Where-Object {$_ -notlike "*WinPE-NetFx*"}
     foreach ($PackagePath in $WinPEADKRE) {
         $CurrentLog = "$PEInfo\logs\$((Get-Date).ToString('yyyy-MM-dd-HHmmss'))-Add-ContentADKWinRE.log"
         Write-Verbose "CurrentLog: $CurrentLog"
@@ -101,7 +101,7 @@ function Add-ContentADKWinRE {
             }
         }
     }
-    $WinPEADKRE = $WinPEADKRE | Where-Object {$_.Name -notlike "*WinPE-PowerShell*"}
+    $WinPEADKRE = $WinPEADKRE | Where-Object {$_ -notlike "*WinPE-PowerShell*"}
     foreach ($PackagePath in $WinPEADKRE) {
         $CurrentLog = "$PEInfo\logs\$((Get-Date).ToString('yyyy-MM-dd-HHmmss'))-Add-ContentADKWinRE.log"
         Write-Verbose "CurrentLog: $CurrentLog"
@@ -149,7 +149,7 @@ function Add-ContentADKWinSE {
             }
         }
     }
-    $WinPEADKSE = $WinPEADKSE | Where-Object {$_.Name -notlike "*WinPE-NetFx*"}
+    $WinPEADKSE = $WinPEADKSE | Where-Object {$_ -notlike "*WinPE-NetFx*"}
     foreach ($PackagePath in $WinPEADKSE) {
         $CurrentLog = "$PEInfo\logs\$((Get-Date).ToString('yyyy-MM-dd-HHmmss'))-Add-ContentADKWinSE.log"
         Write-Verbose "CurrentLog: $CurrentLog"
@@ -163,14 +163,14 @@ function Add-ContentADKWinSE {
             }
         }
     }
-    $WinPEADKSE = $WinPEADKSE | Where-Object {$_.Name -notlike "*WinPE-PowerShell*"}
+    $WinPEADKSE = $WinPEADKSE | Where-Object {$_ -notlike "*WinPE-PowerShell*"}
     foreach ($PackagePath in $WinPEADKSE) {
         $CurrentLog = "$PEInfo\logs\$((Get-Date).ToString('yyyy-MM-dd-HHmmss'))-Add-ContentADKWinSE.log"
         Write-Verbose "CurrentLog: $CurrentLog"
 
         Write-Host -ForegroundColor Gray "  $SetOSDBuilderPathContent\$PackagePath"
         if ($OSMajorVersion -eq 6) {
-            dism /Image:"$MountWinSE" /Add-Package /PackagePath:"$SetOSDBuilderPathContent\$PackagePath" /LogPath:"$CurrentLog.log"
+            dism /Image:"$MountWinSE" /Add-Package /PackagePath:"$SetOSDBuilderPathContent\$PackagePath" /LogPath:"$CurrentLog"
         } else {
             Try {Add-WindowsPackage -PackagePath "$SetOSDBuilderPathContent\$PackagePath" -Path "$MountWinSE" -LogPath "$CurrentLog" | Out-Null}
             Catch {
@@ -1438,7 +1438,7 @@ function Add-ContentPackPEADK {
 
         if ($SourceWim -eq 'WinRE') {
             $ADKFiles = $ADKFiles | Where-Object {$_.Name -notmatch 'setup'}
-            $ADKFilesSub = $ADKFiles | Where-Object {$_.Name -notmatch 'setup'}
+            $ADKFilesSub = $ADKFilesSub | Where-Object {$_.Name -notmatch 'setup'}
         }
 
         foreach ($ADKFile in $ADKFiles | Where-Object {$_.Name -eq 'lp.cab'}) {
@@ -1647,15 +1647,15 @@ function Add-ContentPackPEDaRT {
         $MicrosoftDartConfig = $(Join-Path $(Split-Path "$MicrosoftDartCab") 'DartConfig.dat')
         if (Test-Path $MicrosoftDartConfig) {
             if ($MountWinPE) {Copy-Item -Path $MicrosoftDartConfig -Destination "$MountWinPE\Windows\System32\DartConfig.dat" -Force}
-            if ($MountWinRE) {Copy-Item -Path $MicrosoftDartConfig -Destination "$MountWinSE\Windows\System32\DartConfig.dat" -Force}
-            if ($MountWinSE) {Copy-Item -Path $MicrosoftDartConfig -Destination "$MountWinRE\Windows\System32\DartConfig.dat" -Force}
+            if ($MountWinRE) {Copy-Item -Path $MicrosoftDartConfig -Destination "$MountWinRE\Windows\System32\DartConfig.dat" -Force}
+            if ($MountWinSE) {Copy-Item -Path $MicrosoftDartConfig -Destination "$MountWinSE\Windows\System32\DartConfig.dat" -Force}
         }
 
         $MicrosoftDartConfig = $(Join-Path $(Split-Path "$MicrosoftDartCab") 'DartConfig8.dat')
         if (Test-Path $MicrosoftDartConfig) {
             if ($MountWinPE) {Copy-Item -Path $MicrosoftDartConfig -Destination "$MountWinPE\Windows\System32\DartConfig.dat" -Force}
-            if ($MountWinRE) {Copy-Item -Path $MicrosoftDartConfig -Destination "$MountWinSE\Windows\System32\DartConfig.dat" -Force}
-            if ($MountWinSE) {Copy-Item -Path $MicrosoftDartConfig -Destination "$MountWinRE\Windows\System32\DartConfig.dat" -Force}
+            if ($MountWinRE) {Copy-Item -Path $MicrosoftDartConfig -Destination "$MountWinRE\Windows\System32\DartConfig.dat" -Force}
+            if ($MountWinSE) {Copy-Item -Path $MicrosoftDartConfig -Destination "$MountWinSE\Windows\System32\DartConfig.dat" -Force}
         }
 
         if ($ScriptName -eq 'New-OSBuild') {
@@ -2818,15 +2818,15 @@ function Expand-DaRTPE {
         $MicrosoftDartConfig = $(Join-Path $(Split-Path "$MicrosoftDartCab") 'DartConfig.dat')
         if (Test-Path $MicrosoftDartConfig) {
             if ($MountWinPE) {Copy-Item -Path $MicrosoftDartConfig -Destination "$MountWinPE\Windows\System32\DartConfig.dat" -Force}
-            if ($MountWinRE) {Copy-Item -Path $MicrosoftDartConfig -Destination "$MountWinSE\Windows\System32\DartConfig.dat" -Force}
-            if ($MountWinSE) {Copy-Item -Path $MicrosoftDartConfig -Destination "$MountWinRE\Windows\System32\DartConfig.dat" -Force}
+            if ($MountWinRE) {Copy-Item -Path $MicrosoftDartConfig -Destination "$MountWinRE\Windows\System32\DartConfig.dat" -Force}
+            if ($MountWinSE) {Copy-Item -Path $MicrosoftDartConfig -Destination "$MountWinSE\Windows\System32\DartConfig.dat" -Force}
         }
 
         $MicrosoftDartConfig = $(Join-Path $(Split-Path "$MicrosoftDartCab") 'DartConfig8.dat')
         if (Test-Path $MicrosoftDartConfig) {
             if ($MountWinPE) {Copy-Item -Path $MicrosoftDartConfig -Destination "$MountWinPE\Windows\System32\DartConfig.dat" -Force}
-            if ($MountWinRE) {Copy-Item -Path $MicrosoftDartConfig -Destination "$MountWinSE\Windows\System32\DartConfig.dat" -Force}
-            if ($MountWinSE) {Copy-Item -Path $MicrosoftDartConfig -Destination "$MountWinRE\Windows\System32\DartConfig.dat" -Force}
+            if ($MountWinRE) {Copy-Item -Path $MicrosoftDartConfig -Destination "$MountWinRE\Windows\System32\DartConfig.dat" -Force}
+            if ($MountWinSE) {Copy-Item -Path $MicrosoftDartConfig -Destination "$MountWinSE\Windows\System32\DartConfig.dat" -Force}
         }
 
         if ($ScriptName -eq 'New-OSBuild') {

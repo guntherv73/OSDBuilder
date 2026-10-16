@@ -46,8 +46,7 @@ Describe 'Add-ContentADKWinPE' {
         Should -Invoke dism -Times 0 -Exactly
     }
 
-    # KnownBug: AllFunctions.ps1:30,45 filter the relative path strings of the Task by $_.Name, which is empty, so NetFx and PowerShell are added twice
-    It 'installs every package once' -Skip {
+    It 'installs every package once' {
         Add-ContentADKWinPE 6>$null
         $script:Added.Count | Should -Be 4
     }
@@ -73,7 +72,7 @@ Describe 'Add-ContentADKWinPE' {
         Mock Add-WindowsPackage {throw 'Add-WindowsPackage failed. Error code = 0x800f081e'}
         $Verbose = (Add-ContentADKWinPE 6>$null 4>&1) -join "`n"
         $Verbose | Should -BeLike '*0x800f081e The package is not applicable to this image*'
-        Should -Invoke Add-WindowsPackage -Times 6 -Exactly
+        Should -Invoke Add-WindowsPackage -Times 4 -Exactly
     }
 
     It 'shows the log when a package fails' {
@@ -124,8 +123,7 @@ Describe 'Add-ContentADKWinRE' {
         $global:ReapplyLCU | Should -BeTrue
     }
 
-    # KnownBug: AllFunctions.ps1:89,103 filter the relative path strings of the Task by $_.Name, which is empty, so NetFx and PowerShell are added twice
-    It 'installs every package once' -Skip {
+    It 'installs every package once' {
         Add-ContentADKWinRE 6>$null
         $script:Added.Count | Should -Be 4
     }
@@ -184,8 +182,7 @@ Describe 'Add-ContentADKWinSE' {
         $global:ReapplyLCU | Should -BeTrue
     }
 
-    # KnownBug: AllFunctions.ps1:145,158 filter the relative path strings of the Task by $_.Name, which is empty, so NetFx and PowerShell are added twice
-    It 'installs every package once' -Skip {
+    It 'installs every package once' {
         Add-ContentADKWinSE 6>$null
         $script:Added.Count | Should -Be 3
     }
@@ -196,8 +193,7 @@ Describe 'Add-ContentADKWinSE' {
         $script:Dism | Should -BeLike '/Image:C:\MountWinSE /Add-Package /PackagePath:C:\Content\WinPE\ADK\x64\WinPE-*.cab /LogPath:*'
     }
 
-    # KnownBug: AllFunctions.ps1:158 appends .log to the log path a second time (/LogPath:...-Add-ContentADKWinSE.log.log)
-    It 'writes the dism.exe log to Add-ContentADKWinSE.log' -Skip {
+    It 'writes the dism.exe log to Add-ContentADKWinSE.log' {
         $OSMajorVersion = 6
         Add-ContentADKWinSE 6>$null
         $script:Dism | Should -BeLike '*-Add-ContentADKWinSE.log'

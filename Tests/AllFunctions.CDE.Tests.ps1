@@ -485,8 +485,7 @@ Describe 'Expand-DaRTPE' {
         }
     }
 
-    # KnownBug: Private/AllFunctions.ps1:2820-2821 and 2827-2828 copy the DartConfig of $MountWinRE to $MountWinSE and of $MountWinSE to $MountWinRE
-    It 'copies DartConfig.dat to WinRE when there is no WinSE' -Skip {
+    It 'copies DartConfig.dat to WinRE when there is no WinSE' {
         New-TestFile -Path (Join-Path $DaRTPath 'DartConfig.dat') | Out-Null
         $MountWinSE = $null
         Expand-DaRTPE 6>$null
