@@ -98,6 +98,7 @@ BeforeAll {
             [switch]$NoInstallWim
         )
         $FullName = Join-Path $Parent $Name
+        if (Test-Path $FullName) {Remove-Item -Path $FullName -Recurse -Force}
         $Xml = Join-Path (Join-Path $FullName 'info') 'xml'
         New-Item -Path $Xml -ItemType Directory -Force | Out-Null
         if (-not $NoWindowsImageTxt) {New-TestFile -Path (Join-Path $FullName 'WindowsImage.txt') -Value $WindowsImage.ImageName | Out-Null}
@@ -228,7 +229,7 @@ Describe 'New-OSBuild' {
         Mock Get-OSMedia {
             $script:OSMediaList | Where-Object {(-not $Revision) -or ($_.Revision -eq $Revision)}
         }
-        Mock Out-GridView {$input}
+        Mock Out-GridView {$InputObject}
         Mock Get-IsContentPacksEnabled {$true}
         Mock Get-IsTemplatesEnabled {$false}
         Mock Get-TaskContentPacks {}
@@ -306,7 +307,8 @@ Describe 'New-OSBuild' {
 
         It 'selects the Task in Out-GridView without -ByTaskName' {
             Invoke-NewOSBuild | Out-Null
-            Should -Invoke Out-GridView -Times 1 -Exactly -ParameterFilter {$PassThru -and ($Title -like 'OSBuild Tasks: Select one or more Tasks*')}
+            #Out-GridView is called once for every Task in the pipeline
+            Should -Invoke Out-GridView -Times 1 -ParameterFilter {$PassThru -and ($Title -like 'OSBuild Tasks: Select one or more Tasks*')}
             $global:NewOSBuildState['Show-TaskInfo'].TaskName | Should -Be 'Contoso Win11 Ent x64 25H2'
         }
 
@@ -367,14 +369,14 @@ Describe 'New-OSBuild' {
         It 'selects the OSMedia with Revision OK and OSMajorVersion 10 in Out-GridView' {
             Invoke-NewOSBuild @{SkipTask = $true} | Out-Null
             Should -Invoke Get-OSMedia -Times 1 -Exactly -ParameterFilter {($Revision -eq 'OK') -and ($OSMajorVersion -eq '10')}
-            Should -Invoke Out-GridView -Times 1 -Exactly -ParameterFilter {$Title -like 'Select one or more OSMedia to Build*'}
+            Should -Invoke Out-GridView -Times 1 -ParameterFilter {$Title -like 'Select one or more OSMedia to Build*'}
             Should -Invoke Show-MediaImageInfoOS -Times 1 -Exactly
         }
 
         It 'shows all OSMedia with -ShowHiddenOSMedia' {
             Invoke-NewOSBuild @{SkipTask = $true; ShowHiddenOSMedia = $true} | Out-Null
             Should -Invoke Get-OSMedia -Times 0 -Exactly -ParameterFilter {$Revision -eq 'OK' -and $OSMajorVersion}
-            Should -Invoke Out-GridView -Times 1 -Exactly
+            Should -Invoke Out-GridView -Times 1 -ParameterFilter {$Title -like 'Select one or more OSMedia to Build*'}
         }
 
         It 'warns and exits when no OSMedia is selected' {
@@ -412,7 +414,6 @@ Describe 'New-OSBuild' {
 
         It 'uses the OSMedia of the Task with -DontUseNewestMedia' {
             $script:OSMediaList = @()
-            $TaskOSMedia = New-TestOSMedia
             Invoke-NewOSBuild @{ByTaskName = 'Contoso Win11 Ent x64 25H2'; DontUseNewestMedia = $true} | Out-Null
             $global:NewOSBuildState['Show-TaskInfo'].OSMediaPath | Should -Be "$SetOSDBuilderPathOSMedia\Windows 11 Enterprise x64 25H2 26200.6584"
             Should -Invoke Get-OSMedia -Times 0 -Exactly
@@ -427,6 +428,7 @@ Describe 'New-OSBuild' {
         }
 
         It 'warns when the OSMedia of the Task does not exist with -DontUseNewestMedia' {
+            Remove-Item -Path $script:OSMediaList[0].FullName -Recurse -Force
             $Warnings = Invoke-NewOSBuild @{ByTaskName = 'Contoso Win11 Ent x64 25H2'; DontUseNewestMedia = $true; Execute = $true}
             $Warnings | Should -BeLike '*Unable to find an OSMedia to use*'
             Should -Invoke Get-WindowsImage -Times 0 -Exactly
@@ -665,7 +667,7 @@ Describe 'New-OSBuild' {
         }
 
         It 'applies the updates selected in Out-GridView with -SelectUpdates' {
-            Mock Out-GridView {$input | Where-Object {$_.UpdateGroup -eq 'LCU'}} -ParameterFilter {$Title -eq 'Select Updates to Apply and press OK'}
+            Mock Out-GridView {$InputObject | Where-Object {$_.UpdateGroup -eq 'LCU'}} -ParameterFilter {$Title -eq 'Select Updates to Apply and press OK'}
             Invoke-NewOSBuild @{ByTaskName = 'Contoso Win11 Ent x64 25H2'; Execute = $true; SelectUpdates = $true} | Out-Null
             $global:NewOSBuildState['Mount-InstallwimOS'].OSDUpdates.KBNumber | Should -Be '5066835'
         }
@@ -896,7 +898,7 @@ Describe 'New-OSBuild' {
             Mock Rename-Item {
                 $script:RenameCall++
                 if ($script:RenameCall -eq 1) {throw 'The process cannot access the file'}
-                Microsoft.PowerShell.Management\Rename-Item -Path $Path -NewName $NewName
+                Move-Item -Path $Path -Destination (Join-Path $SetOSDBuilderPathOSBuilds $NewName)
             }
             $Warnings = Invoke-NewOSBuild @{ByTaskName = 'Contoso Win11 Ent x64 25H2'; Execute = $true}
             $Warnings | Should -BeLike '*Waiting 30 seconds*'
@@ -917,7 +919,8 @@ Describe 'New-OSBuild' {
             $Output | Should -Contain "  Save-OSDBuilderDownload -ContentDownload 'OneDriveSetup Enterprise'"
             $Destination = Split-Path $Image -Parent
             Should -Invoke robocopy -Times 1 -Exactly -ParameterFilter {
-                ($RemainingArguments[0] -eq $GetOSDBuilderPathContentOneDrive) -and ($RemainingArguments[1] -like "*$Destination") -and ($RemainingArguments[2] -eq 'OneDriveSetup.exe')
+                #The first positional argument is bound to InputObject of the placeholder
+                ("$InputObject" -eq $GetOSDBuilderPathContentOneDrive) -and ($RemainingArguments[0] -like "*$Destination") -and ($RemainingArguments[1] -eq 'OneDriveSetup.exe')
             }
         }
 
