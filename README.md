@@ -42,7 +42,13 @@ a Task with the Language Packs, Language Features and Windows Capabilities of th
 .\Examples\New-Win11MultiLanguageBuild.ps1 -CustomerName 'Contoso' -OSDBuilderHome 'G:\OSDBuilder' `
     -SourceIso 'D:\ISO\Win11_25H2_x64.iso' -ReleaseId 25H2 -EditionId Enterprise `
     -Languages 'en-US','de-DE','fr-FR','sv-SE','ru-RU','sk-SK','th-TH' -DefaultLanguage 'en-US' `
-    -EnableNetFX3 -CreateISO
+    -CreateISO
+
+# Windows Setup in English, German and French, German is the default Setup language
+.\Examples\New-Win11MultiLanguageBuild.ps1 -CustomerName 'Contoso' -OSDBuilderHome 'G:\OSDBuilder' `
+    -SourceIso 'D:\ISO\Win11_25H2_English_x64.iso' -MediaLanguage 'en-US' `
+    -SetupLanguages 'de-DE','fr-FR' -SetupUILanguage 'de-DE' `
+    -SetupLanguageIso 'D:\ISO\Win11_25H2_German_x64.iso','D:\ISO\Win11_25H2_French_x64.iso'
 ```
 
 ## Windows 11 support
@@ -118,6 +124,41 @@ the same languages in WinRE as in the Windows image
 * Optional components added to WinRE by the Task also get the language packs of the languages already in WinRE
 * `SetAllIntl` of the Task is also set in WinRE
 * With the ISO extracted, the WinRE ADK selection of `New-OSBuildTask` no longer offers the ADK language packs
+
+### Windows Setup languages (LanguageCopySources)
+
+Windows Setup shows its display languages and the language selection of the image from the Setup resources of each
+language ([Add languages to Windows Setup](https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/add-multilingual-support-to-windows-setup)).
+
+1. Import the Windows 11 ISO of each Setup language with `Import-OSMedia` (same release and build, the OSMedia name contains the language)
+2. Select these OSMedia with `New-OSBuildTask -SourcesLanguageCopy` (`LanguageCopySources`), set the default with `-SetSetupUILang`
+3. `New-OSBuild`
+   * adds `lp.cab`, `WinPE-Setup_<lang>`, `WinPE-Setup-Client_<lang>` (Server: `WinPE-Setup-Server_<lang>`), the language pack of every
+     optional component of the Setup image and the font support (Japanese, Korean, Chinese, Thai `WinPE-FontSupport-WinRE`)
+     to boot.wim index 2 (WinSE), from the Languages and Optional Features ISO, `Content\ADK` as fallback
+   * copies the localized Setup resources (`sources\<lang>`) of the LanguageCopySources to the media
+   * creates Lang.ini with `Dism /Gen-LangIni`, sets `SetSetupUILang` and copies Lang.ini to boot.wim
+
+Language Interface Packs are not supported by Windows Setup.
+
+### ContentPacks
+
+* The `<OS> <ReleaseId> <Arch>` directory of a ContentPack type is used when it contains files, otherwise the directory
+  of a compatible release: `Windows 11 24H2 x64` is used for Windows 11 25H2 and 26H2 (same 26100 servicing branch),
+  `Windows 10 2004 x64` for Windows 10 20H2 - 22H2
+* OSLanguageFeatures are added in the required order (Basic first) and with `Add-WindowsCapability`
+  when the directory or a Languages and Optional Features ISO contains the metadata, otherwise with `Add-WindowsPackage`
+* Languages of OSLanguagePacks ContentPacks are also added to WinRE and trigger the reinstall of the inbox apps
+
+### .NET Framework 3.5
+
+* `New-OSBuildTask -EnableNetFX3` enables NetFx3 in `New-OSBuild` after the image cleanup, followed by the .NET Framework CU
+  (Microsoft order for install.wim: LCU, cleanup, .NET and .NET CU, export)
+* Windows 11 24H2 and newer media has no `sources\sxs`, NetFx3 is added with `Add-WindowsCapability -Name NetFX3~~~~` from the
+  Languages and Optional Features ISO (`Content\IsoExtract`), `sources\sxs` is used when the media contains it
+* `Enable-WindowsOptionalFeature` is used when the capability cannot be added, the build shows a warning when NetFx3 is not Enabled afterwards
+* Windows 11: the LCU is not applied again after NetFx3, Windows 10: the LCU is applied again as before
+* The example script enables NetFx3 by default, use `-SkipNetFX3` to skip
 
 ### Inbox Apps
 

@@ -67,3 +67,37 @@ function Get-OSDBuilderLanguageFeatureOrder {
     #Other Language Features are installed after Basic and before Speech
     Return 3
 }
+function Resolve-OSDBuilderContentPackReleasePath {
+    <#
+    .SYNOPSIS
+    Returns the "<OS> <ReleaseId> <Arch>" directory of a ContentPack type for the current build
+
+    .DESCRIPTION
+    The directory of the ReleaseId of the image is used when it contains files.
+    Otherwise the directory of a compatible ReleaseId with files is used, newest first,
+    for example "Windows 11 24H2 x64" for Windows 11 25H2 and 26H2 (same 26100 servicing branch)
+    or "Windows 10 2004 x64" for Windows 10 20H2 - 22H2.
+    When no directory has files, the directory of the ReleaseId of the image is returned.
+    #>
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$Path,
+
+        #Appended to the directory name, for example ' RSAT'
+        [string]$Suffix = ''
+    )
+    $Exact = Join-Path $Path "$UpdateOS $ReleaseID $OSArchitecture$Suffix"
+    if (Get-ChildItem -Path $Exact -File -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1) {Return $Exact}
+
+    $Pattern = Get-OSDBuilderLanguageReleasePattern -OSMedia ([PSCustomObject]@{OperatingSystem = $UpdateOS; ReleaseId = $ReleaseID})
+    $Compatible = @($Pattern -split '\|' | ForEach-Object {$_ -replace '\\',''} | Where-Object {$_ -and ($_ -ne $ReleaseID)} | Sort-Object -Descending)
+    foreach ($Release in $Compatible) {
+        $Candidate = Join-Path $Path "$UpdateOS $Release $OSArchitecture$Suffix"
+        if (Get-ChildItem -Path $Candidate -File -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1) {
+            Write-Host -ForegroundColor DarkGray "  $UpdateOS $ReleaseID uses the compatible ContentPack $Candidate"
+            Return $Candidate
+        }
+    }
+    Return $Exact
+}

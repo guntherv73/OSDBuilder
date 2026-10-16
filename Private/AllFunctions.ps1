@@ -515,7 +515,7 @@ function Add-ContentPack {
                 $ContentPaths = @(
                     "$ContentPackPath\ALL"
                     "$ContentPackPath\$OSArchitecture"
-                    "$ContentPackPath\$UpdateOS $ReleaseID $OSArchitecture"
+                    (Resolve-OSDBuilderContentPackReleasePath -Path $ContentPackPath)
                 )
                 foreach ($ContentPath in $ContentPaths) {
                     if (! (Test-Path $ContentPath)) {New-Item -Path $ContentPath -ItemType Directory -Force -ErrorAction Ignore | Out-Null}
@@ -534,7 +534,7 @@ function Add-ContentPack {
                 $ContentPaths = @(
                     "$ContentPackPath\ALL"
                     "$ContentPackPath\$OSArchitecture"
-                    "$ContentPackPath\$UpdateOS $ReleaseID $OSArchitecture"
+                    (Resolve-OSDBuilderContentPackReleasePath -Path $ContentPackPath)
                 )
                 foreach ($ContentPath in $ContentPaths) {
                     if (! (Test-Path $ContentPath)) {New-Item -Path $ContentPath -ItemType Directory -Force -ErrorAction Ignore | Out-Null}
@@ -550,7 +550,7 @@ function Add-ContentPack {
                 $ContentPaths = @(
                     "$ContentPackPath\ALL"
                     "$ContentPackPath\$OSArchitecture"
-                    "$ContentPackPath\$UpdateOS $ReleaseID $OSArchitecture"
+                    (Resolve-OSDBuilderContentPackReleasePath -Path $ContentPackPath)
                 )
                 foreach ($ContentPath in $ContentPaths) {
                     if (! (Test-Path $ContentPath)) {New-Item -Path $ContentPath -ItemType Directory -Force -ErrorAction Ignore | Out-Null}
@@ -565,11 +565,11 @@ function Add-ContentPack {
             foreach ($ContentPack in $ContentPacks) {
                 $ContentPackPath = Join-Path $SetOSDBuilderPathContentPacks "$ContentPack\OSCapability"
 
-                if (! (Test-Path "$ContentPackPath\$UpdateOS $ReleaseID $OSArchitecture")) {New-Item -Path "$ContentPackPath\$UpdateOS $ReleaseID $OSArchitecture" -ItemType Directory -Force -ErrorAction Ignore | Out-Null}
-                Add-ContentPackOSCapability -ContentPackContent "$ContentPackPath\$UpdateOS $ReleaseID $OSArchitecture"
+                if (! (Test-Path (Resolve-OSDBuilderContentPackReleasePath -Path $ContentPackPath))) {New-Item -Path (Resolve-OSDBuilderContentPackReleasePath -Path $ContentPackPath) -ItemType Directory -Force -ErrorAction Ignore | Out-Null}
+                Add-ContentPackOSCapability -ContentPackContent (Resolve-OSDBuilderContentPackReleasePath -Path $ContentPackPath)
 
-                if (! (Test-Path "$ContentPackPath\$UpdateOS $ReleaseID $OSArchitecture RSAT")) {New-Item -Path "$ContentPackPath\$UpdateOS $ReleaseID $OSArchitecture RSAT" -ItemType Directory -Force -ErrorAction Ignore | Out-Null}
-                Add-ContentPackOSCapability -ContentPackContent "$ContentPackPath\$UpdateOS $ReleaseID $OSArchitecture RSAT" -RSAT
+                if (! (Test-Path (Resolve-OSDBuilderContentPackReleasePath -Path $ContentPackPath -Suffix ' RSAT'))) {New-Item -Path (Resolve-OSDBuilderContentPackReleasePath -Path $ContentPackPath -Suffix ' RSAT') -ItemType Directory -Force -ErrorAction Ignore | Out-Null}
+                Add-ContentPackOSCapability -ContentPackContent (Resolve-OSDBuilderContentPackReleasePath -Path $ContentPackPath -Suffix ' RSAT') -RSAT
             }
         }
         if ($PackType -eq 'OSLanguageFeatures') {
@@ -577,8 +577,8 @@ function Add-ContentPack {
             foreach ($ContentPack in $ContentPacks) {
                 $ContentPackPath = Join-Path $SetOSDBuilderPathContentPacks "$ContentPack\OSLanguageFeatures"
                 
-                if (! (Test-Path "$ContentPackPath\$UpdateOS $ReleaseID $OSArchitecture")) {New-Item -Path "$ContentPackPath\$UpdateOS $ReleaseID $OSArchitecture" -ItemType Directory -Force -ErrorAction Ignore | Out-Null}
-                Add-ContentPackOSLanguageFeatures -ContentPackContent "$ContentPackPath\$UpdateOS $ReleaseID $OSArchitecture"
+                if (! (Test-Path (Resolve-OSDBuilderContentPackReleasePath -Path $ContentPackPath))) {New-Item -Path (Resolve-OSDBuilderContentPackReleasePath -Path $ContentPackPath) -ItemType Directory -Force -ErrorAction Ignore | Out-Null}
+                Add-ContentPackOSLanguageFeatures -ContentPackContent (Resolve-OSDBuilderContentPackReleasePath -Path $ContentPackPath)
             }
         }
         if ($PackType -eq 'OSLanguagePacks') {
@@ -586,8 +586,8 @@ function Add-ContentPack {
             foreach ($ContentPack in $ContentPacks) {
                 $ContentPackPath = Join-Path $SetOSDBuilderPathContentPacks "$ContentPack\OSLanguagePacks"
                 
-                if (! (Test-Path "$ContentPackPath\$UpdateOS $ReleaseID $OSArchitecture")) {New-Item -Path "$ContentPackPath\$UpdateOS $ReleaseID $OSArchitecture" -ItemType Directory -Force -ErrorAction Ignore | Out-Null}
-                Add-ContentPackOSLanguagePacks -ContentPackContent "$ContentPackPath\$UpdateOS $ReleaseID $OSArchitecture"
+                if (! (Test-Path (Resolve-OSDBuilderContentPackReleasePath -Path $ContentPackPath))) {New-Item -Path (Resolve-OSDBuilderContentPackReleasePath -Path $ContentPackPath) -ItemType Directory -Force -ErrorAction Ignore | Out-Null}
+                Add-ContentPackOSLanguagePacks -ContentPackContent (Resolve-OSDBuilderContentPackReleasePath -Path $ContentPackPath)
             }
         }
         if ($PackType -eq 'OSLocalExperiencePacks') {
@@ -595,8 +595,8 @@ function Add-ContentPack {
             foreach ($ContentPack in $ContentPacks) {
                 $ContentPackPath = Join-Path $SetOSDBuilderPathContentPacks "$ContentPack\OSLocalExperiencePacks"
                 
-                if (! (Test-Path "$ContentPackPath\$UpdateOS $ReleaseID $OSArchitecture")) {New-Item -Path "$ContentPackPath\$UpdateOS $ReleaseID $OSArchitecture" -ItemType Directory -Force -ErrorAction Ignore | Out-Null}
-                Add-ContentPackOSLocalExperiencePacks -ContentPackContent "$ContentPackPath\$UpdateOS $ReleaseID $OSArchitecture"
+                if (! (Test-Path (Resolve-OSDBuilderContentPackReleasePath -Path $ContentPackPath))) {New-Item -Path (Resolve-OSDBuilderContentPackReleasePath -Path $ContentPackPath) -ItemType Directory -Force -ErrorAction Ignore | Out-Null}
+                Add-ContentPackOSLocalExperiencePacks -ContentPackContent (Resolve-OSDBuilderContentPackReleasePath -Path $ContentPackPath)
             }
         }
         if ($PackType -eq 'OSPackages') {
@@ -604,8 +604,8 @@ function Add-ContentPack {
             foreach ($ContentPack in $ContentPacks) {
                 $ContentPackPath = Join-Path $SetOSDBuilderPathContentPacks "$ContentPack\OSPackages"
                 
-                if (! (Test-Path "$ContentPackPath\$UpdateOS $ReleaseID $OSArchitecture")) {New-Item -Path "$ContentPackPath\$UpdateOS $ReleaseID $OSArchitecture" -ItemType Directory -Force -ErrorAction Ignore | Out-Null}
-                Add-ContentPackOSPackages -ContentPackContent "$ContentPackPath\$UpdateOS $ReleaseID $OSArchitecture"
+                if (! (Test-Path (Resolve-OSDBuilderContentPackReleasePath -Path $ContentPackPath))) {New-Item -Path (Resolve-OSDBuilderContentPackReleasePath -Path $ContentPackPath) -ItemType Directory -Force -ErrorAction Ignore | Out-Null}
+                Add-ContentPackOSPackages -ContentPackContent (Resolve-OSDBuilderContentPackReleasePath -Path $ContentPackPath)
             }
         }
         if ($PackType -eq 'OSPoshMods') {
@@ -631,7 +631,7 @@ function Add-ContentPack {
                 $ContentPaths = @(
                     "$ContentPackPath\ALL"
                     "$ContentPackPath\$OSArchitecture"
-                    "$ContentPackPath\$UpdateOS $ReleaseID $OSArchitecture"
+                    (Resolve-OSDBuilderContentPackReleasePath -Path $ContentPackPath)
                 )
                 foreach ($ContentPath in $ContentPaths) {
                     if (! (Test-Path $ContentPath)) {New-Item -Path $ContentPath -ItemType Directory -Force -ErrorAction Ignore | Out-Null}
@@ -647,7 +647,7 @@ function Add-ContentPack {
                 $ContentPaths = @(
                     "$ContentPackPath\ALL"
                     "$ContentPackPath\$OSArchitecture"
-                    "$ContentPackPath\$UpdateOS $ReleaseID $OSArchitecture"
+                    (Resolve-OSDBuilderContentPackReleasePath -Path $ContentPackPath)
                 )
                 foreach ($ContentPath in $ContentPaths) {
                     if (! (Test-Path $ContentPath)) {New-Item -Path $ContentPath -ItemType Directory -Force -ErrorAction Ignore | Out-Null}
@@ -663,7 +663,7 @@ function Add-ContentPack {
                 $ContentPaths = @(
                     "$ContentPackPath\ALL"
                     "$ContentPackPath\$OSArchitecture"
-                    "$ContentPackPath\$UpdateOS $ReleaseID $OSArchitecture"
+                    (Resolve-OSDBuilderContentPackReleasePath -Path $ContentPackPath)
                 )
                 foreach ($ContentPath in $ContentPaths) {
                     if (! (Test-Path $ContentPath)) {New-Item -Path $ContentPath -ItemType Directory -Force -ErrorAction Ignore | Out-Null}
@@ -678,16 +678,16 @@ function Add-ContentPack {
             Show-ActionTime; Write-Host -ForegroundColor Green "WinPE: PEADK ContentPack"
             foreach ($ContentPack in $ContentPacks) {
                 $ContentPackPath = Join-Path $SetOSDBuilderPathContentPacks "$ContentPack\PEADK"
-                if (! (Test-Path "$ContentPackPath\$UpdateOS $ReleaseID $OSArchitecture")) {New-Item -Path "$ContentPackPath\$UpdateOS $ReleaseID $OSArchitecture" -ItemType Directory -Force -ErrorAction Ignore | Out-Null}
-                Add-ContentPackPEADK -ContentPackContent "$ContentPackPath\$UpdateOS $ReleaseID $OSArchitecture"
+                if (! (Test-Path (Resolve-OSDBuilderContentPackReleasePath -Path $ContentPackPath))) {New-Item -Path (Resolve-OSDBuilderContentPackReleasePath -Path $ContentPackPath) -ItemType Directory -Force -ErrorAction Ignore | Out-Null}
+                Add-ContentPackPEADK -ContentPackContent (Resolve-OSDBuilderContentPackReleasePath -Path $ContentPackPath)
             }
         }
         if ($PackType -eq 'PEADKLang') {
             Show-ActionTime; Write-Host -ForegroundColor Green "WinPE: PEADKLang ContentPack"
             foreach ($ContentPack in $ContentPacks) {
                 $ContentPackPath = Join-Path $SetOSDBuilderPathContentPacks "$ContentPack\PEADKLang"
-                if (! (Test-Path "$ContentPackPath\$UpdateOS $ReleaseID $OSArchitecture")) {New-Item -Path "$ContentPackPath\$UpdateOS $ReleaseID $OSArchitecture" -ItemType Directory -Force -ErrorAction Ignore | Out-Null}
-                Add-ContentPackPEADK -ContentPackContent "$ContentPackPath\$UpdateOS $ReleaseID $OSArchitecture" -Lang
+                if (! (Test-Path (Resolve-OSDBuilderContentPackReleasePath -Path $ContentPackPath))) {New-Item -Path (Resolve-OSDBuilderContentPackReleasePath -Path $ContentPackPath) -ItemType Directory -Force -ErrorAction Ignore | Out-Null}
+                Add-ContentPackPEADK -ContentPackContent (Resolve-OSDBuilderContentPackReleasePath -Path $ContentPackPath) -Lang
             }
         }
         if ($PackType -eq 'PEDaRT') {
@@ -706,7 +706,7 @@ function Add-ContentPack {
                 $ContentPaths = @(
                     "$ContentPackPath\ALL"
                     "$ContentPackPath\$OSArchitecture"
-                    "$ContentPackPath\$UpdateOS $ReleaseID $OSArchitecture"
+                    (Resolve-OSDBuilderContentPackReleasePath -Path $ContentPackPath)
                 )
                 foreach ($ContentPath in $ContentPaths) {
                     if (! (Test-Path $ContentPath)) {New-Item -Path $ContentPath -ItemType Directory -Force -ErrorAction Ignore | Out-Null}
@@ -722,7 +722,7 @@ function Add-ContentPack {
                 $ContentPaths = @(
                     "$ContentPackPath\ALL"
                     "$ContentPackPath\$OSArchitecture"
-                    "$ContentPackPath\$UpdateOS $ReleaseID $OSArchitecture"
+                    (Resolve-OSDBuilderContentPackReleasePath -Path $ContentPackPath)
                 )
                 foreach ($ContentPath in $ContentPaths) {
                     if (! (Test-Path $ContentPath)) {New-Item -Path $ContentPath -ItemType Directory -Force -ErrorAction Ignore | Out-Null}
@@ -760,7 +760,7 @@ function Add-ContentPack {
                 $ContentPaths = @(
                     "$ContentPackPath\ALL"
                     "$ContentPackPath\$OSArchitecture"
-                    "$ContentPackPath\$UpdateOS $ReleaseID $OSArchitecture"
+                    (Resolve-OSDBuilderContentPackReleasePath -Path $ContentPackPath)
                 )
                 foreach ($ContentPath in $ContentPaths) {
                     if (! (Test-Path $ContentPath)) {New-Item -Path $ContentPath -ItemType Directory -Force -ErrorAction Ignore | Out-Null}
@@ -776,7 +776,7 @@ function Add-ContentPack {
                 $ContentPaths = @(
                     "$ContentPackPath\ALL"
                     "$ContentPackPath\$OSArchitecture"
-                    "$ContentPackPath\$UpdateOS $ReleaseID $OSArchitecture"
+                    (Resolve-OSDBuilderContentPackReleasePath -Path $ContentPackPath)
                 )
                 foreach ($ContentPath in $ContentPaths) {
                     if (! (Test-Path $ContentPath)) {New-Item -Path $ContentPath -ItemType Directory -Force -ErrorAction Ignore | Out-Null}
@@ -1053,8 +1053,11 @@ function Add-ContentPackOSLanguageFeatures {
     }
     #======================================================================================
     #   Import
+    #   Basic must be installed before Fonts, OCR, Handwriting, TextToSpeech and Speech
+    #   Language Features are added with Add-WindowsCapability when a Features on Demand repository is available
     #======================================================================================
-    $OSLanguageFeaturesFiles = Get-ChildItem "$ContentPackContent\*" -Include *.cab -File -Recurse | Sort-Object Length -Descending | Select-Object Name, FullName
+    $OSLanguageFeaturesFiles = Get-ChildItem "$ContentPackContent\*" -Include *.cab -File -Recurse | Sort-Object -Property @{Expression = {Get-OSDBuilderLanguageFeatureOrder -Name $_.Name}}, Name | Select-Object Name, FullName, DirectoryName
+    $CapabilitySource = @(Get-OSDBuilderCapabilitySource -OSMedia ([PSCustomObject]@{OperatingSystem = $UpdateOS; ReleaseId = $ReleaseId; InstallationType = $OSInstallationType}))
 
     foreach ($OSLanguageFeaturesFile in $OSLanguageFeaturesFiles) {
         $CurrentLog = "$Info\logs\$((Get-Date).ToString('yyyy-MM-dd-HHmmss'))-ContentPackOSLanguageFeatures-$($OSLanguageFeaturesFile.Name).log"
@@ -1062,8 +1065,16 @@ function Add-ContentPackOSLanguageFeatures {
         Write-Host "$($OSLanguageFeaturesFile.FullName)" -ForegroundColor DarkGray
 
         if ($MountDirectory) {
+            $global:ReapplyLCU = $true
+            $CapabilityName = Get-OSDBuilderLanguageCapabilityName -Name $OSLanguageFeaturesFile.Name
+            #Add-WindowsCapability requires a repository with metadata, the ContentPack directory or a Languages and Optional Features ISO
+            $Source = @(@($OSLanguageFeaturesFile.DirectoryName) + $CapabilitySource | Where-Object {Test-Path (Join-Path $_ 'metadata')})
+            if ($CapabilityName -and ($Source.Count -gt 0)) {
+                Write-Host "    Add-WindowsCapability $CapabilityName" -ForegroundColor DarkGray
+                if (Add-OSDBuilderWindowsCapability -Path "$MountDirectory" -Name $CapabilityName -Source (@($OSLanguageFeaturesFile.DirectoryName) + $Source) -LogPath $CurrentLog) {Continue}
+                Write-Warning "Add-WindowsCapability failed, adding $($OSLanguageFeaturesFile.Name) with Add-WindowsPackage"
+            }
             Try {
-                $global:ReapplyLCU = $true
                 Add-WindowsPackage -PackagePath "$($OSLanguageFeaturesFile.FullName)" -Path "$MountDirectory" -LogPath $CurrentLog | Out-Null
             }
             Catch {
@@ -2487,22 +2498,67 @@ function Enable-NetFXOS {
     Show-ActionTime
     Write-Host -ForegroundColor Green "OS: Enable NetFX 3.5"
     #=================================================
-    #   Execute
+    #   Installed
+    #   The .NET CU was already applied by Update-DotNetOS
     #=================================================
+    $NetFX3Feature = Get-WindowsOptionalFeature -Path "$MountDirectory" -FeatureName NetFx3 -ErrorAction SilentlyContinue
+    if ($NetFX3Feature.State -eq 'Enabled') {
+        Write-Host -ForegroundColor Gray "INSTALLED         NetFx3"
+        Return
+    }
+    #=================================================
+    #   Source
+    #   Windows 10 media contains sources\sxs
+    #   Windows 11 24H2 and newer media has no sources\sxs, the NetFx3 OnDemand package is on the
+    #   Languages and Optional Features ISO (LanguagesAndOptionalFeatures)
+    #=================================================
+    $NetFX3Source = @()
+    if (Test-Path "$OS\sources\sxs") {$NetFX3Source += "$OS\sources\sxs"}
+    $NetFX3Source += @(Get-OSDBuilderCapabilitySource -OSMedia ([PSCustomObject]@{OperatingSystem = $UpdateOS; ReleaseId = $ReleaseId; InstallationType = $OSInstallationType}))
+    $NetFX3Source = @($NetFX3Source | Where-Object {$_} | Sort-Object -Unique)
+    if ($NetFX3Source.Count -eq 0) {
+        Write-Warning "NetFX 3.5: $OS\sources\sxs does not exist and no Languages and Optional Features repository was found in $GetOSDBuilderPathContentIsoExtract"
+        if ($UpdateOS -eq 'Windows 11') {
+            Write-Warning "Use Save-OSDBuilderDownload -ContentDownload 'Windows 11 24H2-26H2 x64 Languages and Optional Features' (22H2 and 23H2: 'Windows 11 22H2-23H2 x64 Languages and Optional Features') and run New-OSBuild again"
+        }
+        Return
+    }
+    foreach ($Item in $NetFX3Source) {Write-Host "    Source: $Item" -ForegroundColor DarkGray}
+    #=================================================
+    #   Execute
+    #   Microsoft adds NetFX3~~~~ with Add-WindowsCapability after the image cleanup, followed by the .NET CU
+    #   Enable-WindowsOptionalFeature is used when the capability cannot be added
+    #=================================================
+    Write-Host -ForegroundColor Cyan "INSTALLING        " -NoNewline
+    Write-Host -ForegroundColor Gray "NetFX3~~~~"
     $CurrentLog = "$Info\logs\$((Get-Date).ToString('yyyy-MM-dd-HHmmss'))-Enable-NetFXOS.log"
     Write-Verbose "CurrentLog: $CurrentLog"
-    Try {
-        Enable-WindowsOptionalFeature -Path "$MountDirectory" -FeatureName NetFX3 -All -LimitAccess -Source "$OS\sources\sxs" -LogPath "$CurrentLog" | Out-Null
+    $NetFX3Added = Add-OSDBuilderWindowsCapability -Path "$MountDirectory" -Name 'NetFX3~~~~' -Source $NetFX3Source -LogPath $CurrentLog
+    if ($NetFX3Added -ne $true) {
+        Try {
+            Enable-WindowsOptionalFeature -Path "$MountDirectory" -FeatureName NetFX3 -All -LimitAccess -Source $NetFX3Source -LogPath "$CurrentLog" -ErrorAction Stop | Out-Null
+        }
+        Catch {
+            $ErrorMessage = $_.Exception.Message
+            Write-Warning "$ErrorMessage"
+        }
     }
-    Catch {
-        $ErrorMessage = $_.Exception.Message
-        Write-Warning "$ErrorMessage"
+    #=================================================
+    #   Verify
+    #=================================================
+    $NetFX3Feature = Get-WindowsOptionalFeature -Path "$MountDirectory" -FeatureName NetFx3 -ErrorAction SilentlyContinue
+    if ($NetFX3Feature.State -ne 'Enabled') {
+        Write-Warning "NetFX 3.5 could not be enabled, review $CurrentLog"
+        Return
     }
+    Write-Host -ForegroundColor Gray "                  NetFx3 is Enabled"
     #=================================================
     #   Post Action
+    #   The .NET CU services NetFx3, it is applied again after NetFx3 is enabled
+    #   Windows 11: The LCU is not applied again, Microsoft adds .NET and the .NET CU after the LCU
     #=================================================
     Update-DotNetOS -Force
-    Update-CumulativeOS -Force
+    if ($UpdateOS -ne 'Windows 11') {Update-CumulativeOS -Force}
     #=================================================
 }
 function Enable-WindowsOptionalFeatureOS {

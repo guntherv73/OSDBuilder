@@ -144,7 +144,7 @@ function Update-InboxAppsOS {
     if ($OSMajorVersion -ne 10) {Return}
     if ($UpdateOS -ne 'Windows 11') {Return}
     if ($OSInstallationType -ne 'Client') {Return}
-    if (-not ($LanguagePacks -or $LanguageInterfacePacks -or $LanguageFeatures -or $LocalExperiencePacks)) {Return}
+    if (-not ($LanguagePacks -or $LanguageInterfacePacks -or $LanguageFeatures -or $LocalExperiencePacks -or @(Get-OSDBuilderContentPackLanguages).Count)) {Return}
     #=================================================
     #   Header
     #=================================================
