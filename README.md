@@ -91,8 +91,7 @@ Content\IsoExtract\Windows 11 24H2 Language\LanguagesAndOptionalFeatures\Microso
 * Directories containing `Windows 10` are not offered for Windows 11 media (and vice versa)
 * Language Features are installed in the required order: Basic, Fonts, OCR, Handwriting, TextToSpeech, Speech
 * The Windows 11 Language Interface Packs `Microsoft-Windows-Lip-Language-Pack_x64_<lang>.cab`
-  (ca-ES, eu-ES, gl-ES, id-ID, vi-VN) are offered as Language Interface Packs and added after the Language Packs.
-  Add the base Language Pack too (es-ES for ca-ES, eu-ES and gl-ES, en-US for id-ID and vi-VN)
+  (ca-ES, eu-ES, gl-ES, id-ID, vi-VN) are offered as Language Interface Packs and added after the Language Packs
 
 ### Features on Demand (Add-WindowsCapability)
 
