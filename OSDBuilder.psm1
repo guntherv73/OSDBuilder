@@ -1,4 +1,34 @@
 #=================================================
+#   Platform
+#   OSDBuilder services Windows images with DISM, robocopy, oscdimg and offline registry hives
+#   These are only available on Windows, macOS and Linux can manage a Windows host with PowerShell Remoting
+#=================================================
+if (($PSVersionTable.PSEdition -eq 'Core') -and (-not $IsWindows)) {
+    throw "OSDBuilder requires Windows. From macOS or Linux, run OSDBuilder on a Windows host with PowerShell Remoting (Enter-PSSession -HostName <WindowsHost>)"
+}
+#=================================================
+#   PowerShell 7
+#   DISM and BitsTransfer are Windows PowerShell modules
+#   PowerShell 7 loads them natively or with Windows PowerShell Compatibility
+#=================================================
+if ($PSVersionTable.PSEdition -eq 'Core') {
+    foreach ($WindowsPowerShellModule in @('Dism','BitsTransfer')) {
+        if (-not (Get-Module -Name $WindowsPowerShellModule)) {
+            try {
+                Import-Module -Name $WindowsPowerShellModule -ErrorAction Stop -WarningAction SilentlyContinue
+            }
+            catch {
+                try {
+                    Import-Module -Name $WindowsPowerShellModule -UseWindowsPowerShell -ErrorAction Stop -WarningAction SilentlyContinue
+                }
+                catch {
+                    Write-Warning "OSDBuilder: Unable to import the $WindowsPowerShellModule module in PowerShell $($PSVersionTable.PSVersion)"
+                }
+            }
+        }
+    }
+}
+#=================================================
 #   Import Functions
 #   https://github.com/RamblingCookieMonster/PSStackExchange/blob/master/PSStackExchange/PSStackExchange.psm1
 #=================================================

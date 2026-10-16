@@ -12,11 +12,14 @@ function Save-OSDBuilderDownload {
     [CmdletBinding(DefaultParameterSetName='OSDUpdate')]
     param (
 
-        #Download OneDrive Sync Client
+        #Download OneDrive Sync Client or a Windows 11 Languages and Optional Features ISO
+        #The Languages and Optional Features ISO is extracted to Content\IsoExtract for New-OSBuildTask
         [Parameter(ParameterSetName='Content')]
         [ValidateSet(
             'OneDriveSetup Production',
-            'OneDriveSetup Enterprise')]
+            'OneDriveSetup Enterprise',
+            'Windows 11 22H2-23H2 x64 Languages and Optional Features',
+            'Windows 11 24H2-26H2 x64 Languages and Optional Features')]
         [string]$ContentDownload,
         
         #Download the selected Microsoft Updates
@@ -45,7 +48,7 @@ function Save-OSDBuilderDownload {
 
         #Feature Update Build
         [Parameter(ParameterSetName = 'FeatureUpdates')]
-        [ValidateSet ('24H2','23H2','22H2','21H2','21H1','20H2',2004,1909,1903,1809)]
+        [ValidateSet ('26H2','25H2','24H2','23H2','22H2','21H2','21H1','20H2',2004,1909,1903,1809)]
         [string]$FeatureBuild,
 
         #Feature Update Edition
@@ -82,7 +85,7 @@ function Save-OSDBuilderDownload {
 
         #Filter Microsoft Updates for a specific ReleaseId
         [Parameter(ParameterSetName='OSDUpdate')]
-        [ValidateSet ('24H2','23H2','22H2','21H2','21H1','20H2',2004,1909,1903,1809,1803,1709,1703,1607,1511,1507,7601,7603)]
+        [ValidateSet ('26H2','25H2','24H2','23H2','22H2','21H2','21H1','20H2',2004,1909,1903,1809,1803,1709,1703,1607,1511,1507,7601,7603)]
         [Alias('ReleaseId')]
         [string]$UpdateBuild,
 
@@ -139,7 +142,7 @@ function Save-OSDBuilderDownload {
             $UseWebClient = $true
         }
         if ($UseWebClient -eq $true) {
-            [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls1
+            [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
             $WebClientObj = New-Object System.Net.WebClient
         }
         #=================================================
@@ -252,7 +255,13 @@ function Save-OSDBuilderDownload {
             Write-Warning "Use Import-OSMedia to import this Feature Update to OSMedia"
         }
 
-        if ($PSCmdlet.ParameterSetName -eq 'Content') {
+        if (($PSCmdlet.ParameterSetName -eq 'Content') -and ($ContentDownload -like '*Languages and Optional Features')) {
+            #=================================================
+            #   Windows 11 Languages and Optional Features ISO
+            #=================================================
+            Save-OSDBuilderLanguagesAndOptionalFeatures -Name $ContentDownload
+        }
+        elseif ($PSCmdlet.ParameterSetName -eq 'Content') {
             #=================================================
             #   Database
             #=================================================
@@ -378,7 +387,7 @@ function Save-OSDBuilderDownload {
             #=================================================
             if ($Download.IsPresent) {
 				if ($WebClient.IsPresent) {
-                    [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls1
+                    [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
                     $WebClientObj = New-Object System.Net.WebClient
                 }
                 foreach ($Update in $OSDUpdates) {
