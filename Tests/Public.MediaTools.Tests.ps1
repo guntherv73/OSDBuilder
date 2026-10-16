@@ -223,7 +223,7 @@ Describe 'New-OSDBuilderISO' {
     }
 
     It 'creates the ISO of the next media when a media has no OS directory' -Skip {
-        # KnownBug: New-OSDBuilderISO.ps1:284 Return in the foreach of the Process block skips all remaining selected media
+        # KnownBug: New-OSDBuilderISO.ps1:181 Return in the foreach of the Process block skips all remaining selected media
         $NoOS = New-TestMedia -Name 'NoOS' -NoOS
         $Valid = New-TestMedia -Name 'Valid'
         $OSMedia = @($NoOS, $Valid)
