@@ -198,7 +198,8 @@ Describe 'Import-RegistryXmlOS' {
         Mock New-Item {$script:RegistryKeys["$Path"] = $true} -ParameterFilter {"$Path" -like 'Registry::*'}
         Mock New-ItemProperty {}
         Mock Remove-ItemProperty {}
-        Mock Remove-Item {} -ParameterFilter {"$LiteralPath$Path" -like 'Registry::*'}
+        #$Path can come from the scope of the caller (Invoke-OSDBuilderTests.ps1 -Path) when Remove-Item is called with -LiteralPath
+        Mock Remove-Item {} -ParameterFilter {("$LiteralPath" -like 'Registry::*') -or ("$Path" -like 'Registry::*')}
     }
 
     It 'maps the hives of the XML to the loaded offline hives' {
@@ -268,7 +269,7 @@ Describe 'Import-RegistryXmlOS' {
     It 'removes the key of an entry with the action D without a name' {
         $RegistryTemplatesXml = @(Get-Item -Path (Join-Path $IMNRSFixtures 'RegistryDeleteKey.xml'))
         Import-RegistryXmlOS 6>$null
-        Should -Invoke Remove-Item -Times 1 -Exactly -ParameterFilter {"$LiteralPath$Path" -eq 'Registry::HKEY_LOCAL_MACHINE\OfflineSoftware\OSDBuilder\Obsolete'}
+        Should -Invoke Remove-Item -Times 1 -Exactly -ParameterFilter {$LiteralPath -eq 'Registry::HKEY_LOCAL_MACHINE\OfflineSoftware\OSDBuilder\Obsolete'}
     }
 
     It 'converts the hexadecimal REG_DWORD value to a number' {

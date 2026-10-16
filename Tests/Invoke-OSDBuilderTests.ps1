@@ -85,6 +85,8 @@ if ($InstallDependencies) {
 }
 
 $Failed = 0
+#PSScriptAnalyzer can load another installed Pester version (for example 6.x) while it analyzes the tests, import Pester first
+Import-RequiredModule -Name Pester -Version '5.7.1'
 #=================================================
 #   PSScriptAnalyzer
 #   Private scripts written with tests, the example and the tests
@@ -111,7 +113,6 @@ if ($Lint -or $CI) {
 #=================================================
 #   Pester
 #=================================================
-Import-RequiredModule -Name Pester -Version '5.7.1'
 
 $Configuration = New-PesterConfiguration
 $Configuration.Run.Path = $Path

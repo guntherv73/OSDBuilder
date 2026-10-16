@@ -53,6 +53,8 @@ PowerShell 7 on Linux and Windows and with Windows PowerShell 5.1.
 | WinRE and Windows Setup languages | `Tests\WinRELanguages.Tests.ps1` |
 | Local Experience Packs | `Tests\LocalExperiencePacks.Tests.ps1`, `Tests\LocalExperiencePackDownload.Tests.ps1` |
 | install.wim servicing (`AllFunctions.ps1`) | `Tests\OSServicing.Tests.ps1` |
+| Functions of `Private\AllFunctions.ps1` | `Tests\AllFunctions.<Group>.Tests.ps1` (Add, AddContentPack, CDE, Get, GetTaskWinPE, IMNR, Save, Show, UpdateOS, UpdatePE) |
+| Public functions | `Tests\Public.<Function>.Tests.ps1`, the media tools in `Tests\Public.MediaTools.Tests.ps1` |
 | `Examples\New-Win11MultiLanguageBuild.ps1` | `Tests\Examples.Tests.ps1` |
 
 * Dot-source `Tests\TestHelpers.ps1` in `BeforeAll`, then the Private scripts under test:
