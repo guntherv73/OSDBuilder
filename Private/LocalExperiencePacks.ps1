@@ -20,7 +20,11 @@ function Test-OSDBuilderLocalExperiencePackBuild {
     <#
     .SYNOPSIS
     Returns $true when a Local Experience Pack can be added to an image of the Build
-    The Windows.Desktop MinVersion of the LXP must be in the servicing branch of the image and not newer than the image
+
+    .DESCRIPTION
+    The version of an LXP starts with the build of its servicing branch, for example
+    19041.29.88.0 (Windows 10 2004-22H2), 22000.8.13.0 (Windows 11 21H2) or 26100.x (Windows 11 24H2-26H2)
+    The Windows.Desktop MinVersion is lower than the branch (10.0.18823.0 for 19041), it must not be newer than the image
     #>
     [CmdletBinding()]
     param (
@@ -31,14 +35,11 @@ function Test-OSDBuilderLocalExperiencePackBuild {
         [int]$Build
     )
     $MinVersion = $null
-    if (-not [version]::TryParse([string]$Manifest.MinOSVersion, [ref]$MinVersion)) {
-        #No TargetDeviceFamily, the version of the LXP starts with the build of its servicing branch
-        $PackageVersion = $null
-        if (-not [version]::TryParse([string]$Manifest.Version, [ref]$PackageVersion)) {Return $true}
-        Return ((Get-OSDBuilderServicingBuild -Build $PackageVersion.Major) -eq (Get-OSDBuilderServicingBuild -Build $Build))
-    }
-    if ($MinVersion.Build -gt $Build) {Return $false}
-    Return ((Get-OSDBuilderServicingBuild -Build $MinVersion.Build) -eq (Get-OSDBuilderServicingBuild -Build $Build))
+    if ([version]::TryParse([string]$Manifest.MinOSVersion, [ref]$MinVersion) -and ($MinVersion.Build -gt $Build)) {Return $false}
+
+    $PackageVersion = $null
+    if (-not [version]::TryParse([string]$Manifest.Version, [ref]$PackageVersion)) {Return $true}
+    Return ((Get-OSDBuilderServicingBuild -Build $PackageVersion.Major) -eq (Get-OSDBuilderServicingBuild -Build $Build))
 }
 function Add-OSDBuilderLocalExperiencePack {
     <#

@@ -135,7 +135,15 @@ Windows 11 publishes 43 languages as `.cab` Language Packs (38) and Language Int
 The other languages are only available as Local Experience Packs (`.appx`)
 ([Languages overview](https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/languages-overview)), they are not on the ISO.
 
-* Copy the LXPs to a directory in `Content\IsoExtract` that contains the ReleaseId, with the `License.xml` next to each `.appx`:
+* **Windows 10 2004 - 22H2**: Microsoft publishes Local Experience Pack ISOs
+  ([source](https://learn.microsoft.com/en-us/azure/virtual-desktop/language-packs)), the latest is 2206C (2022-06, LXP version `19041.x`).
+  It is downloaded and extracted to `Content\IsoExtract\Windows 10 2004-22H2 x64 Local Experience Packs` with:
+  ```powershell
+  Save-OSDBuilderDownload -ContentDownload 'Windows 10 2004-22H2 x64 Local Experience Packs'
+  ```
+* **Windows 11**: Microsoft does not publish a Local Experience Pack ISO, the LXPs are Microsoft Store apps.
+  An LXP of another servicing branch (for example the Windows 10 `19041.x` LXPs) is rejected for Windows 11 images
+* Copy LXPs from another source to a directory in `Content\IsoExtract` that contains the ReleaseId, with the `License.xml` next to each `.appx`:
   ```
   Content\IsoExtract\Windows 11 24H2 LXP\LocalExperiencePack\nn-no\LanguageExperiencePack.nn-no.Neutral.appx
   Content\IsoExtract\Windows 11 24H2 LXP\LocalExperiencePack\nn-no\License.xml
@@ -143,7 +151,8 @@ The other languages are only available as Local Experience Packs (`.appx`)
 * `New-OSBuildTask -ContentLanguagePackages` offers them as Local Experience Packs, the example script uses an LXP for every language without a `.cab`
 * `New-OSBuild` adds each LXP with `Add-AppxProvisionedPackage` and checks:
   * the AppxManifest identity is a `Microsoft.LanguageExperiencePack*`
-  * the `Windows.Desktop` MinVersion is in the servicing branch of the image (an LXP for 26100 is used for 24H2, 25H2 and 26H2, not for 23H2)
+  * the LXP version starts with the servicing branch of the image (`19041.x` for Windows 10 2004 - 22H2, `22621.x` for Windows 11 22H2 - 23H2,
+    `26100.x` for Windows 11 24H2 - 26H2) and the `Windows.Desktop` MinVersion is not newer than the image
   * the License.xml exists
   * the same or a newer version is not already provisioned (no LCU reapply then)
   * the LXP is provisioned afterwards, the build shows a warning for every LXP that was not added
