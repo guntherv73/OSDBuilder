@@ -271,7 +271,7 @@ function Import-OSMedia {
         #=================================================
         #   Validate ImportOSMediaOperatingSystems
         #=================================================
-        if ($null -eq $ImportOSMediaOperatingSystems) {
+        if (-not $ImportOSMediaOperatingSystems) {
             Write-Host '========================================================================================' -ForegroundColor DarkGray
             Show-ActionTime; Write-Warning "Windows Image could not be found on any CD or DVD Drives.  Throw BREAK"
             Break

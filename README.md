@@ -1,7 +1,21 @@
 # OSDBuilder
 
+[![Tests](https://github.com/msee-dev/OSDBuilder/actions/workflows/tests.yml/badge.svg)](https://github.com/msee-dev/OSDBuilder/actions/workflows/tests.yml)
+
 PowerShell Module for offline servicing of Windows images.
 https://osdbuilder.osdeploy.com
+
+## Development and tests
+
+OSDBuilder is developed test first (TDD), see [CONTRIBUTING.md](CONTRIBUTING.md).
+
+```powershell
+.\Tests\Invoke-OSDBuilderTests.ps1          # Pester tests
+.\Tests\Invoke-OSDBuilderTests.ps1 -CI      # PSScriptAnalyzer, tests and code coverage (>= 90 %) like GitHub Actions
+```
+
+The tests mock DISM, Appx, winget and the Microsoft web services and run with Windows PowerShell 5.1 and PowerShell 7
+on Windows, macOS and Linux without administrator rights.
 
 ## Admin host requirements
 

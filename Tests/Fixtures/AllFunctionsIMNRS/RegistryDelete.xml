@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RegistrySettings clsid="{A3CCFC41-DFDB-43a5-8D26-0FE8B954DA51}">
+  <Registry clsid="{9CD4B2F4-923D-47f5-A062-E897DD1DAD50}" name="RemoveValue" status="RemoveValue" image="8" changed="2026-10-14 10:00:00" uid="{1B0F8A3E-0000-4000-8000-000000000011}">
+    <Properties action="D" displayDecimal="0" default="0" hive="HKEY_LOCAL_MACHINE" key="SOFTWARE\Microsoft\Windows\CurrentVersion\Run" name="SecurityHealth" type="REG_SZ" value=""/>
+  </Registry>
+  <Registry clsid="{9CD4B2F4-923D-47f5-A062-E897DD1DAD50}" name="RemoveDefault" status="RemoveDefault" image="8" changed="2026-10-14 10:00:00" uid="{1B0F8A3E-0000-4000-8000-000000000012}">
+    <Properties action="D" displayDecimal="0" default="1" hive="HKEY_LOCAL_MACHINE" key="SOFTWARE\OSDBuilder" name="" type="REG_SZ" value=""/>
+  </Registry>
+</RegistrySettings>

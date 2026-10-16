@@ -76,6 +76,8 @@ function Get-OSDBuilder {
     if (!($HideDetails.IsPresent)) {
         $StatusCode = try {(Invoke-WebRequest -Uri $global:GetOSDBuilder.PublicJsonURL -UseBasicParsing -DisableKeepAlive).StatusCode}
         catch [Net.WebException]{[int]$_.Exception.Response.StatusCode}
+        #PowerShell 7 throws HttpRequestException when offline
+        catch {$null}
         if ($StatusCode -ne "200") {
             #Check Failed
         } else {

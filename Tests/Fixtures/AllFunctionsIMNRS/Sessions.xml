@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Sessions version="1">
+  <Session version="1.0" id="31234567_1234567890" Client="DISM Package Manager Provider" Options="1" currentPhase="1" lastSuccessfulState="Installed" pendingFollower="False" RevertID="" Complete="2026-09-10T08:00:00Z" Status="0x0">
+    <Tasks>
+      <Phase seq="1">
+        <package id="Package_for_RollupFix~31bf3856ad364e35~amd64~~26100.6584.1.10" name="KB5065426" targetState="Installed" options="3"/>
+      </Phase>
+    </Tasks>
+    <Actions/>
+  </Session>
+  <Session version="1.0" id="31234568_2234567890" Client="DISM Package Manager Provider" Options="1" currentPhase="1" lastSuccessfulState="Installed" pendingFollower="False" RevertID="" Complete="2026-10-14T09:30:00Z" Status="0x0">
+    <Tasks>
+      <Phase seq="1">
+        <package id="Package_for_RollupFix~31bf3856ad364e35~amd64~~26100.6899.1.12" name="KB5127648" targetState="Installed" options="3"/>
+      </Phase>
+    </Tasks>
+    <Actions/>
+  </Session>
+  <Session version="1.0" id="31234569_3234567890" Client="TrustedInstaller FinalizeDownlevel" Options="1" currentPhase="1" lastSuccessfulState="Installed" pendingFollower="False" RevertID="" Complete="2026-10-14T09:45:00Z" Status="0x0">
+    <Tasks>
+      <Phase seq="1">
+        <package id="Microsoft-Windows-Foundation-Package~31bf3856ad364e35~amd64~~10.0.26100.1" name="Foundation" targetState="Installed" options="3"/>
+      </Phase>
+    </Tasks>
+    <Actions/>
+  </Session>
+</Sessions>

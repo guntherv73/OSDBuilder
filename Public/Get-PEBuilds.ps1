@@ -141,7 +141,7 @@ function Get-PEBuilds {
             #   OSMFamily
             #=================================================
             $OSMFamilyV1 = $(Get-Date -Date $($XmlWindowsImage.CreatedTime)).ToString("yyyyMMddHHmmss") + $OSMEditionID
-            if ($null -eq $RegValueCurrentBuild) {
+            if ([string]::IsNullOrEmpty($RegValueCurrentBuild)) {
                 $OSMFamily = $OSMInstallationType + " " + $OSMEditionId + " " + $OSMArch + " " + [string]$OSMBuild + " " + $OSMLanguages
             } else {
                 $OSMFamily = $OSMInstallationType + " " + $OSMEditionId + " " + $OSMArch + " " + [string]$RegValueCurrentBuild + " " + $OSMLanguages

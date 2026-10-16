@@ -27,7 +27,7 @@ function Add-ContentADKWinPE {
         }
     }
 
-    $WinPEADKPE = $WinPEADKPE | Where-Object {$_.Name -notlike "*WinPE-NetFx*"}
+    $WinPEADKPE = $WinPEADKPE | Where-Object {$_ -notlike "*WinPE-NetFx*"}
     foreach ($PackagePath in $WinPEADKPE) {
         if ($PackagePath -like "*WinPE-PowerShell*") {
             $CurrentLog = "$PEInfo\logs\$((Get-Date).ToString('yyyy-MM-dd-HHmmss'))-Add-ContentADKWinPE.log"
@@ -42,7 +42,7 @@ function Add-ContentADKWinPE {
         }
     }
 
-    $WinPEADKPE = $WinPEADKPE | Where-Object {$_.Name -notlike "*WinPE-PowerShell*"}
+    $WinPEADKPE = $WinPEADKPE | Where-Object {$_ -notlike "*WinPE-PowerShell*"}
     foreach ($PackagePath in $WinPEADKPE) {
         Write-Host -ForegroundColor Gray "  $SetOSDBuilderPathContent\$PackagePath"
         $CurrentLog = "$PEInfo\logs\$((Get-Date).ToString('yyyy-MM-dd-HHmmss'))-Add-ContentADKWinPE.log"
@@ -87,7 +87,7 @@ function Add-ContentADKWinRE {
         }
     }
 
-    $WinPEADKRE = $WinPEADKRE | Where-Object {$_.Name -notlike "*WinPE-NetFx*"}
+    $WinPEADKRE = $WinPEADKRE | Where-Object {$_ -notlike "*WinPE-NetFx*"}
     foreach ($PackagePath in $WinPEADKRE) {
         $CurrentLog = "$PEInfo\logs\$((Get-Date).ToString('yyyy-MM-dd-HHmmss'))-Add-ContentADKWinRE.log"
         Write-Verbose "CurrentLog: $CurrentLog"
@@ -101,7 +101,7 @@ function Add-ContentADKWinRE {
             }
         }
     }
-    $WinPEADKRE = $WinPEADKRE | Where-Object {$_.Name -notlike "*WinPE-PowerShell*"}
+    $WinPEADKRE = $WinPEADKRE | Where-Object {$_ -notlike "*WinPE-PowerShell*"}
     foreach ($PackagePath in $WinPEADKRE) {
         $CurrentLog = "$PEInfo\logs\$((Get-Date).ToString('yyyy-MM-dd-HHmmss'))-Add-ContentADKWinRE.log"
         Write-Verbose "CurrentLog: $CurrentLog"
@@ -149,7 +149,7 @@ function Add-ContentADKWinSE {
             }
         }
     }
-    $WinPEADKSE = $WinPEADKSE | Where-Object {$_.Name -notlike "*WinPE-NetFx*"}
+    $WinPEADKSE = $WinPEADKSE | Where-Object {$_ -notlike "*WinPE-NetFx*"}
     foreach ($PackagePath in $WinPEADKSE) {
         $CurrentLog = "$PEInfo\logs\$((Get-Date).ToString('yyyy-MM-dd-HHmmss'))-Add-ContentADKWinSE.log"
         Write-Verbose "CurrentLog: $CurrentLog"
@@ -163,14 +163,14 @@ function Add-ContentADKWinSE {
             }
         }
     }
-    $WinPEADKSE = $WinPEADKSE | Where-Object {$_.Name -notlike "*WinPE-PowerShell*"}
+    $WinPEADKSE = $WinPEADKSE | Where-Object {$_ -notlike "*WinPE-PowerShell*"}
     foreach ($PackagePath in $WinPEADKSE) {
         $CurrentLog = "$PEInfo\logs\$((Get-Date).ToString('yyyy-MM-dd-HHmmss'))-Add-ContentADKWinSE.log"
         Write-Verbose "CurrentLog: $CurrentLog"
 
         Write-Host -ForegroundColor Gray "  $SetOSDBuilderPathContent\$PackagePath"
         if ($OSMajorVersion -eq 6) {
-            dism /Image:"$MountWinSE" /Add-Package /PackagePath:"$SetOSDBuilderPathContent\$PackagePath" /LogPath:"$CurrentLog.log"
+            dism /Image:"$MountWinSE" /Add-Package /PackagePath:"$SetOSDBuilderPathContent\$PackagePath" /LogPath:"$CurrentLog"
         } else {
             Try {Add-WindowsPackage -PackagePath "$SetOSDBuilderPathContent\$PackagePath" -Path "$MountWinSE" -LogPath "$CurrentLog" | Out-Null}
             Catch {
@@ -1056,7 +1056,7 @@ function Add-ContentPackOSLanguageFeatures {
     #   Basic must be installed before Fonts, OCR, Handwriting, TextToSpeech and Speech
     #   Language Features are added with Add-WindowsCapability when a Features on Demand repository is available
     #======================================================================================
-    $OSLanguageFeaturesFiles = Get-ChildItem "$ContentPackContent\*" -Include *.cab -File -Recurse | Sort-Object -Property @{Expression = {Get-OSDBuilderLanguageFeatureOrder -Name $_.Name}}, Name | Select-Object Name, FullName, DirectoryName
+    $OSLanguageFeaturesFiles = Get-ChildItem -Path "$ContentPackContent" -Include *.cab -File -Recurse | Sort-Object -Property @{Expression = {Get-OSDBuilderLanguageFeatureOrder -Name $_.Name}}, Name | Select-Object Name, FullName, DirectoryName
     $CapabilitySource = @(Get-OSDBuilderCapabilitySource -OSMedia ([PSCustomObject]@{OperatingSystem = $UpdateOS; ReleaseId = $ReleaseId; InstallationType = $OSInstallationType}))
 
     foreach ($OSLanguageFeaturesFile in $OSLanguageFeaturesFiles) {
@@ -1173,7 +1173,7 @@ function Add-ContentPackOSPackages {
     #======================================================================================
     #   Import
     #======================================================================================
-    $OSPackagesFiles = Get-ChildItem "$ContentPackContent\*" -Include *.cab -File -Recurse | Sort-Object Name | Select-Object Name, FullName
+    $OSPackagesFiles = Get-ChildItem -Path "$ContentPackContent" -Include *.cab -File -Recurse | Sort-Object Name | Select-Object Name, FullName
 
     foreach ($item in $OSPackagesFiles) {
         $CurrentLog = "$Info\logs\$((Get-Date).ToString('yyyy-MM-dd-HHmmss'))-ContentPackOSPackages-$($item.Name).log"
@@ -1438,7 +1438,7 @@ function Add-ContentPackPEADK {
 
         if ($SourceWim -eq 'WinRE') {
             $ADKFiles = $ADKFiles | Where-Object {$_.Name -notmatch 'setup'}
-            $ADKFilesSub = $ADKFiles | Where-Object {$_.Name -notmatch 'setup'}
+            $ADKFilesSub = $ADKFilesSub | Where-Object {$_.Name -notmatch 'setup'}
         }
 
         foreach ($ADKFile in $ADKFiles | Where-Object {$_.Name -eq 'lp.cab'}) {
@@ -1647,15 +1647,15 @@ function Add-ContentPackPEDaRT {
         $MicrosoftDartConfig = $(Join-Path $(Split-Path "$MicrosoftDartCab") 'DartConfig.dat')
         if (Test-Path $MicrosoftDartConfig) {
             if ($MountWinPE) {Copy-Item -Path $MicrosoftDartConfig -Destination "$MountWinPE\Windows\System32\DartConfig.dat" -Force}
-            if ($MountWinRE) {Copy-Item -Path $MicrosoftDartConfig -Destination "$MountWinSE\Windows\System32\DartConfig.dat" -Force}
-            if ($MountWinSE) {Copy-Item -Path $MicrosoftDartConfig -Destination "$MountWinRE\Windows\System32\DartConfig.dat" -Force}
+            if ($MountWinRE) {Copy-Item -Path $MicrosoftDartConfig -Destination "$MountWinRE\Windows\System32\DartConfig.dat" -Force}
+            if ($MountWinSE) {Copy-Item -Path $MicrosoftDartConfig -Destination "$MountWinSE\Windows\System32\DartConfig.dat" -Force}
         }
 
         $MicrosoftDartConfig = $(Join-Path $(Split-Path "$MicrosoftDartCab") 'DartConfig8.dat')
         if (Test-Path $MicrosoftDartConfig) {
             if ($MountWinPE) {Copy-Item -Path $MicrosoftDartConfig -Destination "$MountWinPE\Windows\System32\DartConfig.dat" -Force}
-            if ($MountWinRE) {Copy-Item -Path $MicrosoftDartConfig -Destination "$MountWinSE\Windows\System32\DartConfig.dat" -Force}
-            if ($MountWinSE) {Copy-Item -Path $MicrosoftDartConfig -Destination "$MountWinRE\Windows\System32\DartConfig.dat" -Force}
+            if ($MountWinRE) {Copy-Item -Path $MicrosoftDartConfig -Destination "$MountWinRE\Windows\System32\DartConfig.dat" -Force}
+            if ($MountWinSE) {Copy-Item -Path $MicrosoftDartConfig -Destination "$MountWinSE\Windows\System32\DartConfig.dat" -Force}
         }
 
         if ($ScriptName -eq 'New-OSBuild') {
@@ -2818,15 +2818,15 @@ function Expand-DaRTPE {
         $MicrosoftDartConfig = $(Join-Path $(Split-Path "$MicrosoftDartCab") 'DartConfig.dat')
         if (Test-Path $MicrosoftDartConfig) {
             if ($MountWinPE) {Copy-Item -Path $MicrosoftDartConfig -Destination "$MountWinPE\Windows\System32\DartConfig.dat" -Force}
-            if ($MountWinRE) {Copy-Item -Path $MicrosoftDartConfig -Destination "$MountWinSE\Windows\System32\DartConfig.dat" -Force}
-            if ($MountWinSE) {Copy-Item -Path $MicrosoftDartConfig -Destination "$MountWinRE\Windows\System32\DartConfig.dat" -Force}
+            if ($MountWinRE) {Copy-Item -Path $MicrosoftDartConfig -Destination "$MountWinRE\Windows\System32\DartConfig.dat" -Force}
+            if ($MountWinSE) {Copy-Item -Path $MicrosoftDartConfig -Destination "$MountWinSE\Windows\System32\DartConfig.dat" -Force}
         }
 
         $MicrosoftDartConfig = $(Join-Path $(Split-Path "$MicrosoftDartCab") 'DartConfig8.dat')
         if (Test-Path $MicrosoftDartConfig) {
             if ($MountWinPE) {Copy-Item -Path $MicrosoftDartConfig -Destination "$MountWinPE\Windows\System32\DartConfig.dat" -Force}
-            if ($MountWinRE) {Copy-Item -Path $MicrosoftDartConfig -Destination "$MountWinSE\Windows\System32\DartConfig.dat" -Force}
-            if ($MountWinSE) {Copy-Item -Path $MicrosoftDartConfig -Destination "$MountWinRE\Windows\System32\DartConfig.dat" -Force}
+            if ($MountWinRE) {Copy-Item -Path $MicrosoftDartConfig -Destination "$MountWinRE\Windows\System32\DartConfig.dat" -Force}
+            if ($MountWinSE) {Copy-Item -Path $MicrosoftDartConfig -Destination "$MountWinSE\Windows\System32\DartConfig.dat" -Force}
         }
 
         if ($ScriptName -eq 'New-OSBuild') {
@@ -2945,7 +2945,7 @@ function Get-FeatureUpdateDownloads {
     $FeatureUpdateDownloads = Get-OSDCloudOperatingSystems -OSArch x64
     $FeatureUpdateDownloads = $FeatureUpdateDownloads | Select-Object -Property OSDStatus, `
     @{Name = 'Title'; Expression = { $_.Name } }, `
-    Language, Activaton, Build, `
+    Language, Activation, Build, `
     @{Name = 'UpdateOS'; Expression = { $_.Version } }, `
     @{Name = 'UpdateBuild'; Expression = { $_.ReleaseID } }, `
     @{Name = 'UpdateArch'; Expression = { $_.Architecture } }, `
@@ -3113,7 +3113,8 @@ function Get-OSDFromJson
             Write-Verbose "Get-Value: value is PSCustomObject"
             $result = @{}
             $value.psobject.properties | ForEach-Object { 
-                $result[$_.Name] = Get-Value -value $_.Value 
+                if ($_.Value -is [System.Object[]]) {$result[$_.Name] = @(Get-Value -value $_.Value)}
+                else {$result[$_.Name] = Get-Value -value $_.Value}
             }
         }
         elseif ($value -is [System.Object[]])
@@ -3127,7 +3128,7 @@ function Get-OSDFromJson
         }
         else
         {
-            Write-Verbose "Get-Value: value is type: $($value.GetType())"
+            if ($null -ne $value) {Write-Verbose "Get-Value: value is type: $($value.GetType())"}
             $result = $value
         }
         return $result
@@ -3887,7 +3888,7 @@ function Get-TaskContentLanguageFeature {
         }
     }
 
-    [array]$LanguageFeature = [array]$LanguageFodIsoExtractDir + [array]$LanguageFodUpdatesDir
+    [array]$LanguageFeature = @([array]$LanguageFodIsoExtractDir + [array]$LanguageFodUpdatesDir) | Where-Object {$_}
     if ($null -eq $LanguageFeature) {Write-Warning "Install.wim Language Features On Demand: Not Found"}
     else {
         if ($ExistingTask.LanguageFeature) {
@@ -3920,7 +3921,7 @@ function Get-TaskContentLanguageInterfacePack {
         }
     }
     
-    [array]$LanguageInterfacePack = [array]$LanguageLipIsoExtractDir + [array]$LanguageLipUpdatesDir
+    [array]$LanguageInterfacePack = @([array]$LanguageLipIsoExtractDir + [array]$LanguageLipUpdatesDir) | Where-Object {$_}
     if ($null -eq $LanguageInterfacePack) {Write-Warning "Install.wim Language Interface Packs: Not Found"}
     else {
         if ($ExistingTask.LanguageInterfacePack) {
@@ -4211,7 +4212,7 @@ function Get-TaskWinPEADK {
 
     $WinPEADKIE = @()
     $WinPEADKIE = $ContentIsoExtractWinPE | Select-Object -Property Name, FullName
-    [array]$WinPEADK = [array]$WinPEADK + [array]$WinPEADKIE
+    [array]$WinPEADK = @([array]$WinPEADK + [array]$WinPEADKIE) | Where-Object {$_}
 
     if ($null -eq $WinPEADK) {Write-Warning "WinPE.wim ADK Packages: Add Content to $GetOSDBuilderPathContentADK"}
     else {
@@ -4242,7 +4243,7 @@ function Get-TaskWinPEADKPE {
 
     $WinPEADKPEIE = @()
     $WinPEADKPEIE = $ContentIsoExtractWinPE | Select-Object -Property Name, FullName
-    [array]$WinPEADKPE = [array]$WinPEADKPE + [array]$WinPEADKPEIE
+    [array]$WinPEADKPE = @([array]$WinPEADKPE + [array]$WinPEADKPEIE) | Where-Object {$_}
 
     if ($null -eq $WinPEADKPE) {Write-Warning "WinPE.wim ADK Packages: Add Content to $GetOSDBuilderPathContentADK"}
     else {
@@ -4279,7 +4280,7 @@ function Get-TaskWinPEADKRE {
 
     $WinPEADKREIE = @()
     $WinPEADKREIE = $ContentIsoExtractWinPE | Select-Object -Property Name, FullName
-    [array]$WinPEADKRE = [array]$WinPEADKRE + [array]$WinPEADKREIE
+    [array]$WinPEADKRE = @([array]$WinPEADKRE + [array]$WinPEADKREIE) | Where-Object {$_}
 
     if ($null -eq $WinPEADKRE) {Write-Warning "WinRE.wim ADK Packages: Add Content to $GetOSDBuilderPathContentADK"}
     else {
@@ -4316,7 +4317,7 @@ function Get-TaskWinPEADKSE {
 
     $WinPEADKSEIE = @()
     $WinPEADKSEIE = $ContentIsoExtractWinPE | Select-Object -Property Name, FullName
-    [array]$WinPEADKSE = [array]$WinPEADKSE + [array]$WinPEADKSEIE
+    [array]$WinPEADKSE = @([array]$WinPEADKSE + [array]$WinPEADKSEIE) | Where-Object {$_}
 
     if ($null -eq $WinPEADKSE) {Write-Warning "WinSE.wim ADK Packages: Add Content to $GetOSDBuilderPathContentADK"}
     else {
@@ -4544,7 +4545,8 @@ function Get-Value {
             Write-Verbose "Get-Value: value is PSCustomObject"
             $result = @{}
             $value.psobject.properties | ForEach-Object { 
-                $result[$_.Name] = Get-Value -value $_.Value 
+                if ($_.Value -is [System.Object[]]) {$result[$_.Name] = @(Get-Value -value $_.Value)}
+                else {$result[$_.Name] = Get-Value -value $_.Value}
             }
         }
         elseif ($value -is [System.Object[]])
@@ -4558,7 +4560,7 @@ function Get-Value {
         }
         else
         {
-            Write-Verbose "Get-Value: value is type: $($value.GetType())"
+            if ($null -ne $value) {Write-Verbose "Get-Value: value is type: $($value.GetType())"}
             $result = $value
         }
         return $result
@@ -4754,6 +4756,9 @@ function Import-RegistryXmlOS {
                 $RegType = $RegType -replace 'REG_EXPAND_SZ','ExpandString'
                 $RegType = $RegType -replace 'REG_BINARY','Binary'
                 $RegValue = $RegEntry.Value
+                #Group Policy Preferences store REG_DWORD and REG_QWORD values as hexadecimal
+                if (($RegType -eq 'DWord') -and ($RegValue -match '^[0-9a-fA-F]{1,8}$')) {$RegValue = [Convert]::ToInt32($RegValue, 16)}
+                if (($RegType -eq 'QWord') -and ($RegValue -match '^[0-9a-fA-F]{1,16}$')) {$RegValue = [Convert]::ToInt64($RegValue, 16)}
 
                 if ($RegType -eq 'Binary') {
                     $RegValue = $RegValue -replace '(..(?!$))','$1,'
@@ -4769,7 +4774,7 @@ function Import-RegistryXmlOS {
                 if ($RegAction -eq "D") {
                     Write-Host "Remove-ItemProperty -LiteralPath $RegPath" -ForegroundColor Red
                     if ($RegDefault -eq '0' -and $RegName -eq '' -and $RegValue -eq '') {
-                        Remove-ItemProperty -LiteralPath $RegPath -Force -ErrorAction SilentlyContinue | Out-Null
+                        Remove-Item -LiteralPath $RegPath -Recurse -Force -ErrorAction SilentlyContinue | Out-Null
                     } elseif ($RegDefault -eq '1') {
                         Write-Host "-Name '(Default)'"
                         Remove-ItemProperty -LiteralPath $RegPath -Name '(Default)' -Force -ErrorAction SilentlyContinue | Out-Null
@@ -4868,7 +4873,7 @@ function Invoke-DismCleanupImage {
     #   Abort Pending Operations
     #=================================================
     if ($OSMajorVersion -eq 10) {
-        if ($(Get-WindowsCapability -Path $MountDirectory | Where-Object {$_.state -eq "*pending*"})) {
+        if ($(Get-WindowsCapability -Path $MountDirectory | Where-Object {$_.state -like "*pending*"})) {
             Write-Warning "Cannot run WindowsImage Cleanup on a WIM with Pending Installations"
             Return
         }
@@ -5747,7 +5752,7 @@ function Save-InventoryOS {
     }
     catch {
         Write-Warning "Get-AppxProvisionedPackage encountered errors"
-        Write-Warning $_.Exception.ErrorCode
+        if ($_.Exception.ErrorCode) {Write-Warning $_.Exception.ErrorCode}
         Write-Warning $_.Exception.Message
     }
 
@@ -5766,7 +5771,7 @@ function Save-InventoryOS {
     }
     catch {
         Write-Warning "Get-WindowsOptionalFeature encountered errors"
-        Write-Warning $_.Exception.ErrorCode
+        if ($_.Exception.ErrorCode) {Write-Warning $_.Exception.ErrorCode}
         Write-Warning $_.Exception.Message
     }
 
@@ -5785,7 +5790,7 @@ function Save-InventoryOS {
     }
     catch {
         Write-Warning "Get-WindowsCapability encountered errors"
-        Write-Warning $_.Exception.ErrorCode
+        if ($_.Exception.ErrorCode) {Write-Warning $_.Exception.ErrorCode}
         Write-Warning $_.Exception.Message
     }
 
@@ -5804,7 +5809,7 @@ function Save-InventoryOS {
     }
     catch {
         Write-Warning "Get-WindowsPackage encountered errors"
-        Write-Warning $_.Exception.ErrorCode
+        if ($_.Exception.ErrorCode) {Write-Warning $_.Exception.ErrorCode}
         Write-Warning $_.Exception.Message
     }
 }
@@ -7445,9 +7450,7 @@ function Update-SetupDUMEDIA {
         Write-Host -ForegroundColor Cyan "Applying update to WinSE at $MountWinSE\Sources"
         robocopy "$TempRandom" "$MountWinSE\Sources" *.* /s /ndl /xo /xx /xl /b /np /ts /tee /r:0 /w:0 /Log+:"$Logs\$((Get-Date).ToString('yyyy-MM-dd-HHmmss'))-Robocopy-WinSE-SetupDU.log" | Out-Null
 
-        #expand.exe "$UpdateSetupDU" -F:*.* "$OS\Sources"
-        #expand.exe "$UpdateSetupDU" -F:*.* "$MountWinSE\Sources"
-        #pause
+        Remove-Item -Path $TempRandom -Recurse -Force -ErrorAction SilentlyContinue
     }
 }
 function Update-SourcesPE {

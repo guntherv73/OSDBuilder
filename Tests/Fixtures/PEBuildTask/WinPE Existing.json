@@ -1,0 +1,46 @@
+{
+    "TaskType":  "PEBuild",
+    "TaskVersion":  "23.1.1.1",
+    "TaskGuid":  "5d2d0c55-3a8e-4f0e-8a51-7ef1b0a1d222",
+    "TaskName":  "Existing",
+    "CustomName":  "Existing WinPE",
+    "ContentPacks":  [
+                         "_Global",
+                         "Contoso"
+                     ],
+    "OSMFamily":  "Enterprise x64 26200 en-US",
+    "OSMGuid":  "11111111-2222-3333-4444-555555555555",
+    "Name":  "Windows 11 Enterprise x64 25H2 26200.6899",
+    "ImageName":  "Windows 11 Enterprise",
+    "Arch":  "x64",
+    "ReleaseId":  "25H2",
+    "UBR":  "26200.6899",
+    "Languages":  [
+                      "en-US"
+                  ],
+    "EditionId":  "Enterprise",
+    "InstallationType":  "Client",
+    "MajorVersion":  "10",
+    "Build":  "26200",
+    "CreatedTime":  "2026-10-01T10:00:00",
+    "ModifiedTime":  "2026-10-02T10:00:00",
+    "WinPEOutput":  "WinPE",
+    "SourceWim":  "WinPE",
+    "MDTDeploymentShare":  "",
+    "WinPEDaRT":  "DaRT\\10\\Toolsx64.cab",
+    "ScratchSpace":  "256",
+    "WinPEAutoExtraFiles":  "True",
+    "WinPEADK":  [
+                     "ADK\\x64\\WinPE_OCs\\WinPE-PowerShell.cab",
+                     "ADK\\x64\\WinPE_OCs\\WinPE-WMI.cab"
+                 ],
+    "WinPEDrivers":  [
+                         "Drivers\\WinPE\\Existing"
+                     ],
+    "WinPEExtraFiles":  [
+                            "ExtraFiles\\WinPE\\Existing"
+                        ],
+    "WinPEScripts":  [
+                         "Scripts\\WinPE\\Existing.ps1"
+                     ]
+}

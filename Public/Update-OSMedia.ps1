@@ -405,7 +405,7 @@ function Update-OSMedia {
                     $WinPEADKRE += @($Task.WinPEADKRE | Where-Object {$_})
                     $WinPEADKSE += @($Task.WinPEADKSE | Where-Object {$_})
                     
-                    if ($Task.SetAllIntl) {$SetAllIntl = $Task.SetAllIntl}
+                    if ($Task.LangSetAllIntl) {$SetAllIntl = $Task.LangSetAllIntl}
                     if ($Task.LangSetInputLocale) {$SetInputLocale = $Task.LangSetInputLocale}
                     if ($Task.LangSetSKUIntlDefaults) {$SetSKUIntlDefaults = $Task.LangSetSKUIntlDefaults}
                     if ($Task.LangSetSetupUILang) {$SetSetupUILang = $Task.LangSetSetupUILang}
@@ -540,7 +540,7 @@ function Update-OSMedia {
             }
             else {
                 Write-Warning "$OSMediaPath is not supported"
-                Break
+                Continue
             }
             #=================================================
             Write-Verbose '19.1.1 WorkingName and WorkingPath'

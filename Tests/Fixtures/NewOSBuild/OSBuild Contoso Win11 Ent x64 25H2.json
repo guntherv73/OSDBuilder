@@ -1,0 +1,125 @@
+{
+    "TaskType":  "OSBuild",
+    "TaskVersion":  "22.4.19.1",
+    "TaskGuid":  "5f3c8a8e-2a4e-4b8e-9d55-6b0f0c1a7e21",
+    "TaskName":  "Contoso Win11 Ent x64 25H2",
+    "CustomName":  "",
+    "OSMFamily":  "Client Enterprise x64 26200 en-US",
+    "OSMGuid":  "0d6c3b52-8f0e-4f7a-9a43-41d8b6a0c3f1",
+    "Name":  "Windows 11 Enterprise x64 25H2 26200.6584",
+    "ImageName":  "Windows 11 Enterprise",
+    "Arch":  "x64",
+    "ReleaseId":  "25H2",
+    "UBR":  "26200.6584",
+    "Languages":  [
+                      "en-US"
+                  ],
+    "EditionId":  "Enterprise",
+    "InstallationType":  "Client",
+    "MajorVersion":  "10",
+    "Build":  "26200",
+    "CreatedTime":  "\/Date(1758700800000)\/",
+    "ModifiedTime":  "\/Date(1758787200000)\/",
+    "ContentPacks":  [
+                         "Contoso"
+                     ],
+    "EnableNetFX3":  "True",
+    "WinPEAutoExtraFiles":  "True",
+    "WinPEOSDCloud":  "False",
+    "WinREWiFi":  "True",
+    "RemoveAppxProvisionedPackage":  [
+                                         "Microsoft.BingNews_4.55.1.0_neutral_~_8wekyb3d8bbwe"
+                                     ],
+    "RemoveWindowsCapability":  [
+                                    "Browser.InternetExplorer~~~~0.0.11.0"
+                                ],
+    "RemoveWindowsPackage":  [
+
+                             ],
+    "DisableWindowsOptionalFeature":  [
+                                          "SMB1Protocol"
+                                      ],
+    "EnableWindowsOptionalFeature":  [
+                                         "TelnetClient"
+                                     ],
+    "Drivers":  [
+                    "Drivers\\Contoso"
+                ],
+    "ExtraFiles":  [
+                       "ExtraFiles\\Contoso"
+                   ],
+    "PSModulesOS":  [
+
+                    ],
+    "PSModulesWinPE":  [
+
+                       ],
+    "Scripts":  [
+                    "Scripts\\Contoso.ps1"
+                ],
+    "StartLayoutXML":  "StartLayout\\Contoso.xml",
+    "UnattendXML":  "Unattend\\Contoso.xml",
+    "AddWindowsPackage":  [
+
+                          ],
+    "AddFeatureOnDemand":  [
+
+                           ],
+    "AddWindowsCapability":  [
+                                 "OpenSSH.Server~~~~0.0.1.0"
+                             ],
+    "WinPEADKPE":  [
+                       "Windows Kits\\10\\Assessment and Deployment Kit\\Windows Preinstallation Environment\\amd64\\WinPE_OCs\\WinPE-PowerShell.cab"
+                   ],
+    "WinPEADKRE":  [
+
+                   ],
+    "WinPEADKSE":  [
+
+                   ],
+    "WinPEDaRT":  "",
+    "WinPEDrivers":  [
+
+                     ],
+    "WinPEExtraFilesPE":  [
+
+                          ],
+    "WinPEExtraFilesRE":  [
+
+                          ],
+    "WinPEExtraFilesSE":  [
+
+                          ],
+    "WinPEScriptsPE":  [
+
+                       ],
+    "WinPEScriptsRE":  [
+
+                       ],
+    "WinPEScriptsSE":  [
+
+                       ],
+    "LangSetAllIntl":  "",
+    "LangSetInputLocale":  "",
+    "LangSetSKUIntlDefaults":  "",
+    "LangSetSetupUILang":  "",
+    "LangSetSysLocale":  "",
+    "LangSetUILang":  "",
+    "LangSetUILangFallback":  "",
+    "LangSetUserLocale":  "",
+    "LanguagePack":  [
+
+                     ],
+    "LanguageInterfacePack":  [
+
+                              ],
+    "LocalExperiencePacks":  [
+
+                             ],
+    "LanguageFeature":  [
+
+                        ],
+    "LanguageCopySources":  [
+
+                            ]
+}

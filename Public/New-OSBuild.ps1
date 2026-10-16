@@ -426,7 +426,7 @@ function New-OSBuild {
                     $WinPEADKRE += @($Task.WinPEADKRE | Where-Object {$_})
                     $WinPEADKSE += @($Task.WinPEADKSE | Where-Object {$_})
                     
-                    if ($Task.SetAllIntl) {$SetAllIntl = $Task.SetAllIntl}
+                    if ($Task.LangSetAllIntl) {$SetAllIntl = $Task.LangSetAllIntl}
                     if ($Task.LangSetInputLocale) {$SetInputLocale = $Task.LangSetInputLocale}
                     if ($Task.LangSetSKUIntlDefaults) {$SetSKUIntlDefaults = $Task.LangSetSKUIntlDefaults}
                     if ($Task.LangSetSetupUILang) {$SetSetupUILang = $Task.LangSetSetupUILang}

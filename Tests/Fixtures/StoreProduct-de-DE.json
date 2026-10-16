@@ -1,0 +1,175 @@
+{
+ "Products": [
+  {
+   "ProductId": "9P6CT0SLW589",
+   "LocalizedProperties": [
+    {
+     "ProductTitle": "Deutsch Local Experience Pack"
+    }
+   ],
+   "Properties": {
+    "PackageFamilyName": "Microsoft.LanguageExperiencePackde-DE_8wekyb3d8bbwe"
+   },
+   "DisplaySkuAvailabilities": [
+    {
+     "Sku": {
+      "Properties": {
+       "Packages": [
+        {
+         "PackageFullName": "Microsoft.LanguageExperiencePackde-DE_1.18981.15.0_neutral__8wekyb3d8bbwe",
+         "PlatformDependencies": [
+          {
+           "MaxTested": 2814751011046376,
+           "MinVersion": 2814751000690688,
+           "PlatformName": "Windows.Core"
+          }
+         ]
+        },
+        {
+         "PackageFullName": "Microsoft.LanguageExperiencePackde-de_17134.47.71.0_neutral__8wekyb3d8bbwe",
+         "PlatformDependencies": [
+          {
+           "MaxTested": 2814750920540160,
+           "MinVersion": 2814750886068224,
+           "PlatformName": "Windows.Desktop"
+          }
+         ]
+        },
+        {
+         "PackageFullName": "Microsoft.LanguageExperiencePackde-DE_19645.0.1.0_neutral__8wekyb3d8bbwe",
+         "PlatformDependencies": [
+          {
+           "MaxTested": 2814751054561281,
+           "MinVersion": 2814751043747840,
+           "PlatformName": "Windows.Desktop"
+          }
+         ]
+        },
+        {
+         "PackageFullName": "Microsoft.LanguageExperiencePackde-DE_45000.19645.1.0_neutral__8wekyb3d8bbwe",
+         "PlatformDependencies": [
+          {
+           "MaxTested": 2814751054561281,
+           "MinVersion": 2814751043747840,
+           "PlatformName": "Windows.Core"
+          }
+         ]
+        },
+        {
+         "PackageFullName": "Microsoft.LanguageExperiencePackde-DE_45000.22360.1.0_neutral__8wekyb3d8bbwe",
+         "PlatformDependencies": [
+          {
+           "MaxTested": 2814751232492521,
+           "MinVersion": 2814751159812096,
+           "PlatformName": "Windows.Core"
+          }
+         ]
+        },
+        {
+         "PackageFullName": "Microsoft.LanguageExperiencePackde-DE_45000.20348.1.0_neutral__8wekyb3d8bbwe",
+         "PlatformDependencies": [
+          {
+           "MaxTested": 2814751100634088,
+           "MinVersion": 2814751085953024,
+           "PlatformName": "Windows.Core"
+          }
+         ]
+        },
+        {
+         "PackageFullName": "Microsoft.LanguageExperiencePackde-DE_20348.1.1.0_neutral__8wekyb3d8bbwe",
+         "PlatformDependencies": [
+          {
+           "MaxTested": 2814751100634088,
+           "MinVersion": 2814751085953024,
+           "PlatformName": "Windows.Desktop"
+          }
+         ]
+        },
+        {
+         "PackageFullName": "Microsoft.LanguageExperiencePackde-DE_18362.48.141.0_neutral__8wekyb3d8bbwe",
+         "PlatformDependencies": [
+          {
+           "MaxTested": 2814750970480986,
+           "MinVersion": 2814750959861760,
+           "PlatformName": "Windows.Desktop"
+          }
+         ]
+        },
+        {
+         "PackageFullName": "Microsoft.LanguageExperiencePackde-DE_17763.32.115.0_neutral__8wekyb3d8bbwe",
+         "PlatformDependencies": [
+          {
+           "MaxTested": 2814750931225814,
+           "MinVersion": 2814750920540160,
+           "PlatformName": "Windows.Desktop"
+          }
+         ]
+        },
+        {
+         "PackageFullName": "Microsoft.LanguageExperiencePackde-DE_26058.1.1.0_neutral__8wekyb3d8bbwe",
+         "PlatformDependencies": [
+          {
+           "MaxTested": 2814751474844648,
+           "MinVersion": 2814751409045504,
+           "PlatformName": "Windows.Desktop"
+          }
+         ]
+        },
+        {
+         "PackageFullName": "Microsoft.LanguageExperiencePackde-DE_22000.46.238.0_neutral__8wekyb3d8bbwe",
+         "PlatformDependencies": [
+          {
+           "MaxTested": 2814751208901212,
+           "MinVersion": 2814751159812096,
+           "PlatformName": "Windows.Desktop"
+          }
+         ]
+        },
+        {
+         "PackageFullName": "Microsoft.LanguageExperiencePackde-DE_19041.80.275.0_neutral__8wekyb3d8bbwe",
+         "PlatformDependencies": [
+          {
+           "MaxTested": 2814751014982058,
+           "MinVersion": 2814751000690688,
+           "PlatformName": "Windows.Desktop"
+          }
+         ]
+        },
+        {
+         "PackageFullName": "Microsoft.LanguageExperiencePackde-DE_28000.2.8.0_neutral__8wekyb3d8bbwe",
+         "PlatformDependencies": [
+          {
+           "MaxTested": 2814751602116673,
+           "MinVersion": 2814751572426752,
+           "PlatformName": "Windows.Desktop"
+          }
+         ]
+        },
+        {
+         "PackageFullName": "Microsoft.LanguageExperiencePackde-DE_22621.146.465.0_neutral__8wekyb3d8bbwe",
+         "PlatformDependencies": [
+          {
+           "MaxTested": 2814751249603495,
+           "MinVersion": 2814751231836160,
+           "PlatformName": "Windows.Desktop"
+          }
+         ]
+        },
+        {
+         "PackageFullName": "Microsoft.LanguageExperiencePackde-DE_26100.169.270.0_neutral__8wekyb3d8bbwe",
+         "PlatformDependencies": [
+          {
+           "MaxTested": 2814751477605035,
+           "MinVersion": 2814751460950016,
+           "PlatformName": "Windows.Desktop"
+          }
+         ]
+        }
+       ]
+      }
+     }
+    }
+   ]
+  }
+ ]
+}
