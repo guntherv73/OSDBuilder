@@ -64,6 +64,17 @@ Describe 'Get-OSDBuilderLanguageFeatureOrder' {
         $Sorted = $Names | Sort-Object {Get-OSDBuilderLanguageFeatureOrder -Name $_}
         ($Sorted | ForEach-Object {($_ -split '-')[3]}) -join ',' | Should -Be 'Basic,Fonts,OCR,Handwriting,TextToSpeech,Speech'
     }
+
+    It '<Name> -> <Expected>' -ForEach @(
+        @{Name = 'Microsoft-Windows-Speech-Shell-Package~31bf3856ad364e35~amd64~de-de~.cab'; Expected = 5}
+        @{Name = 'Microsoft-Windows-InternationalFeatures-Taiwan-Package~31bf3856ad364e35~amd64~~.cab'; Expected = 3}
+    ) {
+        Get-OSDBuilderLanguageFeatureOrder -Name $Name | Should -Be $Expected
+    }
+
+    It 'uses the file name of a full path' {
+        Get-OSDBuilderLanguageFeatureOrder -Name (Join-Path $TestDrive 'Microsoft-Windows-LanguageFeatures-Basic-de-de-Package~31bf3856ad364e35~amd64~~.cab') | Should -Be 0
+    }
 }
 
 Describe 'Resolve-OSDBuilderContentPackReleasePath' {
