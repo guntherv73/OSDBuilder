@@ -614,8 +614,7 @@ Describe 'New-OSBuildTask' {
             $Task.LangSetUserLocale | Should -Be 'de-CH'
         }
 
-        # KnownBug: New-OSBuildTask.ps1:910-917 compare the [string] parameters with $null (always '' when not given) and read SetAllIntl instead of LangSetAllIntl, the existing language settings are lost
-        It 'keeps the Lang settings of the existing Task when the parameters are not given' -Skip {
+        It 'keeps the Lang settings of the existing Task when the parameters are not given' {
             Copy-ExistingTask
             New-OSBuildTask -TaskName 'Contoso' -OSMedia $OSMedia 6>$null 3>$null | Out-Null
             $Task = Get-TestTask
@@ -629,8 +628,7 @@ Describe 'New-OSBuildTask' {
             $Task.LangSetUserLocale | Should -Be 'de-AT'
         }
 
-        # KnownBug: New-OSBuildTask.ps1:916 assigns the existing SetUILangFallback to $SetUILang instead of $SetUILangFallback (masked by the $null check of 910-917, the fallback is lost)
-        It 'does not overwrite -SetUILang with the existing SetUILangFallback' -Skip {
+        It 'does not overwrite -SetUILang with the existing SetUILangFallback' {
             Copy-ExistingTask
             New-OSBuildTask -TaskName 'Contoso' -OSMedia $OSMedia -SetUILang 'fr-FR' 6>$null 3>$null | Out-Null
             $Task = Get-TestTask
@@ -638,8 +636,7 @@ Describe 'New-OSBuildTask' {
             $Task.LangSetUILangFallback | Should -Be 'en-US'
         }
 
-        # KnownBug: New-OSBuildTask.ps1:878 reads $ExistingTask.$WinPEScriptsRE (dynamic property name $null) instead of $ExistingTask.WinPEScriptsRE
-        It 'keeps the WinPEScriptsRE of the existing Task without -ContentWinPEScripts' -Skip {
+        It 'keeps the WinPEScriptsRE of the existing Task without -ContentWinPEScripts' {
             Copy-ExistingTask
             New-OSBuildTask -TaskName 'Contoso' -OSMedia $OSMedia 6>$null 3>$null | Out-Null
             (Get-TestTask).WinPEScriptsRE | Should -Be @('Scripts\WinRE\Existing.ps1')

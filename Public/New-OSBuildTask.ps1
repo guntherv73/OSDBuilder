@@ -875,7 +875,7 @@ function New-OSBuildTask {
             $WinPEScriptsRE = [array]$WinPEScriptsRE + [array]$ExistingTask.WinPEScriptsRE
             $WinPEScriptsRE = $WinPEScriptsRE | Sort-Object -Unique
         } else {
-            if ($ExistingTask.WinPEScriptsRE) {$WinPEScriptsRE = $ExistingTask.$WinPEScriptsRE}
+            if ($ExistingTask.WinPEScriptsRE) {$WinPEScriptsRE = $ExistingTask.WinPEScriptsRE}
         }
         #=================================================
         #   WinPEScriptsSE
@@ -907,14 +907,14 @@ function New-OSBuildTask {
         #   Corrections
         #=================================================
         if ($OSMedia.MajorVersion -eq 6) {$EnableNetFX3 = $false}
-        if ($null -eq $SetAllIntl) {if ($ExistingTask.SetAllIntl) {$SetAllIntl = $ExistingTask.SetAllIntl}}
-        if ($null -eq $SetInputLocale) {if ($ExistingTask.SetInputLocale) {$SetInputLocale = $ExistingTask.SetInputLocale}}
-        if ($null -eq $SetSKUIntlDefaults) {if ($ExistingTask.SetSKUIntlDefaults) {$SetSKUIntlDefaults = $ExistingTask.SetSKUIntlDefaults}}
-        if ($null -eq $SetSetupUILang) {if ($ExistingTask.SetSetupUILang) {$SetSetupUILang = $ExistingTask.SetSetupUILang}}
-        if ($null -eq $SetSysLocale) {if ($ExistingTask.SetSysLocale) {$SetSysLocale = $ExistingTask.SetSysLocale}}
-        if ($null -eq $SetUILang) {if ($ExistingTask.SetUILang) {$SetUILang = $ExistingTask.SetUILang}}
-        if ($null -eq $SetUILangFallback) {if ($ExistingTask.SetUILangFallback) {$SetUILang = $ExistingTask.SetUILangFallback}}
-        if ($null -eq $SetUserLocale) {if ($ExistingTask.SetUserLocale) {$SetUserLocale = $ExistingTask.SetUserLocale}}
+        if ([string]::IsNullOrEmpty($SetAllIntl) -and $ExistingTask.LangSetAllIntl) {$SetAllIntl = $ExistingTask.LangSetAllIntl}
+        if ([string]::IsNullOrEmpty($SetInputLocale) -and $ExistingTask.LangSetInputLocale) {$SetInputLocale = $ExistingTask.LangSetInputLocale}
+        if ([string]::IsNullOrEmpty($SetSKUIntlDefaults) -and $ExistingTask.LangSetSKUIntlDefaults) {$SetSKUIntlDefaults = $ExistingTask.LangSetSKUIntlDefaults}
+        if ([string]::IsNullOrEmpty($SetSetupUILang) -and $ExistingTask.LangSetSetupUILang) {$SetSetupUILang = $ExistingTask.LangSetSetupUILang}
+        if ([string]::IsNullOrEmpty($SetSysLocale) -and $ExistingTask.LangSetSysLocale) {$SetSysLocale = $ExistingTask.LangSetSysLocale}
+        if ([string]::IsNullOrEmpty($SetUILang) -and $ExistingTask.LangSetUILang) {$SetUILang = $ExistingTask.LangSetUILang}
+        if ([string]::IsNullOrEmpty($SetUILangFallback) -and $ExistingTask.LangSetUILangFallback) {$SetUILangFallback = $ExistingTask.LangSetUILangFallback}
+        if ([string]::IsNullOrEmpty($SetUserLocale) -and $ExistingTask.LangSetUserLocale) {$SetUserLocale = $ExistingTask.LangSetUserLocale}
         #=================================================
         #   OSBuildTask
         #=================================================
