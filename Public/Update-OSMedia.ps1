@@ -864,6 +864,7 @@ function Update-OSMedia {
                 Add-ContentPack -PackType PEADK
                 Add-ContentPack -PackType PEADKLang
                 Add-LanguagePacksWinRE
+                Add-LanguagePacksWinSE
                 #=================================================
                 #   WinPE DaRT
                 #=================================================

@@ -11,6 +11,9 @@ Unattended end-to-end build:
    of the selected languages (no Out-GridView)
 5. Runs New-OSBuild
 
+With -SetupLanguages the ISOs of these languages are imported (-SetupLanguageIso) and used as
+LanguageCopySources: Windows Setup shows these display languages and the language selection of the image.
+
 New-OSBuild then:
 - adds the Language Packs, Language Interface Packs and Language Features, reapplies the LCU once
 - adds the same languages to WinRE from the Languages and Optional Features ISO
@@ -21,6 +24,9 @@ About 60 GB of free space are required on the OSDBuilder drive.
 
 .EXAMPLE
 .\New-Win11MultiLanguageBuild.ps1 -CustomerName 'Contoso' -SourceIso 'D:\ISO\Win11_25H2_x64.iso' -EnableNetFX3 -CreateISO
+
+.EXAMPLE
+.\New-Win11MultiLanguageBuild.ps1 -CustomerName 'Contoso' -SourceIso 'D:\ISO\Win11_25H2_English_x64.iso' -SetupLanguages 'de-DE','fr-FR' -SetupLanguageIso 'D:\ISO\Win11_25H2_German_x64.iso','D:\ISO\Win11_25H2_French_x64.iso' -SetupUILanguage 'de-DE'
 
 .EXAMPLE
 .\New-Win11MultiLanguageBuild.ps1 -CustomerName 'Contoso' -Languages 'en-US','de-DE','fr-FR' -DefaultLanguage 'de-DE' -AddWindowsCapability 'Rsat.ActiveDirectory.DS-LDS.Tools~~~~0.0.1.0'
@@ -68,10 +74,27 @@ param (
     [switch]$CreateISO,
 
     #Skip the download of the Languages and Optional Features and Inbox Apps ISOs
-    [switch]$SkipContentDownload
+    [switch]$SkipContentDownload,
+
+    #Language of -SourceIso (the language of the install.wim)
+    [string]$MediaLanguage = 'en-US',
+
+    #Additional Windows Setup display languages, for example 'de-DE','fr-FR'
+    #Each language requires the Windows 11 ISO of that language (-SetupLanguageIso) for the localized Setup resources
+    [string[]]$SetupLanguages = @(),
+
+    #Windows 11 ISOs of the -SetupLanguages (same release and build), imported as OSMedia for LanguageCopySources
+    [string[]]$SetupLanguageIso = @(),
+
+    #Default Windows Setup display language (Dism /Set-SetupUILang)
+    [string]$SetupUILanguage
 )
 $ErrorActionPreference = 'Stop'
 if ($DefaultLanguage -notin $Languages) {throw "-DefaultLanguage $DefaultLanguage must be one of -Languages $($Languages -join ', ')"}
+if (-not $SetupUILanguage) {$SetupUILanguage = $MediaLanguage}
+if ($SetupUILanguage -notin (@($MediaLanguage) + $SetupLanguages)) {throw "-SetupUILanguage $SetupUILanguage must be -MediaLanguage $MediaLanguage or one of -SetupLanguages"}
+#Microsoft: Language Interface Packs are not supported on Windows Setup
+foreach ($Item in $SetupLanguages | Where-Object {$_ -in 'ca-ES','eu-ES','gl-ES','id-ID','vi-VN'}) {throw "-SetupLanguages $Item is a Language Interface Pack, LIPs are not supported by Windows Setup"}
 #=================================================
 #   Names
 #=================================================
@@ -122,23 +145,28 @@ if (!(Test-Path $LofPath)) {
 #   3. OSMedia
 #=================================================
 Write-Step "3. OSMedia Windows 11 $EditionId x64 $ReleaseId"
-function Get-BuildOSMedia {
+function Get-ReleaseOSMedia ([string]$Language) {
     Get-OSMedia -OSMajorVersion 10 -Revision OK | `
         Where-Object {($_.OperatingSystem -eq 'Windows 11') -and ($_.ReleaseId -eq $ReleaseId) -and ($_.EditionId -eq $EditionId) -and ($_.Arch -eq 'x64')} | `
+        Where-Object {(@($_.Languages).Count -eq 1) -and ("$($_.Languages)" -eq $Language)} | `
         Sort-Object -Property ModifiedTime -Descending | Select-Object -First 1
 }
-$OSMedia = Get-BuildOSMedia
-if (-not $OSMedia) {
-    if (-not $SourceIso) {throw "No OSMedia for Windows 11 $EditionId x64 $ReleaseId was found, use -SourceIso to import it"}
-    $DiskImage = Mount-DiskImage -ImagePath $SourceIso -StorageType ISO -PassThru
+function Get-BuildOSMedia {Get-ReleaseOSMedia -Language $MediaLanguage}
+function Import-IsoOSMedia ([string]$Iso) {
+    $DiskImage = Mount-DiskImage -ImagePath $Iso -StorageType ISO -PassThru
     try {
         Start-Sleep -Seconds 2
         $DriveLetter = ($DiskImage | Get-Volume).DriveLetter
         Import-OSMedia -Path "$($DriveLetter):\" -EditionId $EditionId -SkipGrid -SkipFeatureUpdates
     }
     finally {
-        Dismount-DiskImage -ImagePath $SourceIso | Out-Null
+        Dismount-DiskImage -ImagePath $Iso | Out-Null
     }
+}
+$OSMedia = Get-BuildOSMedia
+if (-not $OSMedia) {
+    if (-not $SourceIso) {throw "No OSMedia for Windows 11 $EditionId x64 $ReleaseId $MediaLanguage was found, use -SourceIso to import it"}
+    Import-IsoOSMedia -Iso $SourceIso
     $OSMedia = Get-BuildOSMedia
     if (-not $OSMedia) {throw "Import-OSMedia did not create an OSMedia for Windows 11 $EditionId x64 $ReleaseId"}
 }
@@ -153,6 +181,25 @@ Write-Host "OSMedia: $($OSMedia.Name)"
 #=================================================
 #   5. Task content
 #=================================================
+#=================================================
+#   Windows Setup languages (LanguageCopySources)
+#   The localized Setup resources are copied from an OSMedia of each language with the same build
+#=================================================
+$LanguageCopySources = @()
+if ($SetupLanguages) {
+    Write-Step "Windows Setup languages $($SetupLanguages -join ', ')"
+    $MissingSetup = @($SetupLanguages | Where-Object {-not (Get-ReleaseOSMedia -Language $_)})
+    if ($MissingSetup) {
+        foreach ($Iso in $SetupLanguageIso) {Import-IsoOSMedia -Iso $Iso}
+    }
+    foreach ($Language in $SetupLanguages) {
+        $SetupMedia = Get-ReleaseOSMedia -Language $Language
+        if (-not $SetupMedia) {throw "No OSMedia for Windows 11 $EditionId x64 $ReleaseId $Language was found, add the $Language ISO to -SetupLanguageIso"}
+        if ($SetupMedia.Build -ne $OSMedia.Build) {throw "$($SetupMedia.Name) has build $($SetupMedia.Build), $($OSMedia.Name) has build $($OSMedia.Build)"}
+        Write-Host "$Language Setup resources from $($SetupMedia.Name)"
+        $LanguageCopySources += $SetupMedia.OSMFamily
+    }
+}
 Write-Step "5. Task content for $($Languages -join ', ')"
 $ImageLanguages = @($OSMedia.Languages | ForEach-Object {"$_".ToLower()})
 $LanguagePack = @(); $LanguageInterfacePack = @(); $LanguageFeature = @(); $Missing = @()
@@ -221,6 +268,8 @@ $Task.LanguageInterfacePack         = [string[]]$LanguageInterfacePack
 $Task.LanguageFeature               = [string[]]$LanguageFeature
 $Task.AddWindowsCapability          = [string[]]$AddWindowsCapability
 $Task.RemoveAppxProvisionedPackage  = [string[]]$RemoveAppxPackageName
+$Task.LanguageCopySources           = [string[]]$LanguageCopySources
+if ($LanguageCopySources) {$Task.LangSetSetupUILang = $SetupUILanguage}
 $Task | ConvertTo-Json | Out-File -FilePath $TaskPath
 Write-Host "Task: $TaskPath"
 #=================================================
