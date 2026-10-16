@@ -380,8 +380,9 @@ Describe 'New-OSDBuilderVHD' {
         Mock Format-Volume {} -RemoveParameterType InputObject
         Mock Add-PartitionAccessPath {}
         Mock Get-Partition {
+            #PartitionNumber of the real Get-Partition is UInt32[]
             $Letter = @{1 = 'S'; 3 = 'W'}
-            [PSCustomObject]@{PartitionNumber = $PartitionNumber; DriveLetter = $Letter[[int]$PartitionNumber]}
+            [PSCustomObject]@{PartitionNumber = @($PartitionNumber)[0]; DriveLetter = $Letter[[int]@($PartitionNumber)[0]]}
         }
         Mock Get-PartitionSupportedSize {[PSCustomObject]@{SizeMin = 1GB; SizeMax = 49GB}}
         Mock Resize-Partition {}

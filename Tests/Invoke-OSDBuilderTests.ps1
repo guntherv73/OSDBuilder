@@ -131,7 +131,15 @@ if ($CodeCoverage -or $CI) {
     $Configuration.CodeCoverage.CoveragePercentTarget = $MinimumCoverage
 }
 
-$Result = Invoke-Pester -Configuration $Configuration
+#The tests expect the default ErrorActionPreference Continue, the pwsh shell of GitHub Actions sets Stop in the global scope
+$ErrorActionPreferenceCaller = $global:ErrorActionPreference
+$global:ErrorActionPreference = 'Continue'
+try {
+    $Result = Invoke-Pester -Configuration $Configuration
+}
+finally {
+    $global:ErrorActionPreference = $ErrorActionPreferenceCaller
+}
 if ($Result.FailedCount -gt 0) {
     Write-Host "Pester: $($Result.FailedCount) test(s) failed" -ForegroundColor Red
     $Failed++
