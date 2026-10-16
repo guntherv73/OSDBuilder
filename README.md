@@ -42,7 +42,7 @@ a Task with the Language Packs, Language Features and Windows Capabilities of th
 .\Examples\New-Win11MultiLanguageBuild.ps1 -CustomerName 'Contoso' -OSDBuilderHome 'G:\OSDBuilder' `
     -SourceIso 'D:\ISO\Win11_25H2_x64.iso' -ReleaseId 25H2 -EditionId Enterprise `
     -Languages 'en-US','de-DE','fr-FR','sv-SE','ru-RU','sk-SK','th-TH' -DefaultLanguage 'en-US' `
-    -EnableNetFX3 -CreateISO
+    -CreateISO
 
 # Windows Setup in English, German and French, German is the default Setup language
 .\Examples\New-Win11MultiLanguageBuild.ps1 -CustomerName 'Contoso' -OSDBuilderHome 'G:\OSDBuilder' `
@@ -149,6 +149,16 @@ Language Interface Packs are not supported by Windows Setup.
 * OSLanguageFeatures are added in the required order (Basic first) and with `Add-WindowsCapability`
   when the directory or a Languages and Optional Features ISO contains the metadata, otherwise with `Add-WindowsPackage`
 * Languages of OSLanguagePacks ContentPacks are also added to WinRE and trigger the reinstall of the inbox apps
+
+### .NET Framework 3.5
+
+* `New-OSBuildTask -EnableNetFX3` enables NetFx3 in `New-OSBuild` after the image cleanup, followed by the .NET Framework CU
+  (Microsoft order for install.wim: LCU, cleanup, .NET and .NET CU, export)
+* Windows 11 24H2 and newer media has no `sources\sxs`, NetFx3 is added with `Add-WindowsCapability -Name NetFX3~~~~` from the
+  Languages and Optional Features ISO (`Content\IsoExtract`), `sources\sxs` is used when the media contains it
+* `Enable-WindowsOptionalFeature` is used when the capability cannot be added, the build shows a warning when NetFx3 is not Enabled afterwards
+* Windows 11: the LCU is not applied again after NetFx3, Windows 10: the LCU is applied again as before
+* The example script enables NetFx3 by default, use `-SkipNetFX3` to skip
 
 ### Inbox Apps
 

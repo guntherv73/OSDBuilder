@@ -2498,22 +2498,67 @@ function Enable-NetFXOS {
     Show-ActionTime
     Write-Host -ForegroundColor Green "OS: Enable NetFX 3.5"
     #=================================================
-    #   Execute
+    #   Installed
+    #   The .NET CU was already applied by Update-DotNetOS
     #=================================================
+    $NetFX3Feature = Get-WindowsOptionalFeature -Path "$MountDirectory" -FeatureName NetFx3 -ErrorAction SilentlyContinue
+    if ($NetFX3Feature.State -eq 'Enabled') {
+        Write-Host -ForegroundColor Gray "INSTALLED         NetFx3"
+        Return
+    }
+    #=================================================
+    #   Source
+    #   Windows 10 media contains sources\sxs
+    #   Windows 11 24H2 and newer media has no sources\sxs, the NetFx3 OnDemand package is on the
+    #   Languages and Optional Features ISO (LanguagesAndOptionalFeatures)
+    #=================================================
+    $NetFX3Source = @()
+    if (Test-Path "$OS\sources\sxs") {$NetFX3Source += "$OS\sources\sxs"}
+    $NetFX3Source += @(Get-OSDBuilderCapabilitySource -OSMedia ([PSCustomObject]@{OperatingSystem = $UpdateOS; ReleaseId = $ReleaseId; InstallationType = $OSInstallationType}))
+    $NetFX3Source = @($NetFX3Source | Where-Object {$_} | Sort-Object -Unique)
+    if ($NetFX3Source.Count -eq 0) {
+        Write-Warning "NetFX 3.5: $OS\sources\sxs does not exist and no Languages and Optional Features repository was found in $GetOSDBuilderPathContentIsoExtract"
+        if ($UpdateOS -eq 'Windows 11') {
+            Write-Warning "Use Save-OSDBuilderDownload -ContentDownload 'Windows 11 24H2-26H2 x64 Languages and Optional Features' (22H2 and 23H2: 'Windows 11 22H2-23H2 x64 Languages and Optional Features') and run New-OSBuild again"
+        }
+        Return
+    }
+    foreach ($Item in $NetFX3Source) {Write-Host "    Source: $Item" -ForegroundColor DarkGray}
+    #=================================================
+    #   Execute
+    #   Microsoft adds NetFX3~~~~ with Add-WindowsCapability after the image cleanup, followed by the .NET CU
+    #   Enable-WindowsOptionalFeature is used when the capability cannot be added
+    #=================================================
+    Write-Host -ForegroundColor Cyan "INSTALLING        " -NoNewline
+    Write-Host -ForegroundColor Gray "NetFX3~~~~"
     $CurrentLog = "$Info\logs\$((Get-Date).ToString('yyyy-MM-dd-HHmmss'))-Enable-NetFXOS.log"
     Write-Verbose "CurrentLog: $CurrentLog"
-    Try {
-        Enable-WindowsOptionalFeature -Path "$MountDirectory" -FeatureName NetFX3 -All -LimitAccess -Source "$OS\sources\sxs" -LogPath "$CurrentLog" | Out-Null
+    $NetFX3Added = Add-OSDBuilderWindowsCapability -Path "$MountDirectory" -Name 'NetFX3~~~~' -Source $NetFX3Source -LogPath $CurrentLog
+    if ($NetFX3Added -ne $true) {
+        Try {
+            Enable-WindowsOptionalFeature -Path "$MountDirectory" -FeatureName NetFX3 -All -LimitAccess -Source $NetFX3Source -LogPath "$CurrentLog" -ErrorAction Stop | Out-Null
+        }
+        Catch {
+            $ErrorMessage = $_.Exception.Message
+            Write-Warning "$ErrorMessage"
+        }
     }
-    Catch {
-        $ErrorMessage = $_.Exception.Message
-        Write-Warning "$ErrorMessage"
+    #=================================================
+    #   Verify
+    #=================================================
+    $NetFX3Feature = Get-WindowsOptionalFeature -Path "$MountDirectory" -FeatureName NetFx3 -ErrorAction SilentlyContinue
+    if ($NetFX3Feature.State -ne 'Enabled') {
+        Write-Warning "NetFX 3.5 could not be enabled, review $CurrentLog"
+        Return
     }
+    Write-Host -ForegroundColor Gray "                  NetFx3 is Enabled"
     #=================================================
     #   Post Action
+    #   The .NET CU services NetFx3, it is applied again after NetFx3 is enabled
+    #   Windows 11: The LCU is not applied again, Microsoft adds .NET and the .NET CU after the LCU
     #=================================================
     Update-DotNetOS -Force
-    Update-CumulativeOS -Force
+    if ($UpdateOS -ne 'Windows 11') {Update-CumulativeOS -Force}
     #=================================================
 }
 function Enable-WindowsOptionalFeatureOS {

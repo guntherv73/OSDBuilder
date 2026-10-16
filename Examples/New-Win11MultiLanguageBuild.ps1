@@ -17,13 +17,14 @@ LanguageCopySources: Windows Setup shows these display languages and the languag
 New-OSBuild then:
 - adds the Language Packs, Language Interface Packs and Language Features, reapplies the LCU once
 - adds the same languages to WinRE from the Languages and Optional Features ISO
+- enables .NET Framework 3.5 (NetFx3) from the Languages and Optional Features ISO and applies the .NET CU (-SkipNetFX3 to skip)
 - reinstalls the inbox apps from the Inbox Apps ISO so they include the language resources
 
 Run in an elevated Windows PowerShell 5.1 session on Windows 10/11.
 About 60 GB of free space are required on the OSDBuilder drive.
 
 .EXAMPLE
-.\New-Win11MultiLanguageBuild.ps1 -CustomerName 'Contoso' -SourceIso 'D:\ISO\Win11_25H2_x64.iso' -EnableNetFX3 -CreateISO
+.\New-Win11MultiLanguageBuild.ps1 -CustomerName 'Contoso' -SourceIso 'D:\ISO\Win11_25H2_x64.iso' -CreateISO
 
 .EXAMPLE
 .\New-Win11MultiLanguageBuild.ps1 -CustomerName 'Contoso' -SourceIso 'D:\ISO\Win11_25H2_English_x64.iso' -SetupLanguages 'de-DE','fr-FR' -SetupLanguageIso 'D:\ISO\Win11_25H2_German_x64.iso','D:\ISO\Win11_25H2_French_x64.iso' -SetupUILanguage 'de-DE'
@@ -69,7 +70,11 @@ param (
     #Provisioned apps to remove, by DisplayName, for example 'Microsoft.BingNews','Microsoft.GamingApp'
     [string[]]$RemoveAppxDisplayName = @(),
 
+    #.NET Framework 3.5 is enabled by default, -EnableNetFX3 is kept for compatibility
     [switch]$EnableNetFX3,
+
+    #Do not enable .NET Framework 3.5
+    [switch]$SkipNetFX3,
 
     [switch]$CreateISO,
 
@@ -256,7 +261,7 @@ $TaskParams = @{
     OSMedia     = $OSMedia
     SetAllIntl  = $DefaultLanguage
 }
-if ($EnableNetFX3) {$TaskParams.EnableNetFX3 = $true}
+if (-not $SkipNetFX3) {$TaskParams.EnableNetFX3 = $true}
 New-OSBuildTask @TaskParams
 
 $TaskPath = Join-Path $SetOSDBuilderPathTasks "OSBuild $MediaName.json"
@@ -270,6 +275,7 @@ $Task.AddWindowsCapability          = [string[]]$AddWindowsCapability
 $Task.RemoveAppxProvisionedPackage  = [string[]]$RemoveAppxPackageName
 $Task.LanguageCopySources           = [string[]]$LanguageCopySources
 if ($LanguageCopySources) {$Task.LangSetSetupUILang = $SetupUILanguage}
+$Task.EnableNetFX3                  = [string](-not $SkipNetFX3)
 $Task | ConvertTo-Json | Out-File -FilePath $TaskPath
 Write-Host "Task: $TaskPath"
 #=================================================
