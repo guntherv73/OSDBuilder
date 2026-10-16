@@ -3,7 +3,7 @@
 @{
     RootModule = 'OSDBuilder.psm1'
     ModuleVersion = '26.10.16.1'
-    CompatiblePSEditions    = @('Desktop')
+    CompatiblePSEditions    = @('Desktop','Core')
     GUID = 'adda1fa3-c13e-408b-b83f-f22b9cb3fd47'
     Author = 'David Segura'
     CompanyName = 'David Segura'

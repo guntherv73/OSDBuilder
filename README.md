@@ -3,6 +3,35 @@
 PowerShell Module for offline servicing of Windows images.
 https://osdbuilder.osdeploy.com
 
+## Admin host requirements
+
+| Host | Support |
+|------|---------|
+| Windows 10 / 11, Windows Server 2016+ with Windows PowerShell 5.1 | Supported |
+| Windows 10 / 11, Windows Server 2016+ with PowerShell 7.4+ | Experimental (DISM and BitsTransfer are loaded natively or with Windows PowerShell Compatibility) |
+| macOS / Linux | Not supported locally, use PowerShell Remoting to a Windows host |
+
+OSDBuilder services Windows images with DISM (CBS), robocopy, oscdimg, bcdboot and offline registry hives.
+These components only exist on Windows, so the module refuses to import on macOS and Linux.
+
+### Using OSDBuilder from macOS
+
+Install PowerShell 7 on the Mac and connect to a Windows build host with SSH based PowerShell Remoting
+([PowerShell remoting over SSH](https://learn.microsoft.com/en-us/powershell/scripting/security/remoting/ssh-remoting-in-powershell)).
+The SSH user on the Windows host must be a local Administrator.
+
+```powershell
+# macOS
+Enter-PSSession -HostName buildhost.contoso.local -UserName Administrator
+
+# Windows build host (remote session)
+Import-Module OSDBuilder
+Update-OSMedia -Name 'Windows 11 Enterprise x64 25H2 26200.6584' -Download -Execute
+```
+
+Grid views (`Out-GridView`) are not available in a remote session, use the `-SkipGrid` / `-Name` parameters
+or create the Tasks once in an interactive session on the Windows host.
+
 ## Windows 11 support
 
 This fork supports Windows 11 x64 up to the latest releases:
