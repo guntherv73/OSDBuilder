@@ -11,7 +11,7 @@ OSDBuilder is developed test first (TDD), see [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ```powershell
 .\Tests\Invoke-OSDBuilderTests.ps1          # Pester tests
-.\Tests\Invoke-OSDBuilderTests.ps1 -CI      # PSScriptAnalyzer, tests and code coverage like GitHub Actions
+.\Tests\Invoke-OSDBuilderTests.ps1 -CI      # PSScriptAnalyzer, tests and code coverage (>= 90 %) like GitHub Actions
 ```
 
 The tests mock DISM, Appx, winget and the Microsoft web services and run with Windows PowerShell 5.1 and PowerShell 7

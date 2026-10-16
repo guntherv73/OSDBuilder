@@ -21,9 +21,18 @@ A bug fix always contains the test that reproduced the bug. A pull request witho
 # One file, detailed output
 .\Tests\Invoke-OSDBuilderTests.ps1 -Path .\Tests\LocalExperiencePacks.Tests.ps1 -Output Detailed
 
-# Like the GitHub Actions workflow: PSScriptAnalyzer, tests, code coverage (minimum 75 %), exit code
+# Like the GitHub Actions workflow: PSScriptAnalyzer, tests, code coverage of Private and Public (minimum 90 %), exit code
 .\Tests\Invoke-OSDBuilderTests.ps1 -CI
+
+# Coverage of single functions with the missed lines
+.\Tests\Measure-OSDBuilderCoverage.ps1 -Path .\Tests\LocalExperiencePacks.Tests.ps1 -File LocalExperiencePacks.ps1 -ShowMissed
 ```
+
+## Coverage rules
+
+* Every function in `Private\` and `Public\` has a `Describe 'Function-Name'` block, `Tests\Module.Tests.ps1` fails for a function without one
+* The code coverage of `Private\` and `Public\` must be at least 90 %, `-CI` and the GitHub Actions workflow fail below
+* A new or changed function is covered with at least 90 %, aim for every branch (skip conditions, error paths, Windows 10/11/Server)
 
 The runner installs Pester 5.7.1 and PSScriptAnalyzer 1.24.0 for the current user when they are missing.
 The tests do not need administrator rights, a Windows image, DISM or network access.

@@ -8,9 +8,11 @@ Every change follows Red - Green - Refactor (see CONTRIBUTING.md):
 
 1. Write or extend a Pester test in `Tests\` first and run it, it must fail for the expected reason
 2. Implement the minimal change in `Private\`, `Public\` or `Examples\`
-3. Run `Tests\Invoke-OSDBuilderTests.ps1 -CI` before every commit: PSScriptAnalyzer, all tests and code coverage >= 75 % must pass
-4. Bug fixes include the test that reproduces the bug
-5. Never skip, disable or weaken a test to get green
+3. Run `Tests\Invoke-OSDBuilderTests.ps1 -CI` before every commit: PSScriptAnalyzer, all tests and code coverage of Private and Public >= 90 % must pass
+4. Every function in `Private\` and `Public\` needs a `Describe 'Function-Name'` block (enforced by `Tests\Module.Tests.ps1`),
+   use `Tests\Measure-OSDBuilderCoverage.ps1 -ShowMissed` to find untested lines
+5. Bug fixes include the test that reproduces the bug
+6. Never skip, disable or weaken a test to get green
 
 Run the tests in this environment with `pwsh -NoProfile -File Tests/Invoke-OSDBuilderTests.ps1 -CI`.
 
