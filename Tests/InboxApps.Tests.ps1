@@ -25,6 +25,43 @@ BeforeAll {
         finally {$Zip.Dispose()}
         Get-Item $Path
     }
+
+    #Bundle with any application and resource packages, Architecture '' writes no Architecture attribute,
+    #Missing packages are listed in the bundle manifest but not added to the bundle, EntryName is the escaped zip entry name
+    function New-TestAppxBundleCustom {
+        param ($Path, $Name, $Version = '1.0.0.0', [hashtable[]]$Packages)
+        Add-Type -AssemblyName System.IO.Compression -ErrorAction SilentlyContinue
+        Add-Type -AssemblyName System.IO.Compression.FileSystem -ErrorAction SilentlyContinue
+        $PackageXml = ''
+        foreach ($Package in $Packages) {
+            $Type = if ($Package.Type) {$Package.Type} else {'application'}
+            $ArchAttribute = if ($Package.Architecture) {" Architecture=`"$($Package.Architecture)`""} else {''}
+            $PackageXml += "<Package Type=`"$Type`" Version=`"$($Package.Version)`"$ArchAttribute FileName=`"$($Package.FileName)`" />"
+        }
+        $BundleManifest = '<?xml version="1.0" encoding="utf-8"?>' +
+            '<Bundle xmlns="http://schemas.microsoft.com/appx/2013/bundle">' +
+            "<Identity Name=`"$Name`" Publisher=`"CN=Microsoft Corporation`" Version=`"$Version`" />" +
+            "<Packages>$PackageXml</Packages>" +
+            '</Bundle>'
+        New-Item -Path (Split-Path $Path -Parent) -ItemType Directory -Force | Out-Null
+        if (Test-Path $Path) {Remove-Item -Path $Path -Force}
+        $Zip = [System.IO.Compression.ZipFile]::Open($Path, [System.IO.Compression.ZipArchiveMode]::Create)
+        try {
+            $Entry = $Zip.CreateEntry('AppxMetadata/AppxBundleManifest.xml')
+            $Writer = New-Object System.IO.StreamWriter($Entry.Open())
+            try {$Writer.Write($BundleManifest)} finally {$Writer.Dispose()}
+            foreach ($Package in ($Packages | Where-Object {-not $_.Missing})) {
+                $Arch = if ($Package.Architecture) {$Package.Architecture} else {'neutral'}
+                $Dependency = if ($Package.Dependency) {$Package.Dependency} else {@()}
+                $Inner = Join-Path $TestDrive "$([guid]::NewGuid()).appx"
+                New-TestAppx -Path $Inner -Name $Name -Version $Package.Version -Architecture $Arch -Dependency $Dependency | Out-Null
+                $EntryName = if ($Package.EntryName) {$Package.EntryName} else {$Package.FileName}
+                [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($Zip, $Inner, $EntryName) | Out-Null
+            }
+        }
+        finally {$Zip.Dispose()}
+        Get-Item $Path
+    }
 }
 
 Describe 'Get-OSDBuilderAppxManifest' {
@@ -59,6 +96,79 @@ Describe 'Get-OSDBuilderAppxManifest' {
         $Manifest.Version | Should -Be '11.2508.1.0'
         $Manifest.Architecture | Should -Be 'x64'
         $Manifest.Dependencies.Name | Should -Be 'Microsoft.WindowsAppRuntime.1.7'
+    }
+
+    It 'returns the bundle identity without version when no application matches the architecture' {
+        $Bundle = New-TestAppxBundleCustom -Path (Join-Path (Join-Path $TestDrive 'edge1') 'arm.msixbundle') -Name 'Contoso.Arm' -Packages @(
+            @{Version = '2.0.0.0'; Architecture = 'arm64'; FileName = 'Contoso.Arm_2.0.0.0_arm64.appx'}
+            @{Type = 'resource'; Version = '2.0.0.0'; Architecture = 'x64'; FileName = 'Contoso.Arm_2.0.0.0_language-de.appx'}
+        )
+        $Manifest = Get-OSDBuilderAppxManifest -Path $Bundle.FullName -Detailed
+        $Manifest.IsBundle | Should -BeTrue
+        $Manifest.Name | Should -Be 'Contoso.Arm'
+        $Manifest.Version | Should -BeNullOrEmpty
+        $Manifest.Architecture | Should -BeNullOrEmpty
+        @($Manifest.Dependencies).Count | Should -Be 0
+    }
+
+    It 'returns the bundle identity without version when the application package is not in the bundle' {
+        $Bundle = New-TestAppxBundleCustom -Path (Join-Path (Join-Path $TestDrive 'edge2') 'missing.msixbundle') -Name 'Contoso.Missing' -Packages @(
+            @{Version = '2.0.0.0'; Architecture = 'x64'; FileName = 'Contoso.Missing_2.0.0.0_x64.appx'; Missing = $true}
+        )
+        $Manifest = Get-OSDBuilderAppxManifest -Path $Bundle.FullName -Detailed
+        $Manifest.Name | Should -Be 'Contoso.Missing'
+        $Manifest.Version | Should -BeNullOrEmpty
+    }
+
+    It 'uses the first architecture of -Architecture that the bundle contains' {
+        $Bundle = New-TestAppxBundleCustom -Path (Join-Path (Join-Path $TestDrive 'edge3') 'multi.msixbundle') -Name 'Contoso.Multi' -Packages @(
+            @{Version = '3.0.0.64'; Architecture = 'x64'; FileName = 'Contoso.Multi_x64.appx'}
+            @{Version = '3.0.0.86'; Architecture = 'x86'; FileName = 'Contoso.Multi_x86.appx'; Dependency = @('Microsoft.VCLibs.140.00')}
+        )
+        $Manifest = Get-OSDBuilderAppxManifest -Path $Bundle.FullName -Architecture 'arm64', 'x86', 'x64' -Detailed
+        $Manifest.Version | Should -Be '3.0.0.86'
+        $Manifest.Architecture | Should -Be 'x86'
+        $Manifest.Dependencies.Name | Should -Be 'Microsoft.VCLibs.140.00'
+        (Get-OSDBuilderAppxManifest -Path $Bundle.FullName -Detailed).Version | Should -Be '3.0.0.64'
+    }
+
+    It 'uses an application package without architecture as neutral' {
+        $Bundle = New-TestAppxBundleCustom -Path (Join-Path (Join-Path $TestDrive 'edge4') 'neutral.msixbundle') -Name 'Contoso.Neutral' -Packages @(
+            @{Version = '4.0.0.0'; Architecture = ''; FileName = 'Contoso.Neutral_4.0.0.0_neutral.appx'}
+        )
+        $Manifest = Get-OSDBuilderAppxManifest -Path $Bundle.FullName -Detailed
+        $Manifest.Version | Should -Be '4.0.0.0'
+        $Manifest.Architecture | Should -Be 'neutral'
+    }
+
+    It 'finds an application package with an URL encoded zip entry name' {
+        $Bundle = New-TestAppxBundleCustom -Path (Join-Path (Join-Path $TestDrive 'edge5') 'escaped.msixbundle') -Name 'Contoso.Escaped' -Packages @(
+            @{Version = '5.0.0.0'; Architecture = 'x64'; FileName = 'Contoso Escaped_x64.appx'; EntryName = 'Contoso%20Escaped_x64.appx'}
+        )
+        (Get-OSDBuilderAppxManifest -Path $Bundle.FullName -Detailed).Version | Should -Be '5.0.0.0'
+    }
+
+    It 'returns $null for a bundle with an invalid application package' {
+        Add-Type -AssemblyName System.IO.Compression -ErrorAction SilentlyContinue
+        Add-Type -AssemblyName System.IO.Compression.FileSystem -ErrorAction SilentlyContinue
+        $Path = Join-Path (Join-Path $TestDrive 'edge6') 'invalid.msixbundle'
+        New-Item -Path (Split-Path $Path -Parent) -ItemType Directory -Force | Out-Null
+        $Inner = New-TestFile -Path (Join-Path $TestDrive 'edge6-inner.appx') -Value 'not a zip'
+        $Zip = [System.IO.Compression.ZipFile]::Open($Path, [System.IO.Compression.ZipArchiveMode]::Create)
+        try {
+            $Entry = $Zip.CreateEntry('AppxMetadata/AppxBundleManifest.xml')
+            $Writer = New-Object System.IO.StreamWriter($Entry.Open())
+            try {$Writer.Write('<Bundle><Identity Name="Contoso.Invalid" /><Packages><Package Type="application" Architecture="x64" FileName="inner.appx" /></Packages></Bundle>')} finally {$Writer.Dispose()}
+            [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($Zip, $Inner.FullName, 'inner.appx') | Out-Null
+        }
+        finally {$Zip.Dispose()}
+        $Verbose = (Get-OSDBuilderAppxManifest -Path $Path -Detailed -Verbose 4>&1) | ForEach-Object {"$_"}
+        ($Verbose -join "`n") | Should -BeLike "*Unable to read the manifest of $Path*"
+        Get-OSDBuilderAppxManifest -Path $Path -Detailed | Should -BeNullOrEmpty
+    }
+
+    It 'returns $null for a missing file' {
+        Get-OSDBuilderAppxManifest -Path (Join-Path $TestDrive 'missing.appx') | Should -BeNullOrEmpty
     }
 
     It 'returns $null for a file that is not an app package' {
@@ -151,6 +261,105 @@ Describe 'Update-InboxAppsOS' {
         Mock Add-AppxProvisionedPackage {throw '0x80073cf3'} -ParameterFilter {$PackagePath -like '*Calculator*'}
         Update-InboxAppsOS 6>$null 3>$null 4>$null
         Should -Invoke Add-AppxProvisionedPackage -Times 1 -Exactly -ParameterFilter {$PackagePath -like '*BingNews*'}
+    }
+
+    It 'does nothing when <Case>' -ForEach @(
+        @{Case = 'the OS is not Windows 10 or 11'; Variable = 'OSMajorVersion'; Value = 6}
+        @{Case = 'the OS is Windows 10'; Variable = 'UpdateOS'; Value = 'Windows 10'}
+        @{Case = 'the image is Windows Server'; Variable = 'OSInstallationType'; Value = 'Server'}
+    ) {
+        Set-Variable -Name $Variable -Value $Value
+        Update-InboxAppsOS 6>$null 3>$null
+        Should -Invoke Get-AppxProvisionedPackage -Times 0 -Exactly
+        Should -Invoke Add-AppxProvisionedPackage -Times 0 -Exactly
+    }
+
+    It 'reinstalls the apps for <Variable>' -ForEach @(
+        @{Variable = 'LanguageInterfacePacks'}
+        @{Variable = 'LanguageFeatures'}
+        @{Variable = 'LocalExperiencePacks'}
+    ) {
+        $LanguagePacks = $null
+        Set-Variable -Name $Variable -Value @('something')
+        Update-InboxAppsOS 6>$null
+        Should -Invoke Add-AppxProvisionedPackage -Times 2 -Exactly
+    }
+
+    It 'reinstalls the apps for the languages of the OSLanguagePacks ContentPacks' {
+        $LanguagePacks = $null
+        Mock Get-OSDBuilderContentPackLanguages {'de-de'}
+        Update-InboxAppsOS 6>$null
+        Should -Invoke Add-AppxProvisionedPackage -Times 2 -Exactly
+    }
+
+    It 'writes the log of a failed app' {
+        Mock Add-AppxProvisionedPackage {throw '0x80073cf3 conflict'} -ParameterFilter {$PackagePath -like '*Calculator*'}
+        $Output = (Update-InboxAppsOS 6>$null 3>&1 4>&1) -join "`n"
+        $Output | Should -BeLike '*Inbox Apps: Microsoft.WindowsCalculator could not be reinstalled, 0x80073cf3 conflict*'
+        $Output | Should -BeLike '*Update-InboxAppsOS-Microsoft.WindowsCalculator.log*'
+    }
+
+    It 'shows the apps that are not in the ISO and newer in the image' {
+        $Output = (Update-InboxAppsOS 6>&1 | ForEach-Object {"$_"}) -join "`n"
+        $Output | Should -BeLike '*NOT IN ISO*Microsoft.SecHealthUI*'
+        $Output | Should -BeLike '*NEWER IN IMAGE*Microsoft.Windows.Photos 2026.1.0.0*'
+    }
+
+    Context 'Bundles and dependencies' {
+        BeforeAll {
+            $SetOSDBuilderPathContent = Join-Path $TestDrive 'BundleContent'
+            $BundlePackages = Join-Path (Join-Path (Join-Path $SetOSDBuilderPathContent 'InboxApps') 'Windows 11 24H2-26H2 Inbox Apps') 'packages'
+            #The x64 package wins over the bundle and the neutral package
+            New-TestAppx -Path (Join-Path $BundlePackages 'Contoso.Pref_x64.appx') -Name 'Contoso.Pref' -Version '1.0.0.64' -Architecture 'x64' | Out-Null
+            New-TestAppx -Path (Join-Path $BundlePackages 'Contoso.Pref_neutral.appx') -Name 'Contoso.Pref' -Version '1.0.0.1' -Architecture 'neutral' | Out-Null
+            New-TestAppxBundleCustom -Path (Join-Path $BundlePackages 'Contoso.Pref.msixbundle') -Name 'Contoso.Pref' -Packages @(@{Version = '1.0.0.2'; Architecture = 'x64'; FileName = 'Contoso.Pref_x64_inner.appx'}) | Out-Null
+            #The bundle wins over the neutral package, its application package has a dependency that is not in the Inbox Apps
+            New-TestAppx -Path (Join-Path $BundlePackages 'Contoso.Bundle_neutral.appx') -Name 'Contoso.Bundle' -Version '2.0.0.1' -Architecture 'neutral' | Out-Null
+            New-TestAppxBundleCustom -Path (Join-Path $BundlePackages 'Contoso.Bundle.msixbundle') -Name 'Contoso.Bundle' -Packages @(
+                @{Version = '2.0.0.64'; Architecture = 'x64'; FileName = 'Contoso.Bundle_x64.appx'; Dependency = @('Microsoft.UI.Xaml.2.8')}
+            ) | Out-Null
+            New-TestFile -Path (Join-Path $BundlePackages 'Contoso.Bundle.xml') | Out-Null
+            #A bundle without an application package for x64, neutral or x86
+            New-TestAppxBundleCustom -Path (Join-Path $BundlePackages 'Contoso.Arm.msixbundle') -Name 'Contoso.Arm' -Packages @(@{Version = '3.0.0.0'; Architecture = 'arm64'; FileName = 'Contoso.Arm_arm64.appx'}) | Out-Null
+            #An arm64 package is not used for an x64 image
+            New-TestAppx -Path (Join-Path $BundlePackages 'Contoso.ArmOnly_arm64.appx') -Name 'Contoso.ArmOnly' -Version '4.0.0.0' -Architecture 'arm64' | Out-Null
+        }
+
+        BeforeEach {
+            Mock Get-AppxProvisionedPackage {
+                [PSCustomObject]@{DisplayName = 'Contoso.Pref'; Version = '1.0.0.0'}
+                [PSCustomObject]@{DisplayName = 'Contoso.Bundle'; Version = '2.0.0.0'}
+                [PSCustomObject]@{DisplayName = 'Contoso.Arm'; Version = '3.0.0.0'}
+                [PSCustomObject]@{DisplayName = 'Contoso.ArmOnly'; Version = '4.0.0.0'}
+            }
+        }
+
+        It 'prefers the package of the image architecture over a bundle and a neutral package' {
+            Update-InboxAppsOS 6>$null 3>$null
+            Should -Invoke Add-AppxProvisionedPackage -Times 1 -Exactly -ParameterFilter {$PackagePath -eq (Join-Path $BundlePackages 'Contoso.Pref_x64.appx')}
+            Should -Invoke Add-AppxProvisionedPackage -Times 0 -Exactly -ParameterFilter {$PackagePath -like '*Contoso.Pref_neutral.appx' -or $PackagePath -like '*Contoso.Pref.msixbundle'}
+        }
+
+        It 'reinstalls the bundle with its license and lets DISM use the framework in the image' {
+            $Verbose = (Update-InboxAppsOS -Verbose 6>$null 3>$null 4>&1) -join "`n"
+            $Verbose | Should -BeLike '*Contoso.Bundle dependency Microsoft.UI.Xaml.2.8 is not in the Inbox Apps, DISM uses the framework in the image*'
+            Should -Invoke Add-AppxProvisionedPackage -Times 1 -Exactly -ParameterFilter {
+                ($PackagePath -eq (Join-Path $BundlePackages 'Contoso.Bundle.msixbundle')) -and ($LicensePath -eq (Join-Path $BundlePackages 'Contoso.Bundle.xml')) -and
+                (-not $DependencyPackagePath) -and (-not $SkipLicense) -and ($Path -eq 'C:\Mount')
+            }
+        }
+
+        It 'warns when the application package of a bundle can not be read' {
+            $Warnings = (Update-InboxAppsOS 6>$null 3>&1) -join "`n"
+            $Warnings | Should -BeLike '*Inbox Apps: Unable to read Contoso.Arm*'
+            Should -Invoke Add-AppxProvisionedPackage -Times 0 -Exactly -ParameterFilter {$PackagePath -like '*Contoso.Arm*'}
+        }
+
+        It 'does not use a package of another architecture' {
+            $Output = (Update-InboxAppsOS 6>&1 3>$null | ForEach-Object {"$_"}) -join "`n"
+            $Output | Should -BeLike '*NOT IN ISO*Contoso.ArmOnly*'
+            Should -Invoke Add-AppxProvisionedPackage -Times 2 -Exactly
+        }
     }
 
     It 'warns when the Inbox Apps ISO is not extracted' {

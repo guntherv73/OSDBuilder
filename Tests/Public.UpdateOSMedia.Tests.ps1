@@ -341,14 +341,14 @@ Describe 'Update-OSMedia' {
         It 'warns when the directory has no WindowsImage.txt' {
             New-TestOSMedia -Name $Win11Name -Image 'Win11Enterprise24H2' -NoWindowsImageTxt | Out-Null
             $Warnings = Invoke-UpdateOSMedia -Parameters @{Name = $Win11Name; Execute = $true}
-            $Warnings | Should -BeLike '*is not a valid OSMedia Directory'
+            ($Warnings -like '*is not a valid OSMedia Directory') | Should -HaveCount 1
             Should -Invoke Get-WindowsImage -Times 0 -Exactly
         }
 
         It 'warns when OS\sources\install.wim is missing' {
             New-TestOSMedia -Name $Win11Name -Image 'Win11Enterprise24H2' -NoInstallWim | Out-Null
             $Warnings = Invoke-UpdateOSMedia -Parameters @{Name = $Win11Name; Execute = $true}
-            $Warnings | Should -BeLike '*install.wim is not a valid Windows Image'
+            ($Warnings -like '*install.wim is not a valid Windows Image') | Should -HaveCount 1
             Should -Invoke Get-WindowsImage -Times 0 -Exactly
         }
 
@@ -367,7 +367,7 @@ Describe 'Update-OSMedia' {
         ) {
             New-TestOSMedia -Name $Name -Image $Image -ImageProperty $Property | Out-Null
             $Warnings = Invoke-UpdateOSMedia -Parameters @{Name = $Name; Download = $true; Execute = $true}
-            $Warnings | Should -BeLike '*is not supported'
+            ($Warnings -like '*is not supported') | Should -HaveCount 1
             Should -Invoke Get-OSDUpdateDownloads -Times 0 -Exactly
             Should -Invoke Mount-InstallwimOS -Times 0 -Exactly
         }
@@ -402,7 +402,7 @@ Describe 'Update-OSMedia' {
         }
 
         It 'downloads only the missing required updates of Windows 11 24H2 x64 with -Download' {
-            $HostOutput = (Update-OSMedia -Name $Win11Name -Download 3>$null 6>&1) -join "`n"
+            $HostOutput = (Update-OSMedia -Name $Win11Name -Download 3>$null 6>&1) -join ' '
             Should -Invoke Get-OSDUpdateDownloads -Times 1 -Exactly
             Should -Invoke Get-OSDUpdateDownloads -Times 1 -Exactly -ParameterFilter {$FileName -like 'windows11.0-kb5066131-x64-ndp481*'}
             #Optional updates are listed with the download command but not downloaded
@@ -608,7 +608,7 @@ Describe 'Update-OSMedia' {
                 New-TestFile -Path (Join-Path (Join-Path $global:SetOSDBuilderPathOSMedia "build$($Time.ToString('yyMMddhhmm'))") 'old.txt') | Out-Null
             }
             $Warnings = Invoke-UpdateOSMedia -Parameters $Parameters
-            $Warnings | Should -BeLike '*build* will be replaced!'
+            ($Warnings -like '*build* will be replaced!') | Should -HaveCount 1
             Test-Path (Join-Path (Join-Path $global:SetOSDBuilderPathOSMedia $Win11NewName) 'old.txt') | Should -BeFalse
         }
 
@@ -652,14 +652,14 @@ Describe 'Update-OSMedia' {
             It 'copies the downloaded OneDriveSetup.exe to SysWOW64 of x64 Windows' {
                 (Get-Item (Join-Path $global:GetOSDBuilderPathContentOneDrive 'OneDriveSetup.exe')).LastWriteTime = (Get-Date).AddDays(-7)
                 Invoke-UpdateOSMedia -Parameters $Parameters | Out-Null
-                Should -Invoke robocopy -Times 1 -Exactly -ParameterFilter {(@($RemainingArguments)[1] -like '*SysWOW64') -and (@($RemainingArguments)[2] -eq 'OneDriveSetup.exe')}
+                Should -Invoke robocopy -Times 1 -Exactly -ParameterFilter {((@($InputObject) + @($RemainingArguments)) -join ' ') -like '*OneDrive *SysWOW64 OneDriveSetup.exe /ndl*'}
             }
 
             It 'copies the downloaded OneDriveSetup.exe to System32 of x86 Windows' {
                 $script:OneDriveFolder = 'System32'
                 $script:SourceImages[$Win11Name].Architecture = 0
                 Invoke-UpdateOSMedia -Parameters $Parameters | Out-Null
-                Should -Invoke robocopy -Times 1 -Exactly -ParameterFilter {@($RemainingArguments)[1] -like '*System32'}
+                Should -Invoke robocopy -Times 1 -Exactly -ParameterFilter {((@($InputObject) + @($RemainingArguments)) -join ' ') -like '*OneDrive *System32 OneDriveSetup.exe /ndl*'}
             }
 
             It 'keeps OneDriveSetup.exe of the image when it was not downloaded' {
@@ -719,6 +719,9 @@ Describe 'Update-OSMedia' {
         It 'applies AdobeSU to Windows Server with Desktop Experience' {
             $Name = 'Windows Server 2022 Datacenter Desktop Experience x64 21H2 20348.587'
             New-TestOSMedia -Name $Name -Image 'Server2022Datacenter' -Registry 'Server2022-587' | Out-Null
+            $script:RegistryPre = New-TestRegistry -Key 'Server2022-587'
+            $script:RegistryPost = New-TestRegistry -Key 'Server2022-4294'
+            $script:PostImage = New-TestWindowsImage -Key 'Server2022Datacenter' -ImagePath 'build' -Property @{SPBuild = 4294}
             Mock Update-AdobeOS {$script:Seen['AdobeSU'] = @($OSDUpdateAdobeSU.KBNumber)}
             Mock Update-WindowsServer2012R2OS {$script:Seen['TwelveR2'] = @($OSDUpdateWinTwelveR2 | Where-Object {$_})}
             Invoke-UpdateOSMedia -Parameters @{Name = $Name; Execute = $true} | Out-Null
@@ -726,28 +729,28 @@ Describe 'Update-OSMedia' {
             $script:Seen['TwelveR2'] | Should -BeNullOrEmpty
         }
 
-        It 'maps build <Build> without CurrentVersion.xml to ReleaseId <ReleaseId>' -ForEach @(
-            @{Build = 10240; ReleaseId = '1507'}
-            @{Build = 14393; ReleaseId = '1607'}
-            @{Build = 15063; ReleaseId = '1703'}
-            @{Build = 16299; ReleaseId = '1709'}
-            @{Build = 17134; ReleaseId = '1803'}
-            @{Build = 17763; ReleaseId = '1809'}
+        It 'maps build <Build> without CurrentVersion.xml to ReleaseId <ExpectedReleaseId>' -ForEach @(
+            @{Build = 10240; ExpectedReleaseId = '1507'}
+            @{Build = 14393; ExpectedReleaseId = '1607'}
+            @{Build = 15063; ExpectedReleaseId = '1703'}
+            @{Build = 16299; ExpectedReleaseId = '1709'}
+            @{Build = 17134; ExpectedReleaseId = '1803'}
+            @{Build = 17763; ExpectedReleaseId = '1809'}
         ) {
-            $Name = "Windows 10 Enterprise x64 $ReleaseId $Build.1"
+            $Name = "Windows 10 Enterprise x64 $ExpectedReleaseId $Build.1"
             New-TestOSMedia -Name $Name -Image 'Win10Enterprise1809' -ImageProperty @{Build = $Build; Version = "10.0.$Build.1"} | Out-Null
             $script:TestUpdates = @(
-                New-TestUpdate -UpdateBuild $ReleaseId -KBNumber '1000001'
+                New-TestUpdate -UpdateBuild $ExpectedReleaseId -KBNumber '1000001'
                 New-TestUpdate -UpdateBuild '1909' -KBNumber '1000002'
             )
             #Get-RegCurrentVersion of an old image without CurrentBuild, UBR and DisplayVersion
-            $script:RegistryPre = [PSCustomObject]@{ReleaseId = $ReleaseId}
-            $script:RegistryPost = [PSCustomObject]@{ReleaseId = $ReleaseId; CurrentBuild = "$Build"; UBR = 5000}
+            $script:RegistryPre = [PSCustomObject]@{ReleaseId = $ExpectedReleaseId}
+            $script:RegistryPost = [PSCustomObject]@{ReleaseId = $ExpectedReleaseId; CurrentBuild = "$Build"; UBR = 5000}
             $script:PostImage = New-TestWindowsImage -Key 'Win10Enterprise1809' -ImagePath 'build' -Property @{Build = $Build; SPBuild = 5000}
             Invoke-UpdateOSMedia -Parameters @{Name = $Name; Download = $true; Execute = $true} | Out-Null
             Should -Invoke Get-OSDUpdateDownloads -Times 1 -Exactly
             Should -Invoke Get-OSDUpdateDownloads -Times 1 -Exactly -ParameterFilter {$FileName -like '*kb1000001*'}
-            Get-RenamedOSMedia | Should -Be @("Windows 10 Enterprise x64 $ReleaseId $Build.5000")
+            Get-RenamedOSMedia | Should -Be @("Windows 10 Enterprise x64 $ExpectedReleaseId $Build.5000")
         }
     }
 
@@ -879,14 +882,14 @@ Describe 'Update-OSMedia' {
             $ByTaskName = 'Win11 Enterprise x64 24H2'
             New-Item -Path $global:SetOSDBuilderPathTemplates -ItemType Directory -Force | Out-Null
             $TemplateBase = Get-Content -Path $script:FixtureTask -Raw | ConvertFrom-Json
-            $Global = $TemplateBase | Select-Object -Property *
-            $Global.TaskName = 'Global Corp'; $Global.Drivers = @('Global\Drivers'); $Global.EnableNetFX3 = $true; $Global.ContentPacks = @('GlobalPack')
-            $Global | Add-Member -NotePropertyName SetAllIntl -NotePropertyValue 'de-DE'
+            $GlobalTemplate = $TemplateBase | Select-Object -Property *
+            $GlobalTemplate.TaskName = 'Global Corp'; $GlobalTemplate.Drivers = @('Global\Drivers'); $GlobalTemplate.EnableNetFX3 = $true; $GlobalTemplate.ContentPacks = @('GlobalPack')
+            $GlobalTemplate | Add-Member -NotePropertyName SetAllIntl -NotePropertyValue 'de-DE'
             foreach ($Property in 'StartLayoutXML', 'UnattendXML', 'LangSetInputLocale', 'LangSetSKUIntlDefaults', 'LangSetSetupUILang', 'LangSetSysLocale', 'LangSetUILang', 'LangSetUILangFallback', 'LangSetUserLocale') {
-                $Global.$Property = "$Property-Global"
+                $GlobalTemplate.$Property = "$Property-Global"
             }
-            $Global.WinPEAutoExtraFiles = $true; $Global.WinPEOSDCloud = $true; $Global.WinREWiFi = $true; $Global.WinPEAddDaRT = 'DaRT10'
-            $Global | ConvertTo-Json | Set-Content -Path (Join-Path $global:SetOSDBuilderPathTemplates 'OSBuild Global Corp.json')
+            $GlobalTemplate.WinPEAutoExtraFiles = $true; $GlobalTemplate.WinPEOSDCloud = $true; $GlobalTemplate.WinREWiFi = $true; $GlobalTemplate.WinPEAddDaRT = 'DaRT10'
+            $GlobalTemplate | ConvertTo-Json | Set-Content -Path (Join-Path $global:SetOSDBuilderPathTemplates 'OSBuild Global Corp.json')
             $Family = $TemplateBase | Select-Object -Property *
             $Family.TaskName = 'Win11 Family'; $Family.Drivers = @('Family\Drivers')
             $Family | ConvertTo-Json | Set-Content -Path (Join-Path $global:SetOSDBuilderPathTemplates 'OSBuild Win11 Family.json')
@@ -896,7 +899,7 @@ Describe 'Update-OSMedia' {
 
             Mock Add-ContentDriversOS {$script:Seen['Drivers'] = @($Drivers); $script:Seen['EnableNetFX3'] = $EnableNetFX3; $script:Seen['WinPEDaRT'] = $WinPEDaRT; $script:Seen['SetUILang'] = $SetUILang}
             Invoke-UpdateOSMedia -Command 'New-OSBuild' -Parameters $BuildParameters | Out-Null
-            $script:Seen['Drivers'] | Should -Be @('Corp\Drivers', 'Global\Drivers', 'Corp\Drivers', 'Family\Drivers')
+            $script:Seen['Drivers'] | Should -Be @('Corp\Drivers', 'Global\Drivers', 'Family\Drivers')
             $script:Seen['EnableNetFX3'] | Should -BeTrue
             $script:Seen['WinPEDaRT'] | Should -Be 'DaRT10'
             $script:Seen['SetUILang'] | Should -Be 'LangSetUILang-Global'
