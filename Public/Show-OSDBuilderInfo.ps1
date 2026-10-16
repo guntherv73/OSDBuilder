@@ -70,7 +70,7 @@ function Show-OSDBuilderInfo {
 
             if (!(Test-Path $(Join-Path $Media.FullName (Join-Path "info" (Join-Path "xml" "Get-WindowsImage.xml"))))) {
                 Write-Host '========================================================================================' -ForegroundColor DarkGray
-                Write-Warning "Could not find an OSDBuilder Operating System at $Media.FullName"
+                Write-Warning "Could not find an OSDBuilder Operating System at $($Media.FullName)"
                 Break
             }
 

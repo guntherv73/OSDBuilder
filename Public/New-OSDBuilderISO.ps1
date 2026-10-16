@@ -133,7 +133,7 @@ function New-OSDBuilderISO {
                     $ISOFile = "$ISODestinationFolder\WinPE3 $($Media.Arch) $($Media.UBR).iso"
                 } else {
                     $OSImageName = "WinPE $($Media.Arch) $($Media.UBR)"
-                    $ISOFile = "$ISODestinationFolder\WinPE5 $($Media.Arch) $($Media.UBR).iso"
+                    $ISOFile = "$ISODestinationFolder\WinPE $($Media.Arch) $($Media.UBR).iso"
                 }
             } elseif ($Media.OperatingSystem -like "*Server*") {
                 $OSImageName = "Server $($Media.Version)"
@@ -178,13 +178,13 @@ function New-OSDBuilderISO {
             if (!(Test-Path $ISOSourceFolder)) {
                 Write-Warning "Could not locate $ISOSourceFolder"
                 Write-Warning "Make sure you have proper OS before using New-OSDBuilderISO"
-                Return
+                Continue
             }
             $etfsboot = "$ISOSourceFolder\boot\etfsboot.com"
             if (!(Test-Path $etfsboot)) {
                 Write-Warning "Could not locate $etfsboot"
                 Write-Warning "Make sure you have proper OS before using New-OSDBuilderISO"
-                Return
+                Continue
             }
 
             $efisys = "$ISOSourceFolder\efi\microsoft\boot\efisys.bin"
@@ -199,7 +199,7 @@ function New-OSDBuilderISO {
             } else {
                 Write-Warning "Could not locate $efisys"
                 Write-Warning "Make sure you have proper OS before using New-OSDBuilderISO"
-                Return
+                Continue
             }
 
             Write-Host "Label: $OSImageName" -ForegroundColor Cyan

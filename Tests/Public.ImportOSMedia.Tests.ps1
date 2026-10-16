@@ -192,17 +192,11 @@ Describe 'Import-OSMedia' {
             Should -Invoke Get-WindowsImage -Times 0 -Exactly
         }
 
-        It 'stops when no drive has a Windows Image' {
-            $Warnings = Invoke-ImportOSMedia
-            $Warnings | Should -Contain 'Import-OSMedia: OSMedia was not found . . . Exiting!'
-            Should -Invoke Get-WindowsImage -Times 0 -Exactly
-            Should -Invoke Mount-ImportOSMediaWim -Times 0 -Exactly
-        }
-
-        It 'warns that no Windows Image was found on the CD or DVD drives' -Skip {
-            # KnownBug: Import-OSMedia.ps1:274 compares the array $ImportOSMediaOperatingSystems (initialized with @()) with $null, the check is never true
+        It 'warns and stops when no drive has a Windows Image' {
             $Warnings = Invoke-ImportOSMedia
             $Warnings | Should -Contain 'Windows Image could not be found on any CD or DVD Drives.  Throw BREAK'
+            Should -Invoke Get-WindowsImage -Times 0 -Exactly
+            Should -Invoke Mount-ImportOSMediaWim -Times 0 -Exactly
         }
     }
 

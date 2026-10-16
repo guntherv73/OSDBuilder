@@ -167,8 +167,7 @@ Describe 'New-OSDBuilderISO' {
             Should -Invoke Start-Process -Times 1 -Exactly -ParameterFilter {$ArgumentList[-3] -eq '-l"WinPE x64 1.1"'}
         }
 
-        It 'names the ISO of a PEBuild of an unknown version like the label' -Skip {
-            # KnownBug: New-OSDBuilderISO.ps1:136 names the ISO of a PEBuild of an unknown version 'WinPE5 ...' instead of 'WinPE ...'
+        It 'names the ISO of a PEBuild of an unknown version like the label' {
             $Media = New-TestMedia -Name 'Media' -Property @{MediaType = 'PEBuild'; MajorVersion = 5; Version = '5.0.1'; UBR = '1.1'}
             $OSMedia = @($Media)
             $Result = New-OSDBuilderISO -FullName $Media.FullName -PassThru 6>$null
@@ -243,8 +242,7 @@ Describe 'New-OSDBuilderISO' {
         Should -Invoke Start-Process -Times 0 -Exactly
     }
 
-    It 'creates the ISO of the next media when a media has no OS directory' -Skip {
-        # KnownBug: New-OSDBuilderISO.ps1:181 Return in the foreach of the Process block skips all remaining selected media
+    It 'creates the ISO of the next media when a media has no OS directory' {
         $NoOS = New-TestMedia -Name 'NoOS' -NoOS
         $Valid = New-TestMedia -Name 'Valid'
         $OSMedia = @($NoOS, $Valid)
@@ -588,8 +586,7 @@ Describe 'Show-OSDBuilderInfo' {
         $Warnings | Should -BeLike '*Could not find an OSDBuilder Operating System at*'
     }
 
-    It 'names the media path in the warning when the media has no Get-WindowsImage.xml' -Skip {
-        # KnownBug: Show-OSDBuilderInfo.ps1:73 "$Media.FullName" expands the whole object followed by '.FullName' instead of the path
+    It 'names the media path in the warning when the media has no Get-WindowsImage.xml' {
         Remove-Item -Path (Join-Path $Xml 'Get-WindowsImage.xml')
         $Warnings = (Show-OSDBuilderInfo -FullName $Media.FullName 6>$null 3>&1) -join "`n"
         $Warnings | Should -Be "Could not find an OSDBuilder Operating System at $($Media.FullName)"
