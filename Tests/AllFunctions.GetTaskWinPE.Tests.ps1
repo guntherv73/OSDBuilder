@@ -83,7 +83,7 @@ Describe 'Get-TaskWinPEADK' {
             (Get-RelativeAdk "$Adk11\amd64\WinPE_OCs\de-de\WinPE-WMI_de-de.cab")
         )
         Should -Invoke Out-GridView -Times 4 -Exactly -ParameterFilter {($null -ne $InputObject) -and $PassThru -and ($Title -like 'WinPE.wim ADK Packages:*')}
-        @($Result).Count | Should -Be 4
+        @($Result | Where-Object {$_}).Count | Should -Be 4
     }
 
     It 'offers the x86 ADK packages to an x86 OSMedia and adds the WinPE content of the IsoExtract' {
@@ -126,7 +126,7 @@ Describe 'Get-TaskWinPEADKPE' {
         @($script:GridView | Where-Object {$_}).Count | Should -Be 4
         $script:GridView.FullName | Should -Contain (Get-RelativeAdk "$Adk11\amd64\WinPE_OCs\de-de\lp.cab")
         Should -Invoke Out-GridView -Times 4 -Exactly -ParameterFilter {($null -ne $InputObject) -and $PassThru -and ($Title -like 'WinPE.wim ADK Packages:*')}
-        @($Result).Count | Should -Be 4
+        @($Result | Where-Object {$_}).Count | Should -Be 4
     }
 
     It 'offers the x86 ADK packages to an x86 OSMedia and adds the WinPE content of the IsoExtract' {
@@ -162,7 +162,7 @@ Describe 'Get-TaskWinPEADKRE' {
         $Result = Get-TaskWinPEADKRE 6>$null 3>$null
         @($script:GridView | Where-Object {$_}).Count | Should -Be 4
         Should -Invoke Out-GridView -Times 4 -Exactly -ParameterFilter {($null -ne $InputObject) -and $PassThru -and ($Title -like 'WinRE.wim ADK Packages:*')}
-        @($Result).Count | Should -Be 4
+        @($Result | Where-Object {$_}).Count | Should -Be 4
     }
 
     It 'does not offer the ADK language packs of Windows 11 when the Languages and Optional Features ISO has WinPE languages' {
@@ -215,7 +215,7 @@ Describe 'Get-TaskWinPEADKSE' {
         $Result = Get-TaskWinPEADKSE 6>$null
         @($script:GridView | Where-Object {$_}).Count | Should -Be 4
         Should -Invoke Out-GridView -Times 4 -Exactly -ParameterFilter {($null -ne $InputObject) -and $PassThru -and ($Title -like 'WinSE.wim ADK Packages:*')}
-        @($Result).Count | Should -Be 4
+        @($Result | Where-Object {$_}).Count | Should -Be 4
     }
 
     It 'offers the x86 ADK packages to an x86 OSMedia and adds the WinPE content of the IsoExtract' {

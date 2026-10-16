@@ -347,6 +347,11 @@ Describe 'New-OSDBuilderUSB' {
 }
 
 Describe 'New-OSDBuilderVHD' {
+    AfterEach {
+        #Pester creates the TestDrive of the next block in the temp directory
+        $env:Temp = $SavedTemp
+    }
+
     BeforeEach {
         $env:Temp = Join-Path $TestDrive ([guid]::NewGuid())
         New-Item -Path $env:Temp -ItemType Directory -Force | Out-Null

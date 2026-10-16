@@ -485,8 +485,9 @@ Describe 'New-OSBuild' {
         ) {
             #The expected value is not named ReleaseId, New-OSBuild would read it from the calling scope
             $script:OSMediaList = @(New-TestOSMedia -CurrentVersion $CurrentVersion)
-            Invoke-NewOSBuild @{ByTaskName = 'Contoso Win11 Ent x64 25H2'} | Out-Null
-            $global:NewOSBuildState['Show-TaskInfo'].ReleaseId | Should -Be $ExpectedReleaseId
+            Invoke-NewOSBuild @{ByTaskName = 'Contoso Win11 Ent x64 25H2'; Execute = $true; SkipUpdates = $true} | Out-Null
+            #The ReleaseId of the source OSMedia, before it is read from the registry of the mounted install.wim
+            $global:NewOSBuildState['Mount-InstallwimOS'].ReleaseId | Should -Be $ExpectedReleaseId
         }
 
         It 'maps the build <Build> to the ReleaseId <ExpectedReleaseId> without CurrentVersion.xml' -TestCases @(
