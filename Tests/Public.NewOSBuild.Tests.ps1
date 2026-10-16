@@ -908,8 +908,8 @@ Describe 'New-OSBuild' {
 
     Context 'OneDriveSetup.exe' {
         It 'updates <Image> OneDriveSetup.exe from the Content directory on a <Architecture> Client' -TestCases @(
-            @{Architecture = 9; Image = 'Windows\SysWOW64\OneDriveSetup.exe'}
-            @{Architecture = 0; Image = 'Windows\System32\OneDriveSetup.exe'}
+            @{Architecture = 9; Image = 'Windows\SysWOW64\OneDriveSetup.exe'; Destination = 'Windows\SysWOW64'}
+            @{Architecture = 0; Image = 'Windows\System32\OneDriveSetup.exe'; Destination = 'Windows\System32'}
         ) {
             $script:WindowsImage = New-TestWindowsImage -Architecture $Architecture
             $script:OneDriveSetupPath = $Image
@@ -917,7 +917,6 @@ Describe 'New-OSBuild' {
             $Output = New-OSBuild -ByTaskName 'Contoso Win11 Ent x64 25H2' -Execute 6>&1 3>$null | ForEach-Object {"$_"}
             $Output | Should -Contain 'OS: Update OneDriveSetup.exe'
             $Output | Should -Contain "  Save-OSDBuilderDownload -ContentDownload 'OneDriveSetup Enterprise'"
-            $Destination = Split-Path $Image -Parent
             Should -Invoke robocopy -Times 1 -Exactly -ParameterFilter {
                 #The first positional argument is bound to InputObject of the placeholder
                 ("$InputObject" -eq $GetOSDBuilderPathContentOneDrive) -and ($RemainingArguments[0] -like "*$Destination") -and ($RemainingArguments[1] -eq 'OneDriveSetup.exe')

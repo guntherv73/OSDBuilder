@@ -177,11 +177,12 @@ Describe 'Save-OSDBuilderDownload' {
             @{UpdateGroup = 'LCU Latest Cumulative Update'; Expected = @('2026-09 Cumulative Update for Windows 11 Version 24H2 for x64-based Systems (KB5000001)', '2026-08 Cumulative Update for Windows 11 Version 24H2 for x64-based Systems (KB5000000)')}
             @{UpdateGroup = 'DUSU Setup Dynamic Update'; Expected = @('Setup Dynamic Update for Windows 11 Version 24H2 x64')}
             @{UpdateGroup = 'DUCU Component Dynamic Update'; Expected = @('Safe OS Dynamic Update for Windows 11 Version 24H2 x64')}
-            @{UpdateGroup = 'Adobe Flash Player'; Expected = @('Security Update for Adobe Flash Player for Windows 10 Version 1809 x64')}
+            @{UpdateGroup = 'Adobe Flash Player'; UpdateOS = 'Windows 10'; Expected = @('Security Update for Adobe Flash Player for Windows 10 Version 1809 x64')}
             @{UpdateGroup = 'DotNet Framework'; Expected = @('Cumulative Update for .NET Framework 3.5 and 4.8.1 for Windows 11 Version 24H2 x64')}
             @{UpdateGroup = 'Optional'; Expected = @('Update for Windows 11 Version 24H2 x64 without group', 'Optional Update for Windows 11 Version 24H2 x64')}
         ) {
-            $Result = Save-OSDBuilderDownload -UpdateOS 'Windows 11' -UpdateGroup $UpdateGroup 4>$null
+            if (-not $UpdateOS) {$UpdateOS = 'Windows 11'}
+            $Result = Save-OSDBuilderDownload -UpdateOS $UpdateOS -UpdateGroup $UpdateGroup 4>$null
             @($Result.Title) | Should -Be $Expected
         }
 
