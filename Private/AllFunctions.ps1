@@ -2945,7 +2945,7 @@ function Get-FeatureUpdateDownloads {
     $FeatureUpdateDownloads = Get-OSDCloudOperatingSystems -OSArch x64
     $FeatureUpdateDownloads = $FeatureUpdateDownloads | Select-Object -Property OSDStatus, `
     @{Name = 'Title'; Expression = { $_.Name } }, `
-    Language, Activaton, Build, `
+    Language, Activation, Build, `
     @{Name = 'UpdateOS'; Expression = { $_.Version } }, `
     @{Name = 'UpdateBuild'; Expression = { $_.ReleaseID } }, `
     @{Name = 'UpdateArch'; Expression = { $_.Architecture } }, `
@@ -3113,7 +3113,8 @@ function Get-OSDFromJson
             Write-Verbose "Get-Value: value is PSCustomObject"
             $result = @{}
             $value.psobject.properties | ForEach-Object { 
-                $result[$_.Name] = Get-Value -value $_.Value 
+                if ($_.Value -is [System.Object[]]) {$result[$_.Name] = @(Get-Value -value $_.Value)}
+                else {$result[$_.Name] = Get-Value -value $_.Value}
             }
         }
         elseif ($value -is [System.Object[]])
@@ -3127,7 +3128,7 @@ function Get-OSDFromJson
         }
         else
         {
-            Write-Verbose "Get-Value: value is type: $($value.GetType())"
+            if ($null -ne $value) {Write-Verbose "Get-Value: value is type: $($value.GetType())"}
             $result = $value
         }
         return $result
@@ -3887,7 +3888,7 @@ function Get-TaskContentLanguageFeature {
         }
     }
 
-    [array]$LanguageFeature = [array]$LanguageFodIsoExtractDir + [array]$LanguageFodUpdatesDir
+    [array]$LanguageFeature = @([array]$LanguageFodIsoExtractDir + [array]$LanguageFodUpdatesDir) | Where-Object {$_}
     if ($null -eq $LanguageFeature) {Write-Warning "Install.wim Language Features On Demand: Not Found"}
     else {
         if ($ExistingTask.LanguageFeature) {
@@ -3920,7 +3921,7 @@ function Get-TaskContentLanguageInterfacePack {
         }
     }
     
-    [array]$LanguageInterfacePack = [array]$LanguageLipIsoExtractDir + [array]$LanguageLipUpdatesDir
+    [array]$LanguageInterfacePack = @([array]$LanguageLipIsoExtractDir + [array]$LanguageLipUpdatesDir) | Where-Object {$_}
     if ($null -eq $LanguageInterfacePack) {Write-Warning "Install.wim Language Interface Packs: Not Found"}
     else {
         if ($ExistingTask.LanguageInterfacePack) {
@@ -4211,7 +4212,7 @@ function Get-TaskWinPEADK {
 
     $WinPEADKIE = @()
     $WinPEADKIE = $ContentIsoExtractWinPE | Select-Object -Property Name, FullName
-    [array]$WinPEADK = [array]$WinPEADK + [array]$WinPEADKIE
+    [array]$WinPEADK = @([array]$WinPEADK + [array]$WinPEADKIE) | Where-Object {$_}
 
     if ($null -eq $WinPEADK) {Write-Warning "WinPE.wim ADK Packages: Add Content to $GetOSDBuilderPathContentADK"}
     else {
@@ -4242,7 +4243,7 @@ function Get-TaskWinPEADKPE {
 
     $WinPEADKPEIE = @()
     $WinPEADKPEIE = $ContentIsoExtractWinPE | Select-Object -Property Name, FullName
-    [array]$WinPEADKPE = [array]$WinPEADKPE + [array]$WinPEADKPEIE
+    [array]$WinPEADKPE = @([array]$WinPEADKPE + [array]$WinPEADKPEIE) | Where-Object {$_}
 
     if ($null -eq $WinPEADKPE) {Write-Warning "WinPE.wim ADK Packages: Add Content to $GetOSDBuilderPathContentADK"}
     else {
@@ -4279,7 +4280,7 @@ function Get-TaskWinPEADKRE {
 
     $WinPEADKREIE = @()
     $WinPEADKREIE = $ContentIsoExtractWinPE | Select-Object -Property Name, FullName
-    [array]$WinPEADKRE = [array]$WinPEADKRE + [array]$WinPEADKREIE
+    [array]$WinPEADKRE = @([array]$WinPEADKRE + [array]$WinPEADKREIE) | Where-Object {$_}
 
     if ($null -eq $WinPEADKRE) {Write-Warning "WinRE.wim ADK Packages: Add Content to $GetOSDBuilderPathContentADK"}
     else {
@@ -4316,7 +4317,7 @@ function Get-TaskWinPEADKSE {
 
     $WinPEADKSEIE = @()
     $WinPEADKSEIE = $ContentIsoExtractWinPE | Select-Object -Property Name, FullName
-    [array]$WinPEADKSE = [array]$WinPEADKSE + [array]$WinPEADKSEIE
+    [array]$WinPEADKSE = @([array]$WinPEADKSE + [array]$WinPEADKSEIE) | Where-Object {$_}
 
     if ($null -eq $WinPEADKSE) {Write-Warning "WinSE.wim ADK Packages: Add Content to $GetOSDBuilderPathContentADK"}
     else {
@@ -4544,7 +4545,8 @@ function Get-Value {
             Write-Verbose "Get-Value: value is PSCustomObject"
             $result = @{}
             $value.psobject.properties | ForEach-Object { 
-                $result[$_.Name] = Get-Value -value $_.Value 
+                if ($_.Value -is [System.Object[]]) {$result[$_.Name] = @(Get-Value -value $_.Value)}
+                else {$result[$_.Name] = Get-Value -value $_.Value}
             }
         }
         elseif ($value -is [System.Object[]])
@@ -4558,7 +4560,7 @@ function Get-Value {
         }
         else
         {
-            Write-Verbose "Get-Value: value is type: $($value.GetType())"
+            if ($null -ne $value) {Write-Verbose "Get-Value: value is type: $($value.GetType())"}
             $result = $value
         }
         return $result

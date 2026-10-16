@@ -100,8 +100,7 @@ Describe 'Get-TaskWinPEADK' {
         @($script:GridView | Where-Object {$_}).Count | Should -Be 3
     }
 
-    # KnownBug: Private/AllFunctions.ps1:4214 (and 4245, 4285, 4318 in ADKPE, ADKRE, ADKSE) [array] + $null appends $null, the GridView shows an empty item without WinPE content in the IsoExtract
-    It 'does not offer an empty item when the IsoExtract has no WinPE content' -Skip {
+    It 'does not offer an empty item when the IsoExtract has no WinPE content' {
         Get-TaskWinPEADK 6>$null | Out-Null
         $script:GridView | Should -Not -Contain $null
         Should -Invoke Out-GridView -Times 0 -Exactly -ParameterFilter {$null -eq $InputObject}

@@ -88,8 +88,7 @@ Describe 'Get-FeatureUpdateDownloads' {
         $Downloads[0].OSDStatus | Should -BeNullOrEmpty
     }
 
-    # KnownBug: Private/AllFunctions.ps1:2948 selects the misspelled property Activaton, the Activation of the operating system is lost
-    It 'keeps the Activation of the operating system' -Skip {
+    It 'keeps the Activation of the operating system' {
         $Downloads[1].Activation | Should -Be 'Volume'
     }
 }
@@ -294,8 +293,7 @@ Describe 'Get-OSDFromJson' {
         $Result.Count | Should -Be 0
     }
 
-    # KnownBug: Private/AllFunctions.ps1:3130 (and 4561) calls $value.GetType() on $null, every JSON null writes an error
-    It 'returns $null for a JSON null without an error' -Skip {
+    It 'returns $null for a JSON null without an error' {
         $Path = Join-Path $TestDrive 'Null.json'
         Set-Content -Path $Path -Value '{"CustomName":null}'
         $Result = Get-OSDFromJson -Path $Path -ErrorVariable JsonErrors 2>$null
@@ -327,8 +325,7 @@ Describe 'Get-Value' {
         $Result[1] | Should -Be 'HP'
     }
 
-    # KnownBug: Private/AllFunctions.ps1:4564 (and 3133) returns the ArrayList with return, PowerShell unrolls it: a one item array becomes a scalar, an empty array $null
-    It 'keeps a JSON array with one item as a list' -Skip {
+    It 'keeps a JSON array with one item as a list' {
         $Result = Get-Value -value ([PSCustomObject]@{Languages = @('de-DE'); Drivers = @()})
         , $Result.Languages | Should -BeOfType [System.Collections.IList]
         , $Result.Drivers | Should -BeOfType [System.Collections.IList]
@@ -1040,8 +1037,7 @@ Describe 'Get-TaskContentLanguageFeature' {
         $Warnings | Should -BeLike '*Install.wim Language Features On Demand: Not Found*'
         Should -Invoke Out-GridView -Times 0 -Exactly
     }
-    # KnownBug: Private/AllFunctions.ps1:3890-3891 an empty array is not $null, without Content\Updates the warning is Skipping instead of Not Found
-    It 'warns Not Found when there is no content and no Updates directory' -Skip {
+    It 'warns Not Found when there is no content and no Updates directory' {
         $ContentIsoExtract = $null
         $Warnings = (Get-TaskContentLanguageFeature 6>$null 3>&1) -join "`n"
         $Warnings | Should -BeLike '*Install.wim Language Features On Demand: Not Found*'
@@ -1112,8 +1108,7 @@ Describe 'Get-TaskContentLanguageInterfacePack' {
         Should -Invoke Out-GridView -Times 0 -Exactly
     }
 
-    # KnownBug: Private/AllFunctions.ps1:3923-3924 an empty array is not $null, without Content\Updates the warning is Skipping instead of Not Found
-    It 'warns Not Found when there is no content and no Updates directory' -Skip {
+    It 'warns Not Found when there is no content and no Updates directory' {
         $ContentIsoExtract = $null
         $Warnings = (Get-TaskContentLanguageInterfacePack 6>$null 3>&1) -join "`n"
         $Warnings | Should -BeLike '*Install.wim Language Interface Packs: Not Found*'
