@@ -4210,6 +4210,11 @@ function Get-TaskWinPEADKRE {
 
     $WinPEADKRE = $WinPEADKRE | Where-Object {$_.FullName -match (Get-OSDBuilderLanguageReleasePattern -OSMedia $OSMedia)}
     $WinPEADKRE = $WinPEADKRE | Where-Object {$_.FullName -notmatch (Get-OSDBuilderLanguageExcludePattern -OSMedia $OSMedia)}
+    #Microsoft: WinRE language packs are distributed on the Languages and Optional Features ISO, don't use the ADK language packs
+    #New-OSBuild adds the Languages of the Task to WinRE from the Languages and Optional Features ISO
+    if ($OSMedia.OperatingSystem -eq 'Windows 11' -and (Get-OSDBuilderWinPELanguageSource -OSMedia $OSMedia -Architecture $OSMedia.Arch)) {
+        $WinPEADKRE = $WinPEADKRE | Where-Object {$_.FullName -notmatch '\\WinPE_OCs\\[a-z]{2,3}(-[a-z0-9]{2,4}){1,2}\\'}
+    }
 
     if ($OSMedia.Arch -eq 'x86') {$WinPEADKRE = $WinPEADKRE | Where-Object {$_.FullName -like "*x86*"}
     } else {$WinPEADKRE = $WinPEADKRE | Where-Object {($_.FullName -like "*x64*") -or ($_.FullName -like "*amd64*")}}

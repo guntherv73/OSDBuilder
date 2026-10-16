@@ -863,6 +863,7 @@ function Update-OSMedia {
                 Add-ContentADKWinSE
                 Add-ContentPack -PackType PEADK
                 Add-ContentPack -PackType PEADKLang
+                Add-LanguagePacksWinRE
                 #=================================================
                 #   WinPE DaRT
                 #=================================================
@@ -1049,6 +1050,7 @@ function Update-OSMedia {
                 #=================================================
                 Enable-WindowsOptionalFeatureOS
                 Enable-NetFXOS
+                Update-InboxAppsOS
                 Remove-AppxProvisionedPackageOS
                 Remove-WindowsPackageOS
                 Remove-WindowsCapabilityOS

@@ -883,6 +883,7 @@ function New-OSBuild {
                 Add-ContentADKWinSE
                 Add-ContentPack -PackType PEADK
                 Add-ContentPack -PackType PEADKLang
+                Add-LanguagePacksWinRE
                 #=================================================
                 #   WinPE DaRT
                 #=================================================
@@ -1069,6 +1070,7 @@ function New-OSBuild {
                 #=================================================
                 Enable-WindowsOptionalFeatureOS
                 Enable-NetFXOS
+                Update-InboxAppsOS
                 Remove-AppxProvisionedPackageOS
                 Remove-WindowsPackageOS
                 Remove-WindowsCapabilityOS

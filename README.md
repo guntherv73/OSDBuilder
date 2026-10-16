@@ -93,6 +93,28 @@ Content\IsoExtract\Windows 11 24H2 Language\LanguagesAndOptionalFeatures\Microso
 * The Windows 11 Language Interface Packs `Microsoft-Windows-Lip-Language-Pack_x64_<lang>.cab`
   (ca-ES, eu-ES, gl-ES, id-ID, vi-VN) are offered as Language Interface Packs and added after the Language Packs
 
+### Windows Recovery Environment languages
+
+Microsoft distributes the WinRE language packs on the Languages and Optional Features ISO and recommends
+the same languages in WinRE as in the Windows image
+([Customize Windows RE](https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/customize-windows-re)).
+
+* `New-OSBuild` adds the Language Packs and Language Interface Packs of the Task to WinRE from
+  `Windows Preinstallation Environment\x64\WinPE_OCs` of the extracted ISO:
+  `lp.cab`, the language pack of every optional component in WinRE (not WinPE-WiFi) and the font support for Japanese, Korean and Chinese
+* Optional components added to WinRE by the Task also get the language packs of the languages already in WinRE
+* `SetAllIntl` of the Task is also set in WinRE
+* With the ISO extracted, the WinRE ADK selection of `New-OSBuildTask` no longer offers the ADK language packs
+
+### Inbox Apps
+
+Microsoft recommends to reinstall the inbox apps after adding languages and updates, so the apps include the language resources.
+
+* When the Task adds languages, `New-OSBuild` reinstalls the provisioned apps of the image from `Content\InboxApps`
+* Only apps that are provisioned in the image are reinstalled, removed apps are not added again, and an app is skipped when the image contains a newer version
+* The dependencies are read from the AppxManifest of each app (x64 and x86 frameworks for an x64 image), the license is the `.xml` with the same name
+* `RemoveAppxProvisionedPackage` of the Task runs afterwards
+
 ### Features on Demand (Add-WindowsCapability)
 
 Features on Demand are added with `Add-WindowsCapability` as recommended by Microsoft
