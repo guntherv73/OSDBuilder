@@ -68,6 +68,10 @@ Download and extract the Windows 11 *Languages and Optional Features* ISO publis
 ```powershell
 Save-OSDBuilderDownload -ContentDownload 'Windows 11 24H2-26H2 x64 Languages and Optional Features'
 Save-OSDBuilderDownload -ContentDownload 'Windows 11 22H2-23H2 x64 Languages and Optional Features'
+
+# Inbox Apps (app packages, license files and framework dependencies), extracted to Content\InboxApps
+Save-OSDBuilderDownload -ContentDownload 'Windows 11 24H2-26H2 Inbox Apps'
+Save-OSDBuilderDownload -ContentDownload 'Windows 11 22H2-23H2 Inbox Apps'
 ```
 
 * The ISO (6-7 GB) is saved to `Content\ISO` and reused, an interrupted download is resumed on the next run
@@ -86,6 +90,9 @@ Content\IsoExtract\Windows 11 24H2 Language\LanguagesAndOptionalFeatures\Microso
 * Windows 11 22H2 and 23H2 share the same ISO (22621)
 * Directories containing `Windows 10` are not offered for Windows 11 media (and vice versa)
 * Language Features are installed in the required order: Basic, Fonts, OCR, Handwriting, TextToSpeech, Speech
+* The Windows 11 Language Interface Packs `Microsoft-Windows-Lip-Language-Pack_x64_<lang>.cab`
+  (ca-ES, eu-ES, gl-ES, id-ID, vi-VN) are offered as Language Interface Packs and added after the Language Packs.
+  Add the base Language Pack too (es-ES for ca-ES, eu-ES and gl-ES, en-US for id-ID and vi-VN)
 
 ### Features on Demand (Add-WindowsCapability)
 

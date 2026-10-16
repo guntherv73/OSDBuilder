@@ -3847,7 +3847,8 @@ function Get-TaskContentLanguageInterfacePack {
     [CmdletBinding()]
     param ()
     $LanguageLipIsoExtractDir = @()
-    $LanguageLipIsoExtractDir = $ContentIsoExtract | Where-Object {$_.Name -like "*Language-Interface-Pack*"}
+    #Windows 11 Languages and Optional Features ISO: Microsoft-Windows-Lip-Language-Pack_x64_ca-es.cab
+    $LanguageLipIsoExtractDir = $ContentIsoExtract | Where-Object {$_.Name -like "*Language-Interface-Pack*" -or $_.Name -like "Microsoft-Windows-Lip-Language-Pack_*.cab"}
     $LanguageLipIsoExtractDir = $LanguageLipIsoExtractDir | Where-Object {$_.Name -like "*$($OSMedia.Arch)*"}
 
     $LanguageLipUpdatesDir = @()
