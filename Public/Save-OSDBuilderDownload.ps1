@@ -12,11 +12,14 @@ function Save-OSDBuilderDownload {
     [CmdletBinding(DefaultParameterSetName='OSDUpdate')]
     param (
 
-        #Download OneDrive Sync Client
+        #Download OneDrive Sync Client or a Windows 11 Languages and Optional Features ISO
+        #The Languages and Optional Features ISO is extracted to Content\IsoExtract for New-OSBuildTask
         [Parameter(ParameterSetName='Content')]
         [ValidateSet(
             'OneDriveSetup Production',
-            'OneDriveSetup Enterprise')]
+            'OneDriveSetup Enterprise',
+            'Windows 11 22H2-23H2 x64 Languages and Optional Features',
+            'Windows 11 24H2-26H2 x64 Languages and Optional Features')]
         [string]$ContentDownload,
         
         #Download the selected Microsoft Updates
@@ -252,7 +255,13 @@ function Save-OSDBuilderDownload {
             Write-Warning "Use Import-OSMedia to import this Feature Update to OSMedia"
         }
 
-        if ($PSCmdlet.ParameterSetName -eq 'Content') {
+        if (($PSCmdlet.ParameterSetName -eq 'Content') -and ($ContentDownload -like '*Languages and Optional Features')) {
+            #=================================================
+            #   Windows 11 Languages and Optional Features ISO
+            #=================================================
+            Save-OSDBuilderLanguagesAndOptionalFeatures -Name $ContentDownload
+        }
+        elseif ($PSCmdlet.ParameterSetName -eq 'Content') {
             #=================================================
             #   Database
             #=================================================

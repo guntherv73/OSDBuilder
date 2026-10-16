@@ -62,7 +62,20 @@ LCU, .NET Framework CU, Safe OS Dynamic Update and Setup Dynamic Update of each 
 
 ### Language Packs and Language Features on Demand
 
-Use the Windows 11 *Languages and Optional Features* ISO and extract it to the `Content\IsoExtract` directory.
+Download and extract the Windows 11 *Languages and Optional Features* ISO published by Microsoft
+([source](https://learn.microsoft.com/en-us/azure/virtual-desktop/windows-11-language-packs)):
+
+```powershell
+Save-OSDBuilderDownload -ContentDownload 'Windows 11 24H2-26H2 x64 Languages and Optional Features'
+Save-OSDBuilderDownload -ContentDownload 'Windows 11 22H2-23H2 x64 Languages and Optional Features'
+```
+
+* The ISO (6-7 GB) is saved to `Content\ISO` and reused, an interrupted download is resumed on the next run
+* The ISO is extracted to `Content\IsoExtract\<Name>`, about twice the ISO size of free space is required
+* Microsoft publishes the 26100 ISO for 24H2 and 25H2, 26H2 uses the same 26100 servicing branch
+* Then run `New-OSBuildTask` to select the Language Packs, Language Features and Features on Demand
+
+You can also extract an ISO manually to the `Content\IsoExtract` directory.
 The directory name must contain the ReleaseId, for example:
 
 ```
@@ -73,4 +86,4 @@ Content\IsoExtract\Windows 11 24H2 Language\LanguagesAndOptionalFeatures\Microso
 * Windows 11 22H2 and 23H2 share the same ISO (22621)
 * Directories containing `Windows 10` are not offered for Windows 11 media (and vice versa)
 * Language Features are installed in the required order: Basic, Fonts, OCR, Handwriting, TextToSpeech, Speech
-* The LCU is reapplied after Language content is added
+* The LCU is reapplied once after Language and Feature on Demand content is added

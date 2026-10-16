@@ -954,6 +954,9 @@ function Update-OSMedia {
                 #=================================================
                 Show-ActionTime; Write-Host -ForegroundColor Green "OS: Update Build Revision $UBRPre (Pre-LCU)"
                 if ($global:ReapplyLCU -eq $true) {Update-CumulativeOS -Force} else {Update-CumulativeOS}
+                #The LCU now includes the Language and Feature on Demand content added above
+                #Only content added after this point requires the LCU to be reapplied again
+                $global:ReapplyLCU = $false
                 #=================================================
                 #   Update-OSMedia
                 #=================================================

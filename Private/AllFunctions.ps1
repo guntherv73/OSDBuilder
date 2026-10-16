@@ -3530,7 +3530,8 @@ function Get-TaskContentAddFeatureOnDemand {
     $FeaturesOnDemandIsoExtractDir = $ContentIsoExtract
 
     if ($OSMedia.InstallationType -eq 'Client') {
-        if ($($OSMedia.Arch) -eq 'x64') {$FeaturesOnDemandIsoExtractDir = $FeaturesOnDemandIsoExtractDir | Where-Object {$_.FullName -like "*x64*"}}
+        #Windows 11 Languages and Optional Features ISO uses amd64 in the file name
+        if ($($OSMedia.Arch) -eq 'x64') {$FeaturesOnDemandIsoExtractDir = $FeaturesOnDemandIsoExtractDir | Where-Object {$_.FullName -like "*x64*" -or $_.FullName -like "*amd64*"}}
         if ($($OSMedia.Arch) -eq 'x86') {$FeaturesOnDemandIsoExtractDir = $FeaturesOnDemandIsoExtractDir | Where-Object {$_.FullName -like "*x86*"}}
     }
 
