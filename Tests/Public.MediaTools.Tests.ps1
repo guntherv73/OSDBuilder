@@ -13,9 +13,9 @@ BeforeAll {
 
     function ConvertTo-TestText {
         #Write-Host records (6>&1) and the other output as text, the same on Windows PowerShell 5.1 and PowerShell 7
-        $Lines = foreach ($Item in $input) {
-            if ($Item -is [System.Management.Automation.InformationRecord]) {"$($Item.MessageData)"} else {$Item | Out-String -Width 400}
-        }
+        $Items = @($input)
+        $Lines = @($Items | Where-Object {$_ -is [System.Management.Automation.InformationRecord]} | ForEach-Object {"$($_.MessageData)"})
+        $Lines += $Items | Where-Object {$_ -isnot [System.Management.Automation.InformationRecord]} | Out-String -Width 400
         $Lines -join "`n"
     }
 
