@@ -84,6 +84,8 @@ Describe 'Add-ContentADKWinPE' {
     }
 
     It 'does nothing in <ScriptName>' -ForEach @(@{ScriptName = 'Update-OSMedia'}, @{ScriptName = 'New-OSDCloudOSMedia'}) {
+        #-ForEach data is set before BeforeEach, apply it again
+        foreach ($Key in $_.Keys) {Set-Variable -Name $Key -Value $_[$Key]}
         Add-ContentADKWinPE 6>$null
         Should -Invoke Add-WindowsPackage -Times 0 -Exactly
         $global:ReapplyLCU | Should -BeFalse
@@ -491,6 +493,8 @@ Describe 'Add-ContentStartLayout' {
         @{Case = 'the OS is not Windows 10 or 11'; ScriptName = 'New-OSBuild'; OSMajorVersion = 6; StartLayoutXML = 'StartLayout\Layout.xml'}
         @{Case = 'the Task has no Start Layout'; ScriptName = 'New-OSBuild'; OSMajorVersion = 10; StartLayoutXML = ''}
     ) {
+        #-ForEach data is set before BeforeEach, apply it again
+        foreach ($Key in $_.Keys) {Set-Variable -Name $Key -Value $_[$Key]}
         Add-ContentStartLayout 6>$null
         Test-Path $Destination | Should -BeFalse
     }
@@ -532,6 +536,8 @@ Describe 'Add-ContentUnattEnd' {
         @{Case = 'the OS is not Windows 10 or 11'; ScriptName = 'New-OSBuild'; OSMajorVersion = 6; UnattendXML = 'Unattend\Unattend.xml'}
         @{Case = 'the Task has no Unattend'; ScriptName = 'New-OSBuild'; OSMajorVersion = 10; UnattendXML = $null}
     ) {
+        #-ForEach data is set before BeforeEach, apply it again
+        foreach ($Key in $_.Keys) {Set-Variable -Name $Key -Value $_[$Key]}
         Add-ContentUnattEnd 6>$null
         Test-Path (Join-Path $MountDirectory 'Windows/Panther') | Should -BeFalse
         Should -Invoke Use-WindowsUnattend -Times 0 -Exactly
@@ -594,6 +600,8 @@ Describe 'Add-FeaturesOnDemandOS' {
         @{Case = 'the script is Update-OSMedia'; ScriptName = 'Update-OSMedia'; FeaturesOnDemand = @('a.cab')}
         @{Case = 'the Task has no Features on Demand'; ScriptName = 'New-OSBuild'; FeaturesOnDemand = $null}
     ) {
+        #-ForEach data is set before BeforeEach, apply it again
+        foreach ($Key in $_.Keys) {Set-Variable -Name $Key -Value $_[$Key]}
         Add-FeaturesOnDemandOS 6>$null 3>$null
         Should -Invoke Add-WindowsPackage -Times 0 -Exactly
         Should -Invoke Add-OSDBuilderWindowsCapability -Times 0 -Exactly
@@ -661,6 +669,8 @@ Describe 'Add-LanguageFeaturesOnDemandOS' {
         @{Case = 'the OS is not Windows 10 or 11'; ScriptName = 'New-OSBuild'; OSMajorVersion = 6; Features = @('a.cab')}
         @{Case = 'the Task has no Language Features'; ScriptName = 'New-OSBuild'; OSMajorVersion = 10; Features = $null}
     ) {
+        #-ForEach data is set before BeforeEach, apply it again
+        foreach ($Key in $_.Keys) {Set-Variable -Name $Key -Value $_[$Key]}
         $LanguageFeatures = $Features
         Add-LanguageFeaturesOnDemandOS 6>$null 3>$null
         Should -Invoke Get-OSDBuilderCapabilitySource -Times 0 -Exactly
@@ -698,6 +708,8 @@ Describe 'Add-LanguageInterfacePacksOS' {
         @{Case = 'the OS is not Windows 10 or 11'; ScriptName = 'New-OSBuild'; OSMajorVersion = 6; Lip = @('a.cab')}
         @{Case = 'the Task has no Language Interface Packs'; ScriptName = 'New-OSBuild'; OSMajorVersion = 10; Lip = $null}
     ) {
+        #-ForEach data is set before BeforeEach, apply it again
+        foreach ($Key in $_.Keys) {Set-Variable -Name $Key -Value $_[$Key]}
         $LanguageInterfacePacks = $Lip
         Add-LanguageInterfacePacksOS 6>$null 3>$null
         Should -Invoke Add-WindowsPackage -Times 0 -Exactly
@@ -757,6 +769,8 @@ Describe 'Add-LanguagePacksOS' {
         @{Case = 'the OS is not Windows 10 or 11'; ScriptName = 'New-OSBuild'; OSMajorVersion = 6; Lp = @('a.cab')}
         @{Case = 'the Task has no Language Packs'; ScriptName = 'New-OSBuild'; OSMajorVersion = 10; Lp = @()}
     ) {
+        #-ForEach data is set before BeforeEach, apply it again
+        foreach ($Key in $_.Keys) {Set-Variable -Name $Key -Value $_[$Key]}
         $LanguagePacks = $Lp
         Add-LanguagePacksOS 6>$null 3>$null
         Should -Invoke Add-WindowsPackage -Times 0 -Exactly
@@ -788,6 +802,8 @@ Describe 'Add-LocalExperiencePacksOS' {
         @{Case = 'the OS is not Windows 10 or 11'; OSMajorVersion = 6; Lxp = @('a.appx')}
         @{Case = 'the Task has no LXP'; OSMajorVersion = 10; Lxp = $null}
     ) {
+        #-ForEach data is set before BeforeEach, apply it again
+        foreach ($Key in $_.Keys) {Set-Variable -Name $Key -Value $_[$Key]}
         $LocalExperiencePacks = $Lxp
         Add-LocalExperiencePacksOS 6>$null 3>$null
         Should -Invoke Add-OSDBuilderLocalExperiencePack -Times 0 -Exactly
@@ -841,6 +857,8 @@ Describe 'Add-WindowsCapabilityOS' {
         @{Case = 'the OS is not Windows 10 or 11'; ScriptName = 'New-OSBuild'; OSMajorVersion = 6; Names = @('NetFX3~~~~')}
         @{Case = 'the Task has no capabilities'; ScriptName = 'New-OSBuild'; OSMajorVersion = 10; Names = $null}
     ) {
+        #-ForEach data is set before BeforeEach, apply it again
+        foreach ($Key in $_.Keys) {Set-Variable -Name $Key -Value $_[$Key]}
         $AddWindowsCapability = $Names
         Add-WindowsCapabilityOS 6>$null 3>$null
         Should -Invoke Get-OSDBuilderCapabilitySource -Times 0 -Exactly
@@ -878,6 +896,8 @@ Describe 'Add-WindowsPackageOS' {
         @{Case = 'the script is Update-OSMedia'; ScriptName = 'Update-OSMedia'; Pkg = @('a.cab')}
         @{Case = 'the Task has no packages'; ScriptName = 'New-OSBuild'; Pkg = $null}
     ) {
+        #-ForEach data is set before BeforeEach, apply it again
+        foreach ($Key in $_.Keys) {Set-Variable -Name $Key -Value $_[$Key]}
         $Packages = $Pkg
         Add-WindowsPackageOS 6>$null
         Should -Invoke Add-WindowsPackage -Times 0 -Exactly

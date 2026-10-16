@@ -40,6 +40,9 @@ Describe 'Test-OSDBuilderLocalExperiencePackBuild' {
         @{Version = '19041.29.88.0'; MinVersion = '10.0.18823.0'; Build = 26200; Expected = $false}
         #No TargetDeviceFamily
         @{Version = '26100.9.1.0'; MinVersion = $null; Build = 26200; Expected = $true}
+        #No valid version, only the MinVersion is checked
+        @{Version = $null; MinVersion = '10.0.25846.0'; Build = 26200; Expected = $true}
+        @{Version = 'invalid'; MinVersion = '10.0.27547.0'; Build = 26200; Expected = $false}
     ) {
         $Manifest = [PSCustomObject]@{Version = $Version; MinOSVersion = $MinVersion}
         Test-OSDBuilderLocalExperiencePackBuild -Manifest $Manifest -Build $Build | Should -Be $Expected
@@ -119,6 +122,54 @@ Describe 'Add-OSDBuilderLocalExperiencePack' {
         Mock Add-AppxProvisionedPackage {}
         $Lxp = New-TestLxp -Language 'nn-NO' -Version '26100.129.249.0' -MinVersion '10.0.25846.0'
         Add-OSDBuilderLocalExperiencePack -Path 'C:\Mount' -PackagePath $Lxp -Build 26200 6>$null 3>$null | Should -Be 'Failed'
+    }
+
+    It 'fails for a file that is not an .appx' {
+        $File = New-TestFile -Path (Join-Path (Join-Path $TestDrive 'invalid') 'LanguageExperiencePack.de-de.Neutral.appx') -Value 'not a zip'
+        $Output = (Add-OSDBuilderLocalExperiencePack -Path 'C:\Mount' -PackagePath $File.FullName -Build 26200 -Verbose 6>$null 3>&1 4>&1) -join "`n"
+        $Output | Should -BeLike "*Unable to read the AppxManifest of $($File.FullName)*"
+        $Output | Should -BeLike "*Local Experience Pack: $($File.FullName) is not a valid .appx*"
+        Should -Invoke Add-AppxProvisionedPackage -Times 0 -Exactly
+    }
+
+    It 'fails for an .appx without identity name' {
+        Mock Get-OSDBuilderAppxManifest {[PSCustomObject]@{Name = ''; Version = '1.0.0.0'}}
+        $Lxp = New-TestLxp -Language 'nn-NO' -Version '26100.129.249.0' -MinVersion '10.0.25846.0'
+        (Add-OSDBuilderLocalExperiencePack -Path 'C:\Mount' -PackagePath $Lxp -Build 26200 6>$null 3>&1) -join "`n" | Should -BeLike '*is not a valid .appx*'
+    }
+
+    It 'does not check the build without -Build' {
+        $Lxp = New-TestLxp -Language 'de-DE' -Version '28000.2.8.0' -MinVersion '10.0.27547.0'
+        Add-OSDBuilderLocalExperiencePack -Path 'C:\Mount' -PackagePath $Lxp 6>$null | Should -Be 'Added'
+    }
+
+    It 'fails when the directory has more than one winget license' {
+        $Directory = Join-Path (Join-Path $TestDrive 'twolicenses') 'de-de'
+        $Lxp = New-TestLxp -Language 'de-DE' -Version '26100.169.270.0' -MinVersion '10.0.25846.0' -LicenseName '9P6CT0SLW589_License.xml' -Directory $Directory
+        New-TestFile -Path (Join-Path $Directory '9NOTHER00000_License.xml') -Value '<License />' | Out-Null
+        $Warnings = (Add-OSDBuilderLocalExperiencePack -Path 'C:\Mount' -PackagePath $Lxp -Build 26200 6>$null 3>&1) -join "`n"
+        $Warnings | Should -BeLike '*Unable to find the License.xml*'
+        Should -Invoke Add-AppxProvisionedPackage -Times 0 -Exactly
+    }
+
+    It 'passes the log to DISM and reports it when DISM fails' {
+        Mock Add-AppxProvisionedPackage {throw '0x80073cf3 Package failed updates'}
+        $LogPath = Join-Path $TestDrive 'lxp.log'
+        $Lxp = New-TestLxp -Language 'nn-NO' -Version '26100.129.249.0' -MinVersion '10.0.25846.0'
+        $Warnings = @(Add-OSDBuilderLocalExperiencePack -Path 'C:\Mount' -PackagePath $Lxp -Build 26200 -LogPath $LogPath 6>$null 3>&1)
+        $Warnings[-1] | Should -Be 'Failed'
+        ($Warnings -join "`n") | Should -BeLike '*Microsoft.LanguageExperiencePacknn-NO 0x80073cf3 Package failed updates*'
+        ($Warnings -join "`n") | Should -BeLike "*Review $LogPath*"
+        Should -Invoke Add-AppxProvisionedPackage -Times 1 -Exactly -ParameterFilter {$LogPath -eq (Join-Path $TestDrive 'lxp.log') -and $Path -eq 'C:\Mount'}
+    }
+
+    It 'reports the log when the LXP is not provisioned afterwards' {
+        Mock Add-AppxProvisionedPackage {}
+        $LogPath = Join-Path $TestDrive 'lxp.log'
+        $Lxp = New-TestLxp -Language 'nn-NO' -Version '26100.129.249.0' -MinVersion '10.0.25846.0'
+        $Warnings = (Add-OSDBuilderLocalExperiencePack -Path 'C:\Mount' -PackagePath $Lxp -Build 26200 -LogPath $LogPath 6>$null 3>&1) -join "`n"
+        $Warnings | Should -BeLike '*Microsoft.LanguageExperiencePacknn-NO is not provisioned in the image*'
+        $Warnings | Should -BeLike "*Review $LogPath*"
     }
 }
 

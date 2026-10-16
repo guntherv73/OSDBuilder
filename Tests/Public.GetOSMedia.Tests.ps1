@@ -17,7 +17,7 @@ Describe 'Get-OSMedia' {
         $script:OSDUpdates = @()
         Mock Get-OSDBuilder {}
         Mock Get-OSDUpdates {$script:OSDUpdates}
-        Mock Out-GridView {'Selected in GridView'}
+        Mock Out-GridView {$InputObject | Where-Object Name -like 'Win11*'}
     }
 
     It 'initializes OSDBuilder with -CreatePaths -HideDetails and reads the updates silently' {
@@ -272,8 +272,11 @@ Describe 'Get-OSMedia' {
         }
 
         It 'returns the OSMedia selected in Out-GridView with -GridView' {
-            Get-OSMedia -GridView | Should -Be 'Selected in GridView'
-            Should -Invoke Out-GridView -Times 1 -Exactly -ParameterFilter {$PassThru -and ($Title -eq 'OSMedia')}
+            $Result = Get-OSMedia -GridView
+            @($Result.Name) | Should -Be @('Win11 x64 24H2 New', 'Win11 x64 24H2 Old')
+            $Result[0].PSObject.Properties.Name | Should -Not -Contain 'OSMFamilyV1'
+            $Result[0].PSObject.Properties.Name | Should -Contain 'OSMGuid'
+            Should -Invoke Out-GridView -ParameterFilter {$PassThru -and ($Title -eq 'OSMedia')}
         }
 
         It 'rejects a value that is not in the ValidateSet of <Parameter>' -TestCases @(

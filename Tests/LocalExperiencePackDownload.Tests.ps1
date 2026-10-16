@@ -22,6 +22,43 @@ Describe 'Invoke-OSDBuilderWinget' {
         Mock Get-Command {$null} -ParameterFilter {$Name -eq 'winget.exe'}
         {Invoke-OSDBuilderWinget -Arguments '--version'} | Should -Throw '*winget.exe was not found*'
     }
+
+    Context 'winget.exe is installed' {
+        BeforeAll {
+            #Stands in for winget.exe, writes to the output and the error stream and sets the exit code
+            function Invoke-TestWinget {
+                $global:OSDBuilderTestWingetArgs = @($args)
+                Write-Output "winget $($args -join ' ')"
+                Write-Error 'winget stderr'
+                $global:LASTEXITCODE = 3
+            }
+        }
+
+        BeforeEach {
+            Mock Get-Command {[PSCustomObject]@{Name = 'winget.exe'; Source = 'Invoke-TestWinget'}} -ParameterFilter {$Name -eq 'winget.exe' -and $CommandType -eq 'Application'}
+            $global:OSDBuilderTestWingetArgs = $null
+        }
+
+        AfterAll {
+            Remove-Variable -Name OSDBuilderTestWingetArgs -Scope Global -ErrorAction SilentlyContinue
+        }
+
+        It 'returns the exit code and the output with the error stream with -CaptureOutput' {
+            $Result = Invoke-OSDBuilderWinget -Arguments 'download', '--help' -CaptureOutput -ErrorAction SilentlyContinue
+            $Result.ExitCode | Should -Be 3
+            $Result.Output | Should -BeLike '*winget download --help*'
+            $Result.Output | Should -BeLike '*winget stderr*'
+            $global:OSDBuilderTestWingetArgs -join ' ' | Should -Be 'download --help'
+        }
+
+        It 'writes the output to the console without -CaptureOutput' {
+            Mock Out-Host {}
+            $Result = Invoke-OSDBuilderWinget -Arguments 'download', '--id', '9P6CT0SLW589' -ErrorAction SilentlyContinue 2>$null
+            $Result.ExitCode | Should -Be 3
+            $Result.Output | Should -BeNullOrEmpty
+            Should -Invoke Out-Host -Times 1 -Exactly -ParameterFilter {"$InputObject" -eq 'winget download --id 9P6CT0SLW589'}
+        }
+    }
 }
 
 Describe 'Get-OSDBuilderLocalExperiencePackRelease' {
@@ -34,6 +71,15 @@ Describe 'Get-OSDBuilderLocalExperiencePackRelease' {
         $Result.Build | Should -Be $Build
         $Result.OSVersion | Should -Be "10.0.$Build.0"
         $Result.Directory | Should -Be "$Release x64 Local Experience Packs"
+        $Result.Release | Should -Be $Release
+    }
+
+    It 'rejects an unknown release' {
+        {Get-OSDBuilderLocalExperiencePackRelease -Release 'Windows 11 21H2'} | Should -Throw
+    }
+
+    It 'requires a release' {
+        (Get-Command Get-OSDBuilderLocalExperiencePackRelease).Parameters['Release'].Attributes.Mandatory | Should -Contain $true
     }
 }
 
@@ -151,5 +197,89 @@ Describe 'Save-OSDBuilderLocalExperiencePack' {
         Save-OSDBuilderLocalExperiencePack -Language 'de-DE' -Release 'Windows 10 2004-22H2' 6>$null 3>$null
         Should -Invoke Invoke-OSDBuilderWinget -Times 1 -Exactly -ParameterFilter {$Arguments -contains '10.0.19041.0'}
         Join-Path $GetOSDBuilderPathContentIsoExtract 'Windows 10 2004-22H2 x64 Local Experience Packs' | Should -Exist
+    }
+
+    It 'warns for an invalid language and continues with the next language' {
+        $Warnings = (Save-OSDBuilderLocalExperiencePack -Language 'not a language', 'de-DE' 6>$null 3>&1) -join "`n"
+        $Warnings | Should -BeLike '*Local Experience Packs: not a language is not a valid language*'
+        $Destination | Should -Exist
+    }
+
+    It 'warns when the Microsoft Store can not be queried' {
+        Mock Invoke-RestMethod {throw 'The remote name could not be resolved'}
+        $Warnings = (Save-OSDBuilderLocalExperiencePack -Language 'de-DE' 6>$null 3>&1) -join "`n"
+        $Warnings | Should -BeLike '*Unable to query the Microsoft Store for de-DE, The remote name could not be resolved*'
+        Should -Invoke Invoke-OSDBuilderWinget -Times 0 -Exactly -ParameterFilter {$Arguments -notcontains '--help'}
+    }
+
+    It 'warns when the Microsoft Store has no package for the build' {
+        Mock Get-OSDBuilderLocalExperiencePackProduct {
+            [PSCustomObject]@{Language = 'de-DE'; ProductId = '9P6CT0SLW589'; Title = 'Deutsch Local Experience Pack'; Packages = @(
+                [PSCustomObject]@{PackageFullName = 'x'; Version = [version]'28000.2.8.0'; MinVersion = [version]'10.0.27547.0'}
+                #MinVersion newer than the build
+                [PSCustomObject]@{PackageFullName = 'y'; Version = [version]'26100.1.1.0'; MinVersion = [version]'10.0.26200.0'}
+            )}
+        }
+        $Warnings = (Save-OSDBuilderLocalExperiencePack -Language 'de-DE' 6>$null 3>&1) -join "`n"
+        $Warnings | Should -BeLike '*Deutsch Local Experience Pack `[9P6CT0SLW589`] has no package for Windows build 26100*'
+        Should -Invoke Invoke-OSDBuilderWinget -Times 0 -Exactly -ParameterFilter {$Arguments -notcontains '--help'}
+    }
+
+    It 'downloads again when the saved LXP can not be read' {
+        Save-OSDBuilderLocalExperiencePack -Language 'de-DE' 6>$null 3>$null
+        Set-Content -Path $Destination -Value 'not a zip'
+        $Verbose = (Save-OSDBuilderLocalExperiencePack -Language 'de-DE' -Verbose 6>$null 3>$null 4>&1) -join "`n"
+        $Verbose | Should -BeLike "*Unable to read $Destination, it is downloaded again*"
+        Should -Invoke Invoke-OSDBuilderWinget -Times 2 -Exactly -ParameterFilter {$Arguments -notcontains '--help'}
+        (Get-OSDBuilderAppxManifest -Path $Destination).Version | Should -Be '26100.169.270.0'
+    }
+
+    It 'downloads again when the saved LXP is older' {
+        New-TestAppx -Path $Destination -Name 'Microsoft.LanguageExperiencePackde-DE' -Version '26100.1.1.0' -MinVersion '10.0.25846.0' | Out-Null
+        New-TestFile -Path (Join-Path (Split-Path $Destination -Parent) 'License.xml') | Out-Null
+        Save-OSDBuilderLocalExperiencePack -Language 'de-DE' 6>$null 3>$null
+        Should -Invoke Invoke-OSDBuilderWinget -Times 1 -Exactly -ParameterFilter {$Arguments -notcontains '--help'}
+        (Get-OSDBuilderAppxManifest -Path $Destination).Version | Should -Be '26100.169.270.0'
+    }
+
+    It 'removes an old download directory and the download after saving' {
+        $DownloadPath = Join-Path (Join-Path (Join-Path $SetOSDBuilderPathContent 'ISO') 'LocalExperiencePack') '9P6CT0SLW589'
+        $Stale = New-TestFile -Path (Join-Path $DownloadPath 'Microsoft.LanguageExperiencePackde-DE_99999.0.0.0_Desktop_Neutral.appx') -Value 'stale'
+        Save-OSDBuilderLocalExperiencePack -Language 'de-DE' 6>$null 3>$null
+        $Stale.FullName | Should -Not -Exist
+        $DownloadPath | Should -Not -Exist
+        (Get-OSDBuilderAppxManifest -Path $Destination).Version | Should -Be '26100.169.270.0'
+    }
+
+    It 'warns when winget does not download an LXP' {
+        Mock Invoke-OSDBuilderWinget {New-WingetResult} -ParameterFilter {$Arguments -notcontains '--help'}
+        $Warnings = (Save-OSDBuilderLocalExperiencePack -Language 'de-DE' 6>$null 3>&1) -join "`n"
+        $Warnings | Should -BeLike '*winget did not download a Local Experience Pack for de-DE*'
+        $Destination | Should -Not -Exist
+    }
+
+    It 'warns when the downloaded LXP can not be read' {
+        Mock Invoke-OSDBuilderWinget {
+            $Directory = $Arguments[[array]::IndexOf($Arguments, '--download-directory') + 1]
+            New-TestFile -Path (Join-Path $Directory 'Microsoft.LanguageExperiencePackde-DE_26100.169.270.0_Desktop_Neutral.appx') -Value 'not a zip' | Out-Null
+            New-TestFile -Path (Join-Path $Directory '9P6CT0SLW589_License.xml') -Value '<License />' | Out-Null
+            New-WingetResult
+        } -ParameterFilter {$Arguments -notcontains '--help'}
+        $Output = (Save-OSDBuilderLocalExperiencePack -Language 'de-DE' -Verbose 6>$null 3>&1 4>&1) -join "`n"
+        $Output | Should -BeLike '*Unable to read the AppxManifest of*Microsoft.LanguageExperiencePackde-DE_26100.169.270.0_Desktop_Neutral.appx*'
+        $Output | Should -BeLike '*Microsoft.LanguageExperiencePackde-DE_26100.169.270.0_Desktop_Neutral.appx is not the Local Experience Pack of de-DE*'
+        $Destination | Should -Not -Exist
+    }
+
+    It 'warns when winget downloads the LXP of another language' {
+        Mock Invoke-OSDBuilderWinget {
+            $Directory = $Arguments[[array]::IndexOf($Arguments, '--download-directory') + 1]
+            New-TestAppx -Path (Join-Path $Directory 'Microsoft.LanguageExperiencePackfr-FR_26100.1.1.0_Desktop_Neutral.appx') -Name 'Microsoft.LanguageExperiencePackfr-FR' -Version '26100.1.1.0' -MinVersion '10.0.25846.0' | Out-Null
+            New-TestFile -Path (Join-Path $Directory '9P6CT0SLW589_License.xml') -Value '<License />' | Out-Null
+            New-WingetResult
+        } -ParameterFilter {$Arguments -notcontains '--help'}
+        $Warnings = (Save-OSDBuilderLocalExperiencePack -Language 'de-DE' 6>$null 3>&1) -join "`n"
+        $Warnings | Should -BeLike '*Microsoft.LanguageExperiencePackfr-FR_26100.1.1.0_Desktop_Neutral.appx is not the Local Experience Pack of de-DE*'
+        $Destination | Should -Not -Exist
     }
 }

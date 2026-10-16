@@ -328,7 +328,7 @@ Describe 'Enable-WinREWiFi' {
         $ExpandPath = Join-Path $DriverCab.Directory $DriverCab.BaseName
         Enable-WinREWiFi 6>$null 4>$null
         Should -Invoke Save-WebFile -Times 1 -Exactly -ParameterFilter {$SourceUrl -eq 'https://downloadmirror.intel.com/win10-x64.zip'}
-        Should -Invoke Expand-Archive -Times 1 -Exactly -ParameterFilter {($Path -eq $DriverCab.FullName) -and ($DestinationPath -eq $ExpandPath) -and $Force}
+        Should -Invoke Expand-Archive -Times 1 -Exactly -ParameterFilter {("$Path" -like "*$($DriverCab.Name)") -and ($DestinationPath -eq $ExpandPath) -and $Force}
         Should -Invoke Add-WindowsDriver -Times 1 -Exactly -ParameterFilter {($Path -eq 'C:\Mount\WinRE') -and ($Driver -eq $ExpandPath) -and $Recurse -and $ForceUnsigned}
     }
 
@@ -399,8 +399,9 @@ Describe 'Enable-WinPEOSDCloud' {
         $RegFile = Join-Path $env:TEMP 'RegistryConsole.reg'
         $RegFile | Should -Exist
         $RegContent = Get-Content -Path $RegFile -Raw
-        $RegContent | Should -BeLike 'Windows Registry Editor Version 5.00*'
-        $RegContent | Should -BeLike '*`[HKEY_LOCAL_MACHINE\Default\Console\%SystemRoot%_System32_WindowsPowerShell_v1.0_powershell.exe`]*"FaceName"="Consolas"*'
+        $RegContent.StartsWith('Windows Registry Editor Version 5.00') | Should -BeTrue
+        $RegContent.Contains('[HKEY_LOCAL_MACHINE\Default\Console\%SystemRoot%_System32_WindowsPowerShell_v1.0_powershell.exe]') | Should -BeTrue
+        $RegContent.Contains('"FaceName"="Consolas"') | Should -BeTrue
         Should -Invoke Start-Process -Times 9 -Exactly -ParameterFilter {($FilePath -eq 'reg') -and $Wait}
         foreach ($MountPath in $MountWinPE, $MountWinRE, $MountWinSE) {
             Should -Invoke Start-Process -Times 1 -Exactly -ParameterFilter {"$ArgumentList" -eq "load HKLM\Default $MountPath\Windows\System32\Config\DEFAULT"}

@@ -244,7 +244,7 @@ Describe 'New-OSDBuilderISO' {
             $Efisys = "$SetOSDBuilderPathContent\Tools\AMD64\Oscdimg\efisys.bin"
             New-TestFile -Path (Join-Path $OscdimgFolder 'efisys.bin') | Out-Null
         }
-        New-OSDBuilderISO -FullName $OSMedia[0].FullName 6>$null
+        New-OSDBuilderISO -FullName $OSMedia[0].FullName 6>$null 3>&1 | Write-Host
         Should -Invoke Start-Process -Times 1 -Exactly -ParameterFilter {$ArgumentList[3] -like "*#pEF,e,b`"$Efisys`""}
     }
 
@@ -500,27 +500,27 @@ Describe 'Show-OSDBuilderInfo' {
         $Text = $Output -join "`n"
 
         #Section headers are followed by their items
-        foreach ($Pair in @(
-            @('Get-AppxProvisionedPackage (DisplayName)', 'Microsoft.WindowsCalculator')
-            @('Get-AppxProvisionedPackage Language Experience Packs (DisplayName)', 'Microsoft.LanguageExperiencePackde-DE')
-            @('Get-WindowsCapability (State: Installed)', 'Browser.InternetExplorer~~~~0.0.11.0')
-            @('Get-WindowsCapability (State: NotPresent)', 'XPS.Viewer~~~~0.0.1.0')
-            @('Get-WindowsCapability Language (State: Installed)', 'Language.Basic~~~de-DE~0.0.1.0')
-            @('Get-WindowsCapability Language (State: NotPresent)', 'Language.Speech~~~fr-FR~0.0.1.0')
-            @('Get-WindowsOptionalFeature (State: Enabled)', 'NetFx4-AdvSrvs')
-            @('Get-WindowsOptionalFeature (State: EnablePending)', 'NetFx3')
-            @('Get-WindowsOptionalFeature (State: Disabled)', 'TelnetClient')
-            @('Get-WindowsOptionalFeature (State: DisabledWithPayloadRemoved)', 'SMB1Protocol')
-            @('Get-WindowsPackage (PackageState: Superseded)', 'Package_for_RollupFix~31bf3856ad364e35~amd64~~26100.1.1.1')
-            @('Get-WindowsPackage (PackageState: Installed) Language Packs', 'Microsoft-Windows-Client-LanguagePack-Package~31bf3856ad364e35~amd64~de-DE~10.0.26100.1')
-            @('Get-WindowsPackage (PackageState: Installed) Language Features', 'Microsoft-Windows-LanguageFeatures-Basic-de-de-Package~31bf3856ad364e35~amd64~~10.0.26100.1')
-            @('Get-WindowsPackage (PackageState: Installed) Features on Demand', 'Microsoft-OneCore-ApplicationModel-Sync-Desktop-FOD-Package~31bf3856ad364e35~amd64~~10.0.26100.1')
-            @('Get-WindowsPackage (PackageState: Installed)', 'Microsoft-Windows-Foundation-Package~31bf3856ad364e35~amd64~~10.0.26100.1')
-            @('Get-WindowsPackage (PackageState: Installed) Updates', 'Package_for_RollupFix~31bf3856ad364e35~amd64~~26100.2.1.1')
+        foreach ($Section in @(
+            @{Header = 'Get-AppxProvisionedPackage (DisplayName)'; Item = 'Microsoft.WindowsCalculator'}
+            @{Header = 'Get-AppxProvisionedPackage Language Experience Packs (DisplayName)'; Item = 'Microsoft.LanguageExperiencePackde-DE'}
+            @{Header = 'Get-WindowsCapability (State: Installed)'; Item = 'Browser.InternetExplorer~~~~0.0.11.0'}
+            @{Header = 'Get-WindowsCapability (State: NotPresent)'; Item = 'XPS.Viewer~~~~0.0.1.0'}
+            @{Header = 'Get-WindowsCapability Language (State: Installed)'; Item = 'Language.Basic~~~de-DE~0.0.1.0'}
+            @{Header = 'Get-WindowsCapability Language (State: NotPresent)'; Item = 'Language.Speech~~~fr-FR~0.0.1.0'}
+            @{Header = 'Get-WindowsOptionalFeature (State: Enabled)'; Item = 'NetFx4-AdvSrvs'}
+            @{Header = 'Get-WindowsOptionalFeature (State: EnablePending)'; Item = 'NetFx3'}
+            @{Header = 'Get-WindowsOptionalFeature (State: Disabled)'; Item = 'TelnetClient'}
+            @{Header = 'Get-WindowsOptionalFeature (State: DisabledWithPayloadRemoved)'; Item = 'SMB1Protocol'}
+            @{Header = 'Get-WindowsPackage (PackageState: Superseded)'; Item = 'Package_for_RollupFix~31bf3856ad364e35~amd64~~26100.1.1.1'}
+            @{Header = 'Get-WindowsPackage (PackageState: Installed) Language Packs'; Item = 'Microsoft-Windows-Client-LanguagePack-Package~31bf3856ad364e35~amd64~de-DE~10.0.26100.1'}
+            @{Header = 'Get-WindowsPackage (PackageState: Installed) Language Features'; Item = 'Microsoft-Windows-LanguageFeatures-Basic-de-de-Package~31bf3856ad364e35~amd64~~10.0.26100.1'}
+            @{Header = 'Get-WindowsPackage (PackageState: Installed) Features on Demand'; Item = 'Microsoft-OneCore-ApplicationModel-Sync-Desktop-FOD-Package~31bf3856ad364e35~amd64~~10.0.26100.1'}
+            @{Header = 'Get-WindowsPackage (PackageState: Installed)'; Item = 'Microsoft-Windows-Foundation-Package~31bf3856ad364e35~amd64~~10.0.26100.1'}
+            @{Header = 'Get-WindowsPackage (PackageState: Installed) Updates'; Item = 'Package_for_RollupFix~31bf3856ad364e35~amd64~~26100.2.1.1'}
         )) {
-            $Index = [array]::IndexOf($Output, $Pair[0])
-            $Index | Should -BeGreaterThan -1 -Because "the section $($Pair[0]) is shown"
-            $Output[$Index + 1] | Should -Be $Pair[1]
+            $Index = [array]::IndexOf($Output, $Section.Header)
+            $Index | Should -BeGreaterThan -1 -Because "the section $($Section.Header) is shown"
+            $Output[$Index + 1] | Should -Be $Section.Item
         }
         $Text | Should -Match 'Architecture\s*:\s*x64'
         $Text | Should -Match 'EditionId\s*:\s*Enterprise'
