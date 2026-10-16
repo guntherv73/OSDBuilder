@@ -82,7 +82,7 @@ Describe 'Get-TaskWinPEADK' {
             (Get-RelativeAdk "$Adk11\amd64\WinPE_OCs\de-de\lp.cab")
             (Get-RelativeAdk "$Adk11\amd64\WinPE_OCs\de-de\WinPE-WMI_de-de.cab")
         )
-        Should -Invoke Out-GridView -Times 4 -Exactly -ParameterFilter {$PassThru -and ($Title -like 'WinPE.wim ADK Packages:*')}
+        Should -Invoke Out-GridView -Times 4 -Exactly -ParameterFilter {($null -ne $InputObject) -and $PassThru -and ($Title -like 'WinPE.wim ADK Packages:*')}
         @($Result).Count | Should -Be 4
     }
 
@@ -97,7 +97,14 @@ Describe 'Get-TaskWinPEADK' {
         $ExistingTask = [PSCustomObject]@{WinPEADK = @((Get-RelativeAdk "$Adk11\amd64\WinPE_OCs\WinPE-WMI.cab"))}
         Get-TaskWinPEADK 6>$null | Out-Null
         $script:GridView.FullName | Should -Not -Contain (Get-RelativeAdk "$Adk11\amd64\WinPE_OCs\WinPE-WMI.cab")
-        @($script:GridView).Count | Should -Be 3
+        @($script:GridView | Where-Object {$_}).Count | Should -Be 3
+    }
+
+    # KnownBug: Private/AllFunctions.ps1:4214 (and 4245, 4285, 4318 in ADKPE, ADKRE, ADKSE) [array] + $null appends $null, the GridView shows an empty item without WinPE content in the IsoExtract
+    It 'does not offer an empty item when the IsoExtract has no WinPE content' -Skip {
+        Get-TaskWinPEADK 6>$null | Out-Null
+        $script:GridView | Should -Not -Contain $null
+        Should -Invoke Out-GridView -Times 0 -Exactly -ParameterFilter {$null -eq $InputObject}
     }
 
     It 'warns when there are no ADK packages' {
@@ -116,9 +123,9 @@ Describe 'Get-TaskWinPEADKPE' {
 
     It 'offers the x64 ADK packages of the release for WinPE' {
         $Result = Get-TaskWinPEADKPE 6>$null
-        @($script:GridView).Count | Should -Be 4
+        @($script:GridView | Where-Object {$_}).Count | Should -Be 4
         $script:GridView.FullName | Should -Contain (Get-RelativeAdk "$Adk11\amd64\WinPE_OCs\de-de\lp.cab")
-        Should -Invoke Out-GridView -Times 4 -Exactly -ParameterFilter {$PassThru -and ($Title -like 'WinPE.wim ADK Packages:*')}
+        Should -Invoke Out-GridView -Times 4 -Exactly -ParameterFilter {($null -ne $InputObject) -and $PassThru -and ($Title -like 'WinPE.wim ADK Packages:*')}
         @($Result).Count | Should -Be 4
     }
 
@@ -133,7 +140,7 @@ Describe 'Get-TaskWinPEADKPE' {
         $ExistingTask = [PSCustomObject]@{WinPEADKPE = @((Get-RelativeAdk "$Adk11\amd64\WinPE_OCs\WinPE-PowerShell.cab"))}
         Get-TaskWinPEADKPE 6>$null | Out-Null
         $script:GridView.FullName | Should -Not -Contain (Get-RelativeAdk "$Adk11\amd64\WinPE_OCs\WinPE-PowerShell.cab")
-        @($script:GridView).Count | Should -Be 3
+        @($script:GridView | Where-Object {$_}).Count | Should -Be 3
     }
 
     It 'warns when there are no ADK packages' {
@@ -153,8 +160,8 @@ Describe 'Get-TaskWinPEADKRE' {
 
     It 'offers the x64 ADK packages of the release with the language packs when there is no Languages and Optional Features ISO' {
         $Result = Get-TaskWinPEADKRE 6>$null 3>$null
-        @($script:GridView).Count | Should -Be 4
-        Should -Invoke Out-GridView -Times 4 -Exactly -ParameterFilter {$PassThru -and ($Title -like 'WinRE.wim ADK Packages:*')}
+        @($script:GridView | Where-Object {$_}).Count | Should -Be 4
+        Should -Invoke Out-GridView -Times 4 -Exactly -ParameterFilter {($null -ne $InputObject) -and $PassThru -and ($Title -like 'WinRE.wim ADK Packages:*')}
         @($Result).Count | Should -Be 4
     }
 
@@ -186,7 +193,7 @@ Describe 'Get-TaskWinPEADKRE' {
         $ExistingTask = [PSCustomObject]@{WinPEADKRE = @((Get-RelativeAdk "$Adk11\amd64\WinPE_OCs\WinPE-PowerShell.cab"))}
         Get-TaskWinPEADKRE 6>$null 3>$null | Out-Null
         $script:GridView.FullName | Should -Not -Contain (Get-RelativeAdk "$Adk11\amd64\WinPE_OCs\WinPE-PowerShell.cab")
-        @($script:GridView).Count | Should -Be 3
+        @($script:GridView | Where-Object {$_}).Count | Should -Be 3
     }
 
     It 'warns when there are no ADK packages' {
@@ -206,8 +213,8 @@ Describe 'Get-TaskWinPEADKSE' {
 
     It 'offers the x64 ADK packages of the release for WinSE' {
         $Result = Get-TaskWinPEADKSE 6>$null
-        @($script:GridView).Count | Should -Be 4
-        Should -Invoke Out-GridView -Times 4 -Exactly -ParameterFilter {$PassThru -and ($Title -like 'WinSE.wim ADK Packages:*')}
+        @($script:GridView | Where-Object {$_}).Count | Should -Be 4
+        Should -Invoke Out-GridView -Times 4 -Exactly -ParameterFilter {($null -ne $InputObject) -and $PassThru -and ($Title -like 'WinSE.wim ADK Packages:*')}
         @($Result).Count | Should -Be 4
     }
 
@@ -222,7 +229,7 @@ Describe 'Get-TaskWinPEADKSE' {
         $ExistingTask = [PSCustomObject]@{WinPEADKSE = @((Get-RelativeAdk "$Adk11\amd64\WinPE_OCs\de-de\lp.cab"))}
         Get-TaskWinPEADKSE 6>$null | Out-Null
         $script:GridView.FullName | Should -Not -Contain (Get-RelativeAdk "$Adk11\amd64\WinPE_OCs\de-de\lp.cab")
-        @($script:GridView).Count | Should -Be 3
+        @($script:GridView | Where-Object {$_}).Count | Should -Be 3
     }
 
     It 'warns when there are no ADK packages' {

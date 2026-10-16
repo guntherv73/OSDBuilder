@@ -166,14 +166,20 @@ BeforeAll {
             [string]$Command = 'Update-OSMedia',
             $InputObject
         )
+        #collected in a list, an assignment would be lost when Break leaves the pipeline
+        $Warnings = New-Object System.Collections.Generic.List[string]
         foreach ($Guard in 1) {
             if ($null -ne $InputObject) {
-                $Output = $InputObject | & $Command @Parameters 3>&1 6>$null
+                $InputObject | & $Command @Parameters 3>&1 6>$null | ForEach-Object {
+                    if ($_ -is [System.Management.Automation.WarningRecord]) {$Warnings.Add($_.Message)}
+                }
             } else {
-                $Output = & $Command @Parameters 3>&1 6>$null
+                & $Command @Parameters 3>&1 6>$null | ForEach-Object {
+                    if ($_ -is [System.Management.Automation.WarningRecord]) {$Warnings.Add($_.Message)}
+                }
             }
         }
-        @($Output | Where-Object {$_ -is [System.Management.Automation.WarningRecord]} | ForEach-Object {$_.Message})
+        ,$Warnings.ToArray()
     }
 
     function Get-RenamedOSMedia {

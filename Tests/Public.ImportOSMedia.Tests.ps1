@@ -65,10 +65,14 @@ BeforeAll {
         Break in the Begin block of Import-OSMedia leaves the nearest loop, the foreach keeps it inside this function
         #>
         param ([hashtable]$Parameters = @{})
+        #collected in a list, an assignment would be lost when Break leaves the pipeline
+        $Warnings = New-Object System.Collections.Generic.List[string]
         foreach ($Guard in 1) {
-            $Output = Import-OSMedia @Parameters 3>&1 6>$null
+            Import-OSMedia @Parameters 3>&1 6>$null | ForEach-Object {
+                if ($_ -is [System.Management.Automation.WarningRecord]) {$Warnings.Add($_.Message)}
+            }
         }
-        @($Output | Where-Object {$_ -is [System.Management.Automation.WarningRecord]} | ForEach-Object {$_.Message})
+        ,$Warnings.ToArray()
     }
 
     function Get-ImportedOSMedia {

@@ -143,8 +143,8 @@ Describe 'New-OSDCloudOSMedia' {
         foreach ($Name in 'Copy-MediaOperatingSystem', 'Mount-InstallwimOS', 'Set-WinREWimOS', 'Enable-WinPEOSDCloud', 'Enable-WinREWiFi', 'Dismount-InstallwimOS', 'Export-InstallwimOS', 'Save-WindowsImageContentOS', 'Save-VariablesOSD') {
             Should -Invoke $Name -Times 1 -Exactly
         }
-        foreach ($PackType in 'OSCapability', 'OSPackages', 'OSDrivers', 'OSExtraFiles', 'OSPoshMods', 'OSRegistry', 'OSScripts', 'OSStartLayout') {
-            Should -Invoke Add-ContentPack -Times 1 -Exactly -ParameterFilter {$PackType -eq $PackType}
+        foreach ($ExpectedPackType in 'OSCapability', 'OSPackages', 'OSDrivers', 'OSExtraFiles', 'OSPoshMods', 'OSRegistry', 'OSScripts', 'OSStartLayout') {
+            Should -Invoke Add-ContentPack -Times 1 -Exactly -ParameterFilter {$PackType -eq $ExpectedPackType}
         }
         Should -Invoke Get-RegCurrentVersion -Times 2 -Exactly -ParameterFilter {$Path -eq $ExpectedMountOS}
         Should -Invoke Read-Host -Times 0 -Exactly

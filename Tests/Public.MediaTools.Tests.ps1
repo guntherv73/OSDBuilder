@@ -11,6 +11,14 @@ BeforeAll {
     $SavedTemp = $env:Temp
     $env:PROCESSOR_ARCHITECTURE = 'AMD64'
 
+    function ConvertTo-TestText {
+        #Write-Host records (6>&1) and the other output as text, the same on Windows PowerShell 5.1 and PowerShell 7
+        $Lines = foreach ($Item in $input) {
+            if ($Item -is [System.Management.Automation.InformationRecord]) {"$($Item.MessageData)"} else {$Item | Out-String -Width 400}
+        }
+        $Lines -join "`n"
+    }
+
     function New-TestMedia {
         <#
         .SYNOPSIS
@@ -63,11 +71,16 @@ Describe 'New-OSDBuilderContentPack' {
         New-OSDBuilderContentPack -Name 'Contoso'
         Should -Invoke Get-OSDBuilder -Times 1 -Exactly -ParameterFilter {$HideDetails}
         $Pack = Join-Path $SetOSDBuilderPathContentPacks 'Contoso'
-        foreach ($Directory in 'Media\ALL', 'OSDrivers\x64', 'OSExtraFiles\ALL Subdirs', 'OSPoshMods\System', 'OSRegistry\ALL', 'OSScripts\x64', 'OSStartLayout\ALL',
-            'PEDaRT', 'PEDrivers\x64', 'PEExtraFiles\x64 Subdirs', 'PEPoshMods\ProgramFiles', 'PERegistry\ALL', 'PEScripts\x64') {
-            Join-Path $Pack $Directory | Should -Exist
-        }
-        @(Get-ChildItem -Path $Pack -Directory -Recurse).Count | Should -Be 41
+        $Leaves = @(
+            'Media\ALL', 'Media\x64', 'OSDrivers\ALL', 'OSDrivers\x64', 'OSExtraFiles\ALL', 'OSExtraFiles\ALL Subdirs', 'OSExtraFiles\x64', 'OSExtraFiles\x64 Subdirs',
+            'OSPoshMods\ProgramFiles', 'OSPoshMods\System', 'OSRegistry\ALL', 'OSRegistry\x64', 'OSScripts\ALL', 'OSScripts\x64', 'OSStartLayout\ALL', 'OSStartLayout\x64',
+            'PEDaRT', 'PEDrivers\ALL', 'PEDrivers\x64', 'PEExtraFiles\ALL', 'PEExtraFiles\ALL Subdirs', 'PEExtraFiles\x64', 'PEExtraFiles\x64 Subdirs',
+            'PEPoshMods\ProgramFiles', 'PEPoshMods\System', 'PERegistry\ALL', 'PERegistry\x64', 'PEScripts\ALL', 'PEScripts\x64'
+        )
+        $Expected = @($Leaves + ($Leaves | ForEach-Object {($_ -split '\\')[0]})) | Sort-Object -Unique
+        #Relative paths with \ on every platform
+        $Actual = Get-ChildItem -Path $Pack -Directory -Recurse | ForEach-Object {$_.FullName.Substring($Pack.Length + 1) -replace '/', '\'} | Sort-Object -Unique
+        ($Actual -join '|') | Should -Be ($Expected -join '|')
     }
 
     It 'creates only the OS directories with -ContentType OS' {
@@ -349,9 +362,9 @@ Describe 'New-OSDBuilderVHD' {
         Mock New-VHD {}
         Mock Mount-DiskImage {}
         Mock Dismount-DiskImage {}
-        Mock Get-DiskImage {[PSCustomObject]@{ImagePath = $ImagePath}}
-        #Get-Disk takes the DiskImage CimInstance on Windows
-        Mock Get-Disk {[PSCustomObject]@{Number = 7}} -RemoveParameterType InputObject, DiskImage
+        Mock Get-DiskImage {[PSCustomObject]@{ImagePath = $ImagePath; Number = 7}}
+        #The real Get-Disk binds Number of the DiskImage by property name, the placeholder binds InputObject
+        Mock Get-Disk {[PSCustomObject]@{Number = 7}} -RemoveParameterType DiskImage
         Mock Initialize-Disk {}
         Mock New-Partition {
             if ($GptType -eq '{e3c9e316-0b5c-4db8-817d-f92df00215ae}') {[PSCustomObject]@{PartitionNumber = 2}}
@@ -504,8 +517,10 @@ Describe 'Show-OSDBuilderInfo' {
     }
 
     It 'shows the Appx packages, capabilities, optional features, packages and the Windows image of the media' {
-        $Output = (Show-OSDBuilderInfo -FullName $Media.FullName 6>&1 | Out-String -Width 400) -split "`r?`n" | ForEach-Object {$_.TrimEnd()}
-        $Text = $Output -join "`n"
+        #Write-Host lines and the Format-List output of Get-WindowsImage
+        $All = @(Show-OSDBuilderInfo -FullName $Media.FullName 6>&1)
+        $Output = @($All | Where-Object {$_ -is [System.Management.Automation.InformationRecord]} | ForEach-Object {"$($_.MessageData)".TrimEnd()})
+        $Text = $All | Where-Object {$_ -isnot [System.Management.Automation.InformationRecord]} | Out-String -Width 400
 
         #Section headers are followed by their items
         foreach ($Section in @(
@@ -549,14 +564,14 @@ Describe 'Show-OSDBuilderInfo' {
 
     It 'shows only the Windows image of a media without inventory' {
         $Media = New-TestMedia -Name 'NoInventory'
-        $Text = (Show-OSDBuilderInfo -FullName $Media.FullName 6>&1 | Out-String)
+        $Text = Show-OSDBuilderInfo -FullName $Media.FullName 6>&1 | ConvertTo-TestText
         $Text | Should -Not -BeLike '*Get-WindowsPackage*'
         $Text | Should -BeLike '*Get-WindowsImage*'
         @($global:GetWindowsPackage).Count | Should -Be 0
     }
 
     It 'selects the media in Out-GridView without -FullName' {
-        $Text = Show-OSDBuilderInfo 6>&1 | Out-String
+        $Text = Show-OSDBuilderInfo 6>&1 | ConvertTo-TestText
         Should -Invoke Out-GridView -Times 1 -Exactly -ParameterFilter {$PassThru -and ($InputObject.FullName -eq $Media.FullName)}
         $Text | Should -BeLike "*Show-OSDBuilderInfo -FullName '$($Media.FullName)'*"
     }
