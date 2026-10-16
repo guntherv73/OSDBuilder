@@ -216,11 +216,10 @@ Describe 'New-PEBuild' {
 
     Context 'Execute WinPE' {
         It 'exports the WinPE wim and mounts it' {
-            Mock dism {$script:DismArgs = $RemainingArguments; $script:DismInput = $InputObject}
             Invoke-TestPEBuild @{Execute = $true}
-            Write-Host ("ARGS: " + ($script:DismArgs -join '|') + " INPUT: $script:DismInput")
             Should -Invoke dism -Times 1 -Exactly -ParameterFilter {
-                $Arguments = $RemainingArguments -join ' '
+                #The first argument binds to the first positional parameter of the placeholder
+                $Arguments = (@($InputObject) + @($RemainingArguments)) -join ' '
                 ($Arguments -like '/Export-Image*') -and
                 ($Arguments -like "*/SourceImageFile:$($script:OSMedia.FullName)\WinPE\WinPE.wim*") -and
                 ($Arguments -like "*/DestinationImageFile:$WorkingPath\WimTemp\boot.wim*") -and
@@ -300,14 +299,14 @@ Describe 'New-PEBuild' {
             (Import-Clixml -Path (Join-Path (Join-Path (Join-Path $WorkingPath 'info') 'xml') 'Get-WindowsPackage.xml')).PackageName | Should -Be 'WinPE-WMI-Package~31bf3856ad364e35~amd64~~10.0.26100.1'
             Join-Path (Join-Path $WorkingPath 'info') 'WindowsPackage.txt' | Should -Exist
             Should -Invoke Dismount-WindowsImage -Times 1 -Exactly -ParameterFilter {$Save -and ($Path -like (Join-Path $global:SetOSDBuilderPathMount 'pebuild*'))}
-            Should -Invoke Export-WindowsImage -Times 1 -Exactly -ParameterFilter {($SourceImagePath -eq "$WorkingPath\WimTemp\boot.wim") -and ($DestinationImagePath -eq "$WorkingPath\OS\sources\boot.wim") -and $Setbootable -and ($DestinationName -eq 'Existing')}
+            Should -Invoke Export-WindowsImage -Times 1 -Exactly -ParameterFilter {($SourceImagePath -eq "$(Join-Path $WorkingPath 'WimTemp')\boot.wim") -and ($DestinationImagePath -eq "$(Join-Path $WorkingPath 'OS')\sources\boot.wim") -and $Setbootable -and ($DestinationName -eq 'Existing')}
             Should -Invoke Export-WindowsImage -Times 1 -Exactly -ParameterFilter {$DestinationImagePath -eq "$WorkingPath\WinPE.wim"}
             Should -Invoke Export-WindowsImage -Times 2 -Exactly
         }
 
         It 'writes the Windows Image inventory with the UBR and removes the temporary directories' {
             Invoke-TestPEBuild @{Execute = $true}
-            Should -Invoke Get-WindowsImage -Times 1 -Exactly -ParameterFilter {$ImagePath -eq "$WorkingPath\OS\sources\boot.wim"}
+            Should -Invoke Get-WindowsImage -Times 1 -Exactly -ParameterFilter {$ImagePath -eq "$(Join-Path $WorkingPath 'OS')\sources\boot.wim"}
             (Import-Clixml -Path (Join-Path (Join-Path (Join-Path $WorkingPath 'info') 'xml') 'Get-WindowsImage.xml')).UBR | Should -Be '26200.6899'
             (Get-Content -Path (Join-Path $WorkingPath 'WindowsImage.txt')) | Where-Object {-not $_.Trim()} | Should -BeNullOrEmpty
             Should -Invoke Save-WindowsImageContentPE -Times 1 -Exactly
@@ -417,7 +416,8 @@ Describe 'New-PEBuild' {
             $script:PEBuildTasks = @(New-TestPEBuildTask -FileName 'Recovery Contoso.json' -Change {$Task.WinPEOutput = 'Recovery'; $Task.SourceWim = 'WinRE'})
             Invoke-TestPEBuild @{Execute = $true}
             Should -Invoke dism -Times 1 -Exactly -ParameterFilter {
-                $Arguments = $RemainingArguments -join ' '
+                #The first argument binds to the first positional parameter of the placeholder
+                $Arguments = (@($InputObject) + @($RemainingArguments)) -join ' '
                 ($Arguments -like "*/SourceImageFile:$($script:OSMedia.FullName)\WinPE\WinRE.wim*") -and ($Arguments -like '*/DestinationName:Microsoft Windows Recovery Environment (x64)*')
             }
             Should -Invoke Export-WindowsImage -Times 1 -Exactly -ParameterFilter {$DestinationImagePath -eq "$WorkingPath\WinRE.wim"}
