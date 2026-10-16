@@ -38,6 +38,8 @@ function Get-OSDBuilderAppxManifest {
             Architecture    = if ($Xml.Package.Identity.ProcessorArchitecture) {$Xml.Package.Identity.ProcessorArchitecture} else {'neutral'}
             IsFramework     = ([string]$Xml.Package.Properties.Framework -eq 'true')
             Dependencies    = $Dependencies
+            #Windows.Desktop MinVersion, for example 10.0.26100.0 for a Windows 11 24H2 Local Experience Pack
+            MinOSVersion    = @($Xml.Package.Dependencies.TargetDeviceFamily | Where-Object {$_} | Where-Object {$_.Name -in @('Windows.Desktop','Windows.Universal')} | Select-Object -ExpandProperty MinVersion -First 1)[0]
         }
     }
 

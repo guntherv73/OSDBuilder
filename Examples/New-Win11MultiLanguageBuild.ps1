@@ -16,6 +16,7 @@ LanguageCopySources: Windows Setup shows these display languages and the languag
 
 New-OSBuild then:
 - adds the Language Packs, Language Interface Packs and Language Features, reapplies the LCU once
+- adds a Local Experience Pack from Content\IsoExtract for languages without a .cab (see README)
 - adds the same languages to WinRE from the Languages and Optional Features ISO
 - enables .NET Framework 3.5 (NetFx3) from the Languages and Optional Features ISO and applies the .NET CU (-SkipNetFX3 to skip)
 - reinstalls the inbox apps from the Inbox Apps ISO so they include the language resources
@@ -207,7 +208,16 @@ if ($SetupLanguages) {
 }
 Write-Step "5. Task content for $($Languages -join ', ')"
 $ImageLanguages = @($OSMedia.Languages | ForEach-Object {"$_".ToLower()})
-$LanguagePack = @(); $LanguageInterfacePack = @(); $LanguageFeature = @(); $Missing = @()
+$LanguagePack = @(); $LanguageInterfacePack = @(); $LanguageFeature = @(); $LocalExperiencePack = @(); $Missing = @()
+
+#Windows 11 publishes 43 languages as .cab on the Languages and Optional Features ISO, the other languages only as
+#Local Experience Packs (.appx). LXPs are used from Content\IsoExtract\<directory with the ReleaseId>\LocalExperiencePack\<lang>
+$ReleaseIds = if ($ReleaseGroup -eq '22H2-23H2') {@('22H2','23H2')} else {@('24H2','25H2','26H2')}
+$IsoExtractPath = Join-Path $SetOSDBuilderPathContent 'IsoExtract'
+$LxpFiles = @(Get-ChildItem -Path $IsoExtractPath -Filter 'LanguageExperiencePack.*.appx' -File -Recurse -ErrorAction SilentlyContinue | `
+    Where-Object {$_.Directory.Parent.Name -eq 'LocalExperiencePack'} | `
+    Where-Object {$_.FullName -match "Windows 11 .*($($ReleaseIds -join '|'))"} | `
+    Where-Object {Test-Path (Join-Path $_.DirectoryName 'License.xml')})
 
 foreach ($Language in ($Languages | ForEach-Object {$_.ToLower()} | Sort-Object -Unique)) {
     if ($Language -in $ImageLanguages) {
@@ -217,7 +227,12 @@ foreach ($Language in ($Languages | ForEach-Object {$_.ToLower()} | Sort-Object 
     $LipLp = "Microsoft-Windows-Lip-Language-Pack_x64_$Language.cab"
     if (Test-Path (Join-Path $LofPath $ClientLp)) {$LanguagePack += "$LofRelative\$ClientLp"}
     elseif (Test-Path (Join-Path $LofPath $LipLp)) {$LanguageInterfacePack += "$LofRelative\$LipLp"}
-    else {$Missing += $Language; Continue}
+    else {
+        $Lxp = $LxpFiles | Where-Object {$_.Name -eq "LanguageExperiencePack.$Language.Neutral.appx"} | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+        #New-OSBuild expects the path relative to the Content directory
+        if ($Lxp) {$LocalExperiencePack += $Lxp.FullName.Substring($SetOSDBuilderPathContent.TrimEnd('\', '/').Length + 1)}
+        else {$Missing += $Language; Continue}
+    }
 
     $Types = @($LanguageFeatures)
     foreach ($Type in $Types) {
@@ -235,7 +250,7 @@ foreach ($Language in ($Languages | ForEach-Object {$_.ToLower()} | Sort-Object 
         if (Test-Path (Join-Path $LofPath $Cab)) {$LanguageFeature += "$LofRelative\$Cab"}
     }
 }
-if ($Missing) {throw "No Language Pack was found in $LofPath for: $($Missing -join ', ')"}
+if ($Missing) {throw "No Language Pack was found in $LofPath and no Local Experience Pack in $IsoExtractPath for: $($Missing -join ', ')"}
 $LanguageFeature = @($LanguageFeature | Sort-Object -Unique)
 
 $RemoveAppxPackageName = @()
@@ -248,6 +263,7 @@ if ($RemoveAppxDisplayName) {
 
 foreach ($Item in $LanguagePack)            {Write-Host "LanguagePack          $Item"}
 foreach ($Item in $LanguageInterfacePack)   {Write-Host "LanguageInterfacePack $Item"}
+foreach ($Item in $LocalExperiencePack)     {Write-Host "LocalExperiencePack   $Item"}
 foreach ($Item in $LanguageFeature)         {Write-Host "LanguageFeature       $Item"}
 foreach ($Item in $AddWindowsCapability)    {Write-Host "WindowsCapability     $Item"}
 foreach ($Item in $RemoveAppxPackageName)   {Write-Host "RemoveAppx            $Item"}
@@ -270,6 +286,7 @@ $Task = Get-Content -Path $TaskPath -Raw | ConvertFrom-Json
 $Task.CustomName                    = $ExportName
 $Task.LanguagePack                  = [string[]]$LanguagePack
 $Task.LanguageInterfacePack         = [string[]]$LanguageInterfacePack
+$Task | Add-Member -NotePropertyName LocalExperiencePacks -NotePropertyValue ([string[]]$LocalExperiencePack) -Force
 $Task.LanguageFeature               = [string[]]$LanguageFeature
 $Task.AddWindowsCapability          = [string[]]$AddWindowsCapability
 $Task.RemoveAppxProvisionedPackage  = [string[]]$RemoveAppxPackageName

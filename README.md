@@ -112,6 +112,27 @@ Content\IsoExtract\Windows 11 24H2 Language\LanguagesAndOptionalFeatures\Microso
 * The Windows 11 Language Interface Packs `Microsoft-Windows-Lip-Language-Pack_x64_<lang>.cab`
   (ca-ES, eu-ES, gl-ES, id-ID, vi-VN) are offered as Language Interface Packs and added after the Language Packs
 
+### Local Experience Packs (LXP)
+
+Windows 11 publishes 43 languages as `.cab` Language Packs (38) and Language Interface Packs (5) on the Languages and Optional Features ISO.
+The other languages are only available as Local Experience Packs (`.appx`)
+([Languages overview](https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/languages-overview)), they are not on the ISO.
+
+* Copy the LXPs to a directory in `Content\IsoExtract` that contains the ReleaseId, with the `License.xml` next to each `.appx`:
+  ```
+  Content\IsoExtract\Windows 11 24H2 LXP\LocalExperiencePack\nn-no\LanguageExperiencePack.nn-no.Neutral.appx
+  Content\IsoExtract\Windows 11 24H2 LXP\LocalExperiencePack\nn-no\License.xml
+  ```
+* `New-OSBuildTask -ContentLanguagePackages` offers them as Local Experience Packs, the example script uses an LXP for every language without a `.cab`
+* `New-OSBuild` adds each LXP with `Add-AppxProvisionedPackage` and checks:
+  * the AppxManifest identity is a `Microsoft.LanguageExperiencePack*`
+  * the `Windows.Desktop` MinVersion is in the servicing branch of the image (an LXP for 26100 is used for 24H2, 25H2 and 26H2, not for 23H2)
+  * the License.xml exists
+  * the same or a newer version is not already provisioned (no LCU reapply then)
+  * the LXP is provisioned afterwards, the build shows a warning for every LXP that was not added
+* OSLocalExperiencePacks ContentPacks use the same checks and only apply `LanguageExperiencePack*.appx`
+* LXP languages are not added to WinRE and Windows Setup, Microsoft publishes WinRE and Setup languages only for the `.cab` languages
+
 ### Windows Recovery Environment languages
 
 Microsoft distributes the WinRE language packs on the Languages and Optional Features ISO and recommends
