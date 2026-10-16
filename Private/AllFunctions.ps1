@@ -4756,6 +4756,9 @@ function Import-RegistryXmlOS {
                 $RegType = $RegType -replace 'REG_EXPAND_SZ','ExpandString'
                 $RegType = $RegType -replace 'REG_BINARY','Binary'
                 $RegValue = $RegEntry.Value
+                #Group Policy Preferences store REG_DWORD and REG_QWORD values as hexadecimal
+                if (($RegType -eq 'DWord') -and ($RegValue -match '^[0-9a-fA-F]{1,8}$')) {$RegValue = [Convert]::ToInt32($RegValue, 16)}
+                if (($RegType -eq 'QWord') -and ($RegValue -match '^[0-9a-fA-F]{1,16}$')) {$RegValue = [Convert]::ToInt64($RegValue, 16)}
 
                 if ($RegType -eq 'Binary') {
                     $RegValue = $RegValue -replace '(..(?!$))','$1,'
@@ -4771,7 +4774,7 @@ function Import-RegistryXmlOS {
                 if ($RegAction -eq "D") {
                     Write-Host "Remove-ItemProperty -LiteralPath $RegPath" -ForegroundColor Red
                     if ($RegDefault -eq '0' -and $RegName -eq '' -and $RegValue -eq '') {
-                        Remove-ItemProperty -LiteralPath $RegPath -Force -ErrorAction SilentlyContinue | Out-Null
+                        Remove-Item -LiteralPath $RegPath -Recurse -Force -ErrorAction SilentlyContinue | Out-Null
                     } elseif ($RegDefault -eq '1') {
                         Write-Host "-Name '(Default)'"
                         Remove-ItemProperty -LiteralPath $RegPath -Name '(Default)' -Force -ErrorAction SilentlyContinue | Out-Null
@@ -4870,7 +4873,7 @@ function Invoke-DismCleanupImage {
     #   Abort Pending Operations
     #=================================================
     if ($OSMajorVersion -eq 10) {
-        if ($(Get-WindowsCapability -Path $MountDirectory | Where-Object {$_.state -eq "*pending*"})) {
+        if ($(Get-WindowsCapability -Path $MountDirectory | Where-Object {$_.state -like "*pending*"})) {
             Write-Warning "Cannot run WindowsImage Cleanup on a WIM with Pending Installations"
             Return
         }
@@ -5749,7 +5752,7 @@ function Save-InventoryOS {
     }
     catch {
         Write-Warning "Get-AppxProvisionedPackage encountered errors"
-        Write-Warning $_.Exception.ErrorCode
+        if ($_.Exception.ErrorCode) {Write-Warning $_.Exception.ErrorCode}
         Write-Warning $_.Exception.Message
     }
 
@@ -5768,7 +5771,7 @@ function Save-InventoryOS {
     }
     catch {
         Write-Warning "Get-WindowsOptionalFeature encountered errors"
-        Write-Warning $_.Exception.ErrorCode
+        if ($_.Exception.ErrorCode) {Write-Warning $_.Exception.ErrorCode}
         Write-Warning $_.Exception.Message
     }
 
@@ -5787,7 +5790,7 @@ function Save-InventoryOS {
     }
     catch {
         Write-Warning "Get-WindowsCapability encountered errors"
-        Write-Warning $_.Exception.ErrorCode
+        if ($_.Exception.ErrorCode) {Write-Warning $_.Exception.ErrorCode}
         Write-Warning $_.Exception.Message
     }
 
@@ -5806,7 +5809,7 @@ function Save-InventoryOS {
     }
     catch {
         Write-Warning "Get-WindowsPackage encountered errors"
-        Write-Warning $_.Exception.ErrorCode
+        if ($_.Exception.ErrorCode) {Write-Warning $_.Exception.ErrorCode}
         Write-Warning $_.Exception.Message
     }
 }
@@ -7447,9 +7450,7 @@ function Update-SetupDUMEDIA {
         Write-Host -ForegroundColor Cyan "Applying update to WinSE at $MountWinSE\Sources"
         robocopy "$TempRandom" "$MountWinSE\Sources" *.* /s /ndl /xo /xx /xl /b /np /ts /tee /r:0 /w:0 /Log+:"$Logs\$((Get-Date).ToString('yyyy-MM-dd-HHmmss'))-Robocopy-WinSE-SetupDU.log" | Out-Null
 
-        #expand.exe "$UpdateSetupDU" -F:*.* "$OS\Sources"
-        #expand.exe "$UpdateSetupDU" -F:*.* "$MountWinSE\Sources"
-        #pause
+        Remove-Item -Path $TempRandom -Recurse -Force -ErrorAction SilentlyContinue
     }
 }
 function Update-SourcesPE {

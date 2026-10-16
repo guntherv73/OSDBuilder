@@ -243,7 +243,7 @@ Describe 'Import-RegistryXmlOS' {
         $script:LoadedHives.Count | Should -Be 0
         $Output | Should -BeLike '*OS: Template Registry XML*'
         $Output | Should -BeLike "*Processing $($RegistryTemplatesXml[0].FullName)*"
-        $Output | Should -BeLike '*-Name DisableWindowsConsumerFeatures -PropertyType DWord -Value 00000001*'
+        $Output | Should -BeLike '*-Name DisableWindowsConsumerFeatures -PropertyType DWord -Value 1*'
     }
 
     It 'removes the values of entries with the action D' {
@@ -265,15 +265,13 @@ Describe 'Import-RegistryXmlOS' {
         Should -Invoke New-ItemProperty -Times 0 -Exactly
     }
 
-    # KnownBug: Import-RegistryXmlOS calls Remove-ItemProperty without the mandatory -Name to remove a key (AllFunctions.ps1:4772), it prompts for a Name and does not remove the key
-    It 'removes the key of an entry with the action D without a name' -Skip {
+    It 'removes the key of an entry with the action D without a name' {
         $RegistryTemplatesXml = @(Get-Item -Path (Join-Path $IMNRSFixtures 'RegistryDeleteKey.xml'))
         Import-RegistryXmlOS 6>$null
         Should -Invoke Remove-Item -Times 1 -Exactly -ParameterFilter {"$LiteralPath$Path" -eq 'Registry::HKEY_LOCAL_MACHINE\OfflineSoftware\OSDBuilder\Obsolete'}
     }
 
-    # KnownBug: the REG_DWORD value of a Group Policy Preferences XML is hexadecimal, Import-RegistryXmlOS passes '0000001e' unchanged to New-ItemProperty (AllFunctions.ps1:4789)
-    It 'converts the hexadecimal REG_DWORD value to a number' -Skip {
+    It 'converts the hexadecimal REG_DWORD value to a number' {
         $Xml = (Get-Content -Path (Join-Path $IMNRSFixtures 'Registry.xml') -Raw) -replace 'value="00000001"', 'value="0000001e"'
         $RegistryTemplatesXml = @(New-TestFile -Path (Join-Path $TestDrive 'RegistryHex.xml') -Value $Xml)
         Import-RegistryXmlOS 6>$null
@@ -333,8 +331,7 @@ Describe 'Invoke-DismCleanupImage' {
         $script:Dism.Count | Should -Be 1
     }
 
-    # KnownBug: the pending check compares the State with -eq "*pending*" instead of -like (AllFunctions.ps1:4871), it never finds a pending capability
-    It 'does not clean up an image with pending capabilities' -Skip {
+    It 'does not clean up an image with pending capabilities' {
         Mock Get-WindowsCapability {[PSCustomObject]@{Name = 'Language.Basic~~~de-DE~0.0.1.0'; State = 'InstallPending'}}
         $Warnings = (Invoke-DismCleanupImage 6>$null 3>&1) -join "`n"
         $Warnings | Should -BeLike '*Cannot run WindowsImage Cleanup on a WIM with Pending Installations*'

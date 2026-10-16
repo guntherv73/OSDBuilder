@@ -271,7 +271,6 @@ Describe 'Update-SetupDUMEDIA' {
         Should -Invoke expand.exe -Times 1 -Exactly -ParameterFilter {
             (Join-ProgramArgument $InputObject $RemainingArguments) -like "*kb5065410* -F: *.* $env:TEMP\4713"
         }
-        Test-Path (Join-Path $env:TEMP '4712') | Should -BeTrue
     }
 
     It 'copies the expanded files to the media sources and to WinSE sources with a log' {
@@ -308,8 +307,7 @@ Describe 'Update-SetupDUMEDIA' {
         Should -Invoke New-Item -Times 1 -Exactly -ParameterFilter {$Path -like '*4713'}
     }
 
-    # KnownBug: Update-SetupDUMEDIA never removes the temporary folder in $env:TEMP that expand.exe extracts the Setup Dynamic Update to
-    It 'removes the temporary folder after applying the update' -Skip {
+    It 'removes the temporary folder after applying the update' {
         Update-SetupDUMEDIA 6>$null
         Test-Path (Join-Path $env:TEMP '4712') | Should -BeFalse
         Test-Path (Join-Path $env:TEMP '4713') | Should -BeFalse

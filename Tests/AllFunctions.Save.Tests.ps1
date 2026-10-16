@@ -126,8 +126,7 @@ Describe 'Save-InventoryOS' {
         Test-Path -Path (Join-Path $OSMediaPath 'WindowsPackage.txt') | Should -BeFalse
     }
 
-    # KnownBug: the catch blocks of Save-InventoryOS pass $_.Exception.ErrorCode to Write-Warning (AllFunctions.ps1:5750), an exception without ErrorCode fails with 'Cannot bind argument to parameter Message because it is null'
-    It 'warns without an error when the exception has no ErrorCode' -Skip {
+    It 'warns without an error when the exception has no ErrorCode' {
         Mock Get-AppxProvisionedPackage {throw 'The mount directory is not valid'}
         $Warnings = (Save-InventoryOS -OSMediaPath $OSMediaPath 6>$null 3>&1) -join "`n"
         $Warnings | Should -BeLike '*The mount directory is not valid*'
