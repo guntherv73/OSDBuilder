@@ -890,6 +890,7 @@ function New-OSBuild {
                 #   WinPE Updates
                 #=================================================
                 Update-ServicingStackPE
+                Update-SafeOSPE
                 Update-CumulativePE
                 #=================================================
                 #   WinPE Content

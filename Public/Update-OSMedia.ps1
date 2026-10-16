@@ -870,6 +870,7 @@ function Update-OSMedia {
                 #   WinPE Updates
                 #=================================================
                 Update-ServicingStackPE
+                Update-SafeOSPE
                 Update-CumulativePE
                 #=================================================
                 #   WinPE Content
