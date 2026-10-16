@@ -141,8 +141,20 @@ The other languages are only available as Local Experience Packs (`.appx`)
   ```powershell
   Save-OSDBuilderDownload -ContentDownload 'Windows 10 2004-22H2 x64 Local Experience Packs'
   ```
-* **Windows 11**: Microsoft does not publish a Local Experience Pack ISO, the LXPs are Microsoft Store apps.
-  An LXP of another servicing branch (for example the Windows 10 `19041.x` LXPs) is rejected for Windows 11 images
+* **Windows 11**: Microsoft does not publish a Local Experience Pack ISO, the LXPs are Microsoft Store apps with one package per
+  Windows build (for example `de-DE`: `26100.169.270.0` for 24H2 - 26H2, `22621.146.465.0` for 22H2 - 23H2, `28000.2.8.0` for newer builds).
+  OSDBuilder downloads them with `winget download`:
+  ```powershell
+  Save-OSDBuilderDownload -LocalExperiencePack 'nn-NO','af-ZA' -LocalExperiencePackRelease 'Windows 11 24H2-26H2'
+  ```
+  * the Microsoft Store product is found by the PackageFamilyName `Microsoft.LanguageExperiencePack<lang>_8wekyb3d8bbwe`
+  * `winget download --os-version 10.0.26100.0` selects the package of the servicing branch, without `--os-version`
+    winget downloads the package of the newest Windows build, which cannot be added to a 24H2 - 26H2 image
+  * the offline license requires a Microsoft Entra ID account with the Global Administrator, User Administrator or License Administrator role
+    ([winget download](https://learn.microsoft.com/en-us/windows/package-manager/winget/download)), use `-AuthenticationAccount` to select the account
+  * the LXP is saved with `License.xml` to `Content\IsoExtract\Windows 11 <Release> x64 Local Experience Packs\LocalExperiencePack\<lang>`
+  * the example script downloads the LXP of every language without a `.cab` (skipped with `-SkipContentDownload`)
+* An LXP of another servicing branch (for example the Windows 10 `19041.x` LXPs) is rejected for Windows 11 images
 * Copy LXPs from another source to a directory in `Content\IsoExtract` that contains the ReleaseId, with the `License.xml` next to each `.appx`:
   ```
   Content\IsoExtract\Windows 11 24H2 LXP\LocalExperiencePack\nn-no\LanguageExperiencePack.nn-no.Neutral.appx
@@ -153,7 +165,7 @@ The other languages are only available as Local Experience Packs (`.appx`)
   * the AppxManifest identity is a `Microsoft.LanguageExperiencePack*`
   * the LXP version starts with the servicing branch of the image (`19041.x` for Windows 10 2004 - 22H2, `22621.x` for Windows 11 22H2 - 23H2,
     `26100.x` for Windows 11 24H2 - 26H2) and the `Windows.Desktop` MinVersion is not newer than the image
-  * the License.xml exists
+  * the `License.xml` (or the `<ProductId>_License.xml` of `winget download`) exists
   * the same or a newer version is not already provisioned (no LCU reapply then)
   * the LXP is provisioned afterwards, the build shows a warning for every LXP that was not added
 * OSLocalExperiencePacks ContentPacks use the same checks and only apply `LanguageExperiencePack*.appx`

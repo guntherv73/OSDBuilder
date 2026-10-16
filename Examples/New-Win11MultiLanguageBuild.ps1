@@ -16,7 +16,7 @@ LanguageCopySources: Windows Setup shows these display languages and the languag
 
 New-OSBuild then:
 - adds the Language Packs, Language Interface Packs and Language Features, reapplies the LCU once
-- adds a Local Experience Pack from Content\IsoExtract for languages without a .cab (see README)
+- adds a Local Experience Pack for languages without a .cab, downloaded from the Microsoft Store with winget (see README)
 - adds the same languages to WinRE from the Languages and Optional Features ISO
 - enables .NET Framework 3.5 (NetFx3) from the Languages and Optional Features ISO and applies the .NET CU (-SkipNetFX3 to skip)
 - reinstalls the inbox apps from the Inbox Apps ISO so they include the language resources
@@ -227,6 +227,17 @@ $LanguagePack = @(); $LanguageInterfacePack = @(); $LanguageFeature = @(); $Loca
 #Local Experience Packs (.appx). LXPs are used from Content\IsoExtract\<directory with the ReleaseId>\LocalExperiencePack\<lang>
 $ReleaseIds = if ($ReleaseGroup -eq '22H2-23H2') {@('22H2','23H2')} else {@('24H2','25H2','26H2')}
 $IsoExtractPath = Join-Path $SetOSDBuilderPathContent 'IsoExtract'
+
+#Languages without a .cab are downloaded from the Microsoft Store with winget (Microsoft Entra ID License Administrator)
+$LxpLanguages = @($Languages | ForEach-Object {$_.ToLower()} | Sort-Object -Unique | Where-Object {
+    ($_ -notin $ImageLanguages) -and
+    !(Test-Path (Join-Path $LofPath "Microsoft-Windows-Client-Language-Pack_x64_$_.cab")) -and
+    !(Test-Path (Join-Path $LofPath "Microsoft-Windows-Lip-Language-Pack_x64_$_.cab"))
+})
+if ($LxpLanguages -and -not $SkipContentDownload) {
+    Write-Host "Local Experience Packs from the Microsoft Store: $($LxpLanguages -join ', ')" -ForegroundColor Cyan
+    Save-OSDBuilderDownload -LocalExperiencePack $LxpLanguages -LocalExperiencePackRelease "Windows 11 $ReleaseGroup"
+}
 $LxpFiles = @(Get-ChildItem -Path $IsoExtractPath -Filter 'LanguageExperiencePack.*.appx' -File -Recurse -ErrorAction SilentlyContinue | `
     Where-Object {$_.Directory.Parent.Name -eq 'LocalExperiencePack'} | `
     Where-Object {$_.FullName -match "Windows 11 .*($($ReleaseIds -join '|'))"} | `

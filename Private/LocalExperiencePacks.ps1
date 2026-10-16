@@ -91,7 +91,13 @@ function Add-OSDBuilderLocalExperiencePack {
     #   License
     #=================================================
     $Directory = Split-Path -Path $PackagePath -Parent
-    $LicensePath = Get-ChildItem -LiteralPath $Directory -File -Filter '*.xml' -ErrorAction SilentlyContinue | Where-Object {$_.Name -eq 'License.xml'} | Select-Object -First 1 -ExpandProperty FullName
+    #License.xml (Local Experience Pack ISO) or <ProductId>_License.xml (winget download)
+    $LicenseFiles = @(Get-ChildItem -LiteralPath $Directory -File -Filter '*.xml' -ErrorAction SilentlyContinue)
+    $LicensePath = $LicenseFiles | Where-Object {$_.Name -eq 'License.xml'} | Select-Object -First 1 -ExpandProperty FullName
+    if (-not $LicensePath) {
+        $WingetLicense = @($LicenseFiles | Where-Object {$_.Name -like '*_License.xml'})
+        if ($WingetLicense.Count -eq 1) {$LicensePath = $WingetLicense[0].FullName}
+    }
     if (-not $LicensePath) {
         Write-Warning "Local Experience Pack: Unable to find the License.xml for $($Manifest.Name) in $Directory"
         Return 'Failed'

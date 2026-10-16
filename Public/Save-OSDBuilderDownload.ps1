@@ -121,7 +121,21 @@ function Save-OSDBuilderDownload {
         [switch]$WebClient,
 
         [Parameter(ParameterSetName='OSDUpdate')]
-        [switch]$CheckFileHash
+        [switch]$CheckFileHash,
+
+        #Download Local Experience Packs from the Microsoft Store with winget, for example 'nn-NO','af-ZA'
+        #winget download --os-version and a Microsoft Entra ID Global, User or License Administrator are required
+        [Parameter(ParameterSetName='LocalExperiencePack', Mandatory = $true)]
+        [string[]]$LocalExperiencePack,
+
+        #Windows release of the Local Experience Packs
+        [Parameter(ParameterSetName='LocalExperiencePack')]
+        [ValidateSet('Windows 11 24H2-26H2','Windows 11 22H2-23H2','Windows 10 2004-22H2')]
+        [string]$LocalExperiencePackRelease = 'Windows 11 24H2-26H2',
+
+        #Microsoft Entra ID account for the Microsoft Store license
+        [Parameter(ParameterSetName='LocalExperiencePack')]
+        [string]$AuthenticationAccount
 
     )
 
@@ -131,6 +145,18 @@ function Save-OSDBuilderDownload {
     }
 
     Process {
+        #=================================================
+        #   Local Experience Packs (Microsoft Store)
+        #=================================================
+        if ($PSCmdlet.ParameterSetName -eq 'LocalExperiencePack') {
+            $LxpParams = @{
+                Language    = $LocalExperiencePack
+                Release     = $LocalExperiencePackRelease
+            }
+            if ($AuthenticationAccount) {$LxpParams.AuthenticationAccount = $AuthenticationAccount}
+            Save-OSDBuilderLocalExperiencePack @LxpParams
+            Return
+        }
         #=================================================
         #   Test WebClient
         #=================================================
