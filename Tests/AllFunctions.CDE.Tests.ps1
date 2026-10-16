@@ -445,12 +445,13 @@ Describe 'Enable-WinPEOSDCloud' {
 Describe 'Expand-DaRTPE' {
     BeforeEach {
         $ScriptName = 'New-OSBuild'
-        $SetOSDBuilderPathContent = Join-Path $TestDrive 'Content'
+        $Root = Join-Path $TestDrive ([guid]::NewGuid().Guid)
+        $SetOSDBuilderPathContent = Join-Path $Root 'Content'
         $WinPEDaRT = 'DaRT\DaRT 10\Toolsx64.cab'
         $DaRTPath = Join-Path (Join-Path $SetOSDBuilderPathContent 'DaRT') 'DaRT 10'
         New-TestFile -Path (Join-Path $DaRTPath 'Toolsx64.cab') | Out-Null
-        $MountWinPE = Join-Path $TestDrive 'WinPE'; $MountWinRE = Join-Path $TestDrive 'WinRE'; $MountWinSE = Join-Path $TestDrive 'WinSE'
-        $MountDirectory = Join-Path $TestDrive 'PEBuild'
+        $MountWinPE = Join-Path $Root 'WinPE'; $MountWinRE = Join-Path $Root 'WinRE'; $MountWinSE = Join-Path $Root 'WinSE'
+        $MountDirectory = Join-Path $Root 'PEBuild'
         foreach ($MountPath in $MountWinPE, $MountWinRE, $MountWinSE, $MountDirectory) {
             New-TestFile -Path (Join-Path (Join-Path (Join-Path $MountPath 'Windows') 'System32') 'winpeshl.ini') -Value "[LaunchApps]`r`n%SYSTEMDRIVE%\sources\recovery\recenv.exe, -prompt" | Out-Null
         }
@@ -484,7 +485,7 @@ Describe 'Expand-DaRTPE' {
         }
     }
 
-    # KnownBug: Private/AllFunctions.ps1:2817-2818 and 2823-2824 copy the DartConfig of $MountWinRE to $MountWinSE and of $MountWinSE to $MountWinRE
+    # KnownBug: Private/AllFunctions.ps1:2820-2821 and 2827-2828 copy the DartConfig of $MountWinRE to $MountWinSE and of $MountWinSE to $MountWinRE
     It 'copies DartConfig.dat to WinRE when there is no WinSE' -Skip {
         New-TestFile -Path (Join-Path $DaRTPath 'DartConfig.dat') | Out-Null
         $MountWinSE = $null
@@ -579,7 +580,7 @@ Describe 'Export-PEWims' {
 }
 
 Describe 'Export-SessionsXmlOS' {
-    BeforeEach {
+    BeforeAll {
         $OSMediaPath = Join-Path $TestDrive 'OSMedia'
         foreach ($Directory in 'logs', 'xml', 'json') {New-Item -Path (Join-Path (Join-Path $OSMediaPath 'info') $Directory) -ItemType Directory -Force | Out-Null}
         Copy-Item -Path (Join-Path (Join-Path (Join-Path $PSScriptRoot 'Fixtures') 'AllFunctionsCDEG') 'Sessions.xml') -Destination (Join-Path $OSMediaPath 'Sessions.xml')

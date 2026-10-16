@@ -744,9 +744,8 @@ Describe 'Add-LanguagePacksOS' {
 
     It 'provisions .appx Language Packs with the License.xml of their directory' {
         Add-LanguagePacksOS 6>$null 3>$null
-        $ExpectedLicense = Join-Path (Join-Path (Join-Path $SetOSDBuilderPathContent 'LXP') 'de-de') 'License.xml'
         Should -Invoke Add-AppxProvisionedPackage -Times 1 -Exactly -ParameterFilter {
-            ($PackagePath -like '*LanguageExperiencePack.de-de.Neutral.appx') -and ($Path -eq 'C:\Mount') -and ($LicensePath -eq $ExpectedLicense) -and ($LogPath -like '*-Add-LanguagePacksOS.log')
+            ($PackagePath -like '*LanguageExperiencePack.de-de.Neutral.appx') -and ($Path -eq 'C:\Mount') -and ($LicensePath -like '*LXP?de-de?License.xml') -and ($LogPath -like '*-Add-LanguagePacksOS.log')
         }
     }
 

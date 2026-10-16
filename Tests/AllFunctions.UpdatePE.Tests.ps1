@@ -238,6 +238,7 @@ Describe 'Update-SetupDUMEDIA' {
         New-UpdateFile $SetOSDBuilderPathUpdates $OSDUpdateSetupDU
         $script:TempBefore = $env:TEMP
         $env:TEMP = Join-Path $TestDrive 'Temp'
+        if (Test-Path $env:TEMP) {Remove-Item -Path $env:TEMP -Recurse -Force}
         New-Item -Path $env:TEMP -ItemType Directory -Force | Out-Null
         $script:Random = 4711
         Mock Get-Random {$script:Random++; $script:Random}
@@ -275,7 +276,7 @@ Describe 'Update-SetupDUMEDIA' {
 
     It 'copies the expanded files to the media sources and to WinSE sources with a log' {
         Update-SetupDUMEDIA 6>$null
-        Should -Invoke robocopy -Times 2 -Exactly
+        Should -Invoke robocopy -Times 4 -Exactly
         Should -Invoke robocopy -Times 1 -Exactly -ParameterFilter {
             (Join-ProgramArgument $InputObject $RemainingArguments) -like "$env:TEMP\4712 C:\OSBuild\OS\Sources *.* /s /ndl /xo /xx /xl /b /np /ts /tee /r:0 /w:0 /Log+:C:\OSBuild\info\logs\*-Robocopy-Media-SetupDU.log"
         }

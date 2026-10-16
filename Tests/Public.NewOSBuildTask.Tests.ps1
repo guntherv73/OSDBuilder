@@ -287,8 +287,8 @@ Describe 'New-OSBuildTask' {
             Join-Path $global:SetOSDBuilderPathTasks 'OSBuild Contoso.json' | Should -Not -Exist
         }
 
-        # KnownBug: New-OSBuildTask does not check for a cancelled Out-GridView and writes a Task without OSMedia
-        It 'exits with a warning and writes no Task when the OSMedia selection is cancelled' -Skip {
+        #$OSMedia has [ValidateNotNullOrEmpty()], assigning the empty selection throws into the Catch block
+        It 'exits with a warning and writes no Task when the OSMedia selection is cancelled' {
             Mock Out-GridView {}
             $Warnings = foreach ($Once in 1) {New-OSBuildTask -TaskName 'Contoso' 6>$null 3>&1}
             ($Warnings -join "`n") | Should -BeLike '*Source OSMedia was not selected*'
@@ -629,7 +629,7 @@ Describe 'New-OSBuildTask' {
             $Task.LangSetUserLocale | Should -Be 'de-AT'
         }
 
-        # KnownBug: New-OSBuildTask.ps1:916 assigns the existing SetUILangFallback to $SetUILang instead of $SetUILangFallback
+        # KnownBug: New-OSBuildTask.ps1:916 assigns the existing SetUILangFallback to $SetUILang instead of $SetUILangFallback (masked by the $null check of 910-917, the fallback is lost)
         It 'does not overwrite -SetUILang with the existing SetUILangFallback' -Skip {
             Copy-ExistingTask
             New-OSBuildTask -TaskName 'Contoso' -OSMedia $OSMedia -SetUILang 'fr-FR' 6>$null 3>$null | Out-Null

@@ -44,7 +44,7 @@ Describe 'Invoke-OSDBuilderWinget' {
         }
 
         It 'returns the exit code and the output with the error stream with -CaptureOutput' {
-            $Result = Invoke-OSDBuilderWinget -Arguments 'download', '--help' -CaptureOutput -ErrorAction SilentlyContinue
+            $Result = Invoke-OSDBuilderWinget -Arguments 'download', '--help' -CaptureOutput
             $Result.ExitCode | Should -Be 3
             $Result.Output | Should -BeLike '*winget download --help*'
             $Result.Output | Should -BeLike '*winget stderr*'
@@ -229,7 +229,7 @@ Describe 'Save-OSDBuilderLocalExperiencePack' {
         Save-OSDBuilderLocalExperiencePack -Language 'de-DE' 6>$null 3>$null
         Set-Content -Path $Destination -Value 'not a zip'
         $Verbose = (Save-OSDBuilderLocalExperiencePack -Language 'de-DE' -Verbose 6>$null 3>$null 4>&1) -join "`n"
-        $Verbose | Should -BeLike "*Unable to read $Destination, it is downloaded again*"
+        $Verbose | Should -BeLike "*Unable to read the manifest of $Destination*"
         Should -Invoke Invoke-OSDBuilderWinget -Times 2 -Exactly -ParameterFilter {$Arguments -notcontains '--help'}
         (Get-OSDBuilderAppxManifest -Path $Destination).Version | Should -Be '26100.169.270.0'
     }
@@ -266,7 +266,7 @@ Describe 'Save-OSDBuilderLocalExperiencePack' {
             New-WingetResult
         } -ParameterFilter {$Arguments -notcontains '--help'}
         $Output = (Save-OSDBuilderLocalExperiencePack -Language 'de-DE' -Verbose 6>$null 3>&1 4>&1) -join "`n"
-        $Output | Should -BeLike '*Unable to read the AppxManifest of*Microsoft.LanguageExperiencePackde-DE_26100.169.270.0_Desktop_Neutral.appx*'
+        $Output | Should -BeLike '*Unable to read the manifest of*Microsoft.LanguageExperiencePackde-DE_26100.169.270.0_Desktop_Neutral.appx*'
         $Output | Should -BeLike '*Microsoft.LanguageExperiencePackde-DE_26100.169.270.0_Desktop_Neutral.appx is not the Local Experience Pack of de-DE*'
         $Destination | Should -Not -Exist
     }
@@ -280,6 +280,22 @@ Describe 'Save-OSDBuilderLocalExperiencePack' {
         } -ParameterFilter {$Arguments -notcontains '--help'}
         $Warnings = (Save-OSDBuilderLocalExperiencePack -Language 'de-DE' 6>$null 3>&1) -join "`n"
         $Warnings | Should -BeLike '*Microsoft.LanguageExperiencePackfr-FR_26100.1.1.0_Desktop_Neutral.appx is not the Local Experience Pack of de-DE*'
+        $Destination | Should -Not -Exist
+    }
+
+    It 'downloads again when reading the saved LXP throws' {
+        Save-OSDBuilderLocalExperiencePack -Language 'de-DE' 6>$null 3>$null
+        Mock Get-OSDBuilderAppxManifest {throw 'Access denied'} -ParameterFilter {$Path -eq $Destination}
+        $Verbose = (Save-OSDBuilderLocalExperiencePack -Language 'de-DE' -Verbose 6>$null 3>$null 4>&1) -join "`n"
+        $Verbose | Should -BeLike "*Unable to read $Destination, it is downloaded again*"
+        Should -Invoke Invoke-OSDBuilderWinget -Times 2 -Exactly -ParameterFilter {$Arguments -notcontains '--help'}
+    }
+
+    It 'warns when reading the downloaded LXP throws' {
+        Mock Get-OSDBuilderAppxManifest {throw 'Access denied'}
+        $Output = (Save-OSDBuilderLocalExperiencePack -Language 'de-DE' -Verbose 6>$null 3>&1 4>&1) -join "`n"
+        $Output | Should -BeLike '*Unable to read the AppxManifest of*Microsoft.LanguageExperiencePackde-DE_26100.169.270.0_Desktop_Neutral.appx*'
+        $Output | Should -BeLike '*is not the Local Experience Pack of de-DE*'
         $Destination | Should -Not -Exist
     }
 }

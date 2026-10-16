@@ -119,10 +119,11 @@ Describe 'Import-AutoExtraFilesPE' {
         $script:Robocopy.Count | Should -Be 3
     }
 
-    It 'does nothing for <ScriptName> with WinPEAutoExtraFiles <WinPEAutoExtraFiles>' -TestCases @(
-        @{ScriptName = 'New-PEBuild'; WinPEAutoExtraFiles = $true}
-        @{ScriptName = 'New-OSBuild'; WinPEAutoExtraFiles = $false}
+    It 'does nothing for <TestScriptName> with WinPEAutoExtraFiles <TestAutoExtraFiles>' -TestCases @(
+        @{TestScriptName = 'New-PEBuild'; TestAutoExtraFiles = $true}
+        @{TestScriptName = 'New-OSBuild'; TestAutoExtraFiles = $false}
     ) {
+        $ScriptName = $TestScriptName; $WinPEAutoExtraFiles = $TestAutoExtraFiles
         Import-AutoExtraFilesPE 6>$null
         Should -Invoke robocopy -Times 0 -Exactly
     }
@@ -324,8 +325,8 @@ Describe 'Invoke-DismCleanupImage' {
         $script:Dism.Count | Should -Be 1
     }
 
-    It 'does not check pending capabilities on Windows <OSMajorVersion>' -TestCases @(@{OSMajorVersion = 6}) {
-        $OSVersion = '6.3.9600'
+    It 'does not check pending capabilities on Windows 8.1' {
+        $OSMajorVersion = 6; $OSVersion = '6.3.9600'
         Invoke-DismCleanupImage 6>$null | Out-Null
         Should -Invoke Get-WindowsCapability -Times 0 -Exactly
         $script:Dism.Count | Should -Be 1
@@ -340,10 +341,11 @@ Describe 'Invoke-DismCleanupImage' {
     }
 
     It 'does nothing with <Case>' -TestCases @(
-        @{Case = 'SkipUpdates'; SkipUpdates = $true; SkipComponentCleanup = $false; OSVersion = '10.0.26100.1'}
-        @{Case = 'SkipComponentCleanup'; SkipUpdates = $false; SkipComponentCleanup = $true; OSVersion = '10.0.26100.1'}
-        @{Case = 'Windows 7'; SkipUpdates = $false; SkipComponentCleanup = $false; OSVersion = '6.1.7601'}
+        @{Case = 'SkipUpdates'; TestSkipUpdates = $true; TestSkipComponentCleanup = $false; TestOSVersion = '10.0.26100.1'}
+        @{Case = 'SkipComponentCleanup'; TestSkipUpdates = $false; TestSkipComponentCleanup = $true; TestOSVersion = '10.0.26100.1'}
+        @{Case = 'Windows 7'; TestSkipUpdates = $false; TestSkipComponentCleanup = $false; TestOSVersion = '6.1.7601'}
     ) {
+        $SkipUpdates = $TestSkipUpdates; $SkipComponentCleanup = $TestSkipComponentCleanup; $OSVersion = $TestOSVersion
         Invoke-DismCleanupImage 6>$null | Out-Null
         $script:Dism.Count | Should -Be 0
     }
@@ -537,10 +539,11 @@ Describe 'Remove-AppxProvisionedPackageOS' {
     }
 
     It 'does nothing for <Case>' -TestCases @(
-        @{Case = 'New-PEBuild'; ScriptName = 'New-PEBuild'; OSMajorVersion = 10; RemoveAppx = @('Microsoft.BingNews')}
-        @{Case = 'Windows 7'; ScriptName = 'New-OSBuild'; OSMajorVersion = 6; RemoveAppx = @('Microsoft.BingNews')}
-        @{Case = 'no packages'; ScriptName = 'New-OSBuild'; OSMajorVersion = 10; RemoveAppx = @()}
+        @{Case = 'New-PEBuild'; TestScriptName = 'New-PEBuild'; TestOSMajorVersion = 10; TestRemove = @('Microsoft.BingNews')}
+        @{Case = 'Windows 7'; TestScriptName = 'New-OSBuild'; TestOSMajorVersion = 6; TestRemove = @('Microsoft.BingNews')}
+        @{Case = 'no packages'; TestScriptName = 'New-OSBuild'; TestOSMajorVersion = 10; TestRemove = @()}
     ) {
+        $ScriptName = $TestScriptName; $OSMajorVersion = $TestOSMajorVersion; $RemoveAppx = $TestRemove
         Remove-AppxProvisionedPackageOS 6>$null
         Should -Invoke Remove-AppxProvisionedPackage -Times 0 -Exactly
     }
@@ -569,9 +572,10 @@ Describe 'Remove-WindowsCapabilityOS' {
     }
 
     It 'does nothing for <Case>' -TestCases @(
-        @{Case = 'New-PEBuild'; ScriptName = 'New-PEBuild'; RemoveCapability = @('App.StepsRecorder~~~~0.0.1.0')}
-        @{Case = 'no capabilities'; ScriptName = 'New-OSBuild'; RemoveCapability = $null}
+        @{Case = 'New-PEBuild'; TestScriptName = 'New-PEBuild'; TestRemove = @('App.StepsRecorder~~~~0.0.1.0')}
+        @{Case = 'no capabilities'; TestScriptName = 'New-OSBuild'; TestRemove = $null}
     ) {
+        $ScriptName = $TestScriptName; $RemoveCapability = $TestRemove
         Remove-WindowsCapabilityOS 6>$null
         Should -Invoke Remove-WindowsCapability -Times 0 -Exactly
     }
@@ -600,9 +604,10 @@ Describe 'Remove-WindowsPackageOS' {
     }
 
     It 'does nothing for <Case>' -TestCases @(
-        @{Case = 'New-PEBuild'; ScriptName = 'New-PEBuild'; RemovePackage = @('Package')}
-        @{Case = 'no packages'; ScriptName = 'New-OSBuild'; RemovePackage = ''}
+        @{Case = 'New-PEBuild'; TestScriptName = 'New-PEBuild'; TestRemove = @('Package')}
+        @{Case = 'no packages'; TestScriptName = 'New-OSBuild'; TestRemove = ''}
     ) {
+        $ScriptName = $TestScriptName; $RemovePackage = $TestRemove
         Remove-WindowsPackageOS 6>$null
         Should -Invoke Remove-WindowsPackage -Times 0 -Exactly
     }
@@ -858,14 +863,17 @@ Describe 'Repair-PEBuildTask' {
         (Get-Content -Path $TaskPath -Raw | ConvertFrom-Json).Name | Should -Be $Expected[0]
     }
 
-    It 'keeps an existing backup' {
-        New-TestFile -Path (Join-Path (Join-Path $TaskDirectory 'Repair') (Split-Path $TaskPath -Leaf)) -Value 'first backup' | Out-Null
+    It 'creates the Repair directory for the backup' {
         Remove-Item -Path (Join-Path $TaskDirectory 'Repair') -Recurse -Force
         Repair-PEBuildTask 6>$null 3>$null
-        Test-Path -Path (Join-Path (Join-Path $TaskDirectory 'Repair') (Split-Path $TaskPath -Leaf)) | Should -BeTrue
+        Test-Path -Path (Join-Path (Join-Path $TaskDirectory 'Repair') (Split-Path $TaskPath -Leaf)) -PathType Leaf | Should -BeTrue
+    }
+
+    It 'keeps an existing backup' {
         New-TestFile -Path (Join-Path (Join-Path $TaskDirectory 'Repair') (Split-Path $TaskPath -Leaf)) -Value 'first backup' | Out-Null
         Repair-PEBuildTask 6>$null 3>$null
         Get-Content -Path (Join-Path (Join-Path $TaskDirectory 'Repair') (Split-Path $TaskPath -Leaf)) | Should -Be 'first backup'
+        (Get-Content -Path $TaskPath -Raw | ConvertFrom-Json).TaskType | Should -Be 'PEBuild'
     }
 
     It 'does not change a task that is newer than 19.1.3' {

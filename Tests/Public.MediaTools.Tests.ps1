@@ -238,14 +238,14 @@ Describe 'New-OSDBuilderISO' {
     ) {
         $OSMedia = @(New-TestMedia -Name 'NoEfisys' -NoEfisys)
         if ($Path) {
-            $Efisys = $Path
-            Mock Test-Path {$true} -ParameterFilter {$Path -eq $Efisys}
+            $ExpectedEfisys = $Path
+            Mock Test-Path {$true} -ParameterFilter {$Path -eq $ExpectedEfisys}
         } else {
-            $Efisys = "$SetOSDBuilderPathContent\Tools\AMD64\Oscdimg\efisys.bin"
+            $ExpectedEfisys = "$SetOSDBuilderPathContent\Tools\AMD64\Oscdimg\efisys.bin"
             New-TestFile -Path (Join-Path $OscdimgFolder 'efisys.bin') | Out-Null
         }
-        New-OSDBuilderISO -FullName $OSMedia[0].FullName 6>$null 3>&1 | Write-Host
-        Should -Invoke Start-Process -Times 1 -Exactly -ParameterFilter {$ArgumentList[3] -like "*#pEF,e,b`"$Efisys`""}
+        New-OSDBuilderISO -FullName $OSMedia[0].FullName 6>$null
+        Should -Invoke Start-Process -Times 1 -Exactly -ParameterFilter {$ArgumentList[3] -like "*#pEF,e,b`"$ExpectedEfisys`""}
     }
 
     It 'warns when efisys.bin is not found' {
