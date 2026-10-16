@@ -928,7 +928,8 @@ Describe 'Update-OSMedia' {
                 $script:Seen['WinPEADKSE'] = @($WinPEADKSE); $script:Seen['ContentPacks'] = @($ContentPacks)
             }
             Invoke-UpdateOSMedia -Command 'New-OSBuild' -Parameters $BuildParameters | Out-Null
-            $script:Seen['RemoveAppx'] | Should -Be @('Microsoft.BingNews_4.55.62231.0_neutral_~_8wekyb3d8bbwe', 'RemoveAppxProvisionedPackage-Global')
+            #task, Global template, OSMFamily template
+            $script:Seen['RemoveAppx'] | Should -Be @('Microsoft.BingNews_4.55.62231.0_neutral_~_8wekyb3d8bbwe', 'RemoveAppxProvisionedPackage-Global', 'Microsoft.BingNews_4.55.62231.0_neutral_~_8wekyb3d8bbwe')
             $script:Seen['LanguagePacks'] | Should -Be @('LanguagePack-Global')
             $script:Seen['AddWindowsCapability'] | Should -Be @('OpenSSH.Server~~~~0.0.1.0', 'AddWindowsCapability-Global', 'OpenSSH.Server~~~~0.0.1.0')
             $script:Seen['WinPEADKSE'] | Should -Be @('WinPEADKSE-Global')
