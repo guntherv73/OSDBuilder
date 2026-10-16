@@ -540,7 +540,7 @@ function Update-OSMedia {
             }
             else {
                 Write-Warning "$OSMediaPath is not supported"
-                Break
+                Continue
             }
             #=================================================
             Write-Verbose '19.1.1 WorkingName and WorkingPath'

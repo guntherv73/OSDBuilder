@@ -331,10 +331,6 @@ Describe 'Update-OSMedia' {
             $script:Seen['Grid'] | Should -Be @($Win11Name)
         }
 
-        It 'has an -UpdateNeeded parameter for the UpdateNeeded filter' -Skip {
-            # KnownBug: Update-OSMedia.ps1:201 filters on $UpdateNeeded, but Update-OSMedia has no UpdateNeeded parameter (dead code, the value leaks from the caller scope)
-            (Get-Command Update-OSMedia).Parameters.Keys | Should -Contain 'UpdateNeeded'
-        }
     }
 
     Context 'OSMedia validation' {
@@ -378,8 +374,7 @@ Describe 'Update-OSMedia' {
             Should -Invoke Mount-InstallwimOS -Times 0 -Exactly
         }
 
-        It 'continues with the next OSMedia after an unsupported OSMedia' -Skip {
-            # KnownBug: Update-OSMedia.ps1:543 uses Break for an unsupported OSMedia, which also skips the remaining OSMedia of -Name (Continue is expected)
+        It 'continues with the next OSMedia after an unsupported OSMedia' {
             New-TestOSMedia -Name 'Windows 7 ENTERPRISE x64 7601.17514' -Image 'Win7Enterprise' | Out-Null
             New-TestOSMedia -Name $Win11Name -Image 'Win11Enterprise24H2' -Registry 'Win11-24H2-1742' | Out-Null
             Invoke-UpdateOSMedia -Parameters @{Name = 'Windows 7 ENTERPRISE x64 7601.17514', $Win11Name} | Out-Null

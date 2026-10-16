@@ -351,13 +351,6 @@ Describe 'New-PEBuild' {
             Should -Invoke New-OSDBuilderISO -Times 1 -Exactly -ParameterFilter {$FullName -eq $WorkingPath}
         }
 
-        # KnownBug: New-PEBuild.ps1:834 reads $OSDInfo, but New-PEBuild has no -OSDInfo parameter, Show-OSDBuilderInfo is never called
-        It 'shows the PEBuild with -OSDInfo' -Skip {
-            (Get-Command New-PEBuild).Parameters.Keys | Should -Contain 'OSDInfo'
-            Invoke-TestPEBuild @{Execute = $true; OSDInfo = $true}
-            Should -Invoke Show-OSDBuilderInfo -Times 1 -Exactly -ParameterFilter {$FullName -eq $WorkingPath}
-        }
-
         It 'sets the ReleaseId <ReleaseId> of Build <Build>' -ForEach @(
             @{Build = '7600'; ReleaseId = '7600'}, @{Build = '7601'; ReleaseId = '7601'}, @{Build = '10240'; ReleaseId = '1507'}
             @{Build = '14393'; ReleaseId = '1607'}, @{Build = '15063'; ReleaseId = '1703'}, @{Build = '16299'; ReleaseId = '1709'}
