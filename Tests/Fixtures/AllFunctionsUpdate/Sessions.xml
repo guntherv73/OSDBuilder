@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Sessions version="1.0">
+  <Session version="1.0" id="30850035_2380318011" client="DISM Package Manager Provider" options="0" currentPhase="1" lastSuccessfulState="Complete" pendingFollower="False" status="0x0">
+    <Tasks>
+      <Phase seq="1">
+        <package id="Package_for_KB3172729~31bf3856ad364e35~amd64~~6.3.1.1" name="Package_for_KB3172729" targetState="Installed" options="3" />
+        <package id="Package_for_KB4566425~31bf3856ad364e35~amd64~~6.3.1.0" name="Package_for_KB4566425" targetState="Absent" options="3" />
+      </Phase>
+    </Tasks>
+    <Actions>
+      <Phase seq="1" rebootRequested="False">
+        <Resolve package="Package_for_KB3172729~31bf3856ad364e35~amd64~~6.3.1.1" update="KB3172729" />
+        <Install package="Package_for_KB3172729~31bf3856ad364e35~amd64~~6.3.1.1" update="KB3172729" />
+      </Phase>
+    </Actions>
+  </Session>
+  <Session version="1.0" id="30850036_2381102847" client="DISM Package Manager Provider" options="0" currentPhase="1" lastSuccessfulState="Complete" pendingFollower="False" status="0x0">
+    <Tasks>
+      <Phase seq="1">
+        <package id="Package_for_RollupFix~31bf3856ad364e35~amd64~~9600.20044.1.0" name="Package_for_RollupFix" targetState="Installed" options="3" />
+        <package id="Package_for_KB4598285~31bf3856ad364e35~amd64~~6.3.1.0" name="Package_for_KB4598285" targetState="Installed" options="3" />
+      </Phase>
+    </Tasks>
+    <Actions />
+  </Session>
+</Sessions>

@@ -1,0 +1,123 @@
+{
+    "TaskType":  "OSBuild",
+    "TaskVersion":  "23.1.1.1",
+    "TaskGuid":  "0b9f8c39-4b5e-4bd2-9a59-2f7c1f0e4c11",
+    "TaskName":  "Existing",
+    "CustomName":  "Existing Custom",
+    "OSMFamily":  "Enterprise x64 26200 en-US",
+    "OSMGuid":  "11111111-2222-3333-4444-555555555555",
+    "Name":  "Windows 11 Enterprise x64 25H2 26200.6899",
+    "ImageName":  "Windows 11 Enterprise",
+    "Arch":  "x64",
+    "ReleaseId":  "25H2",
+    "UBR":  "26200.6899",
+    "Languages":  [
+                      "en-US"
+                  ],
+    "EditionId":  "Enterprise",
+    "InstallationType":  "Client",
+    "MajorVersion":  "10",
+    "Build":  "26200",
+    "CreatedTime":  "2026-10-01T10:00:00",
+    "ModifiedTime":  "2026-10-02T10:00:00",
+    "ContentPacks":  [
+                         "_Global",
+                         "Contoso"
+                     ],
+    "EnableNetFX3":  "True",
+    "WinPEAutoExtraFiles":  "True",
+    "WinPEOSDCloud":  "True",
+    "WinREWiFi":  "True",
+    "RemoveAppxProvisionedPackage":  [
+                                         "Microsoft.BingNews_8wekyb3d8bbwe"
+                                     ],
+    "RemoveWindowsCapability":  [
+                                    "App.StepsRecorder~~~~0.0.1.0"
+                                ],
+    "RemoveWindowsPackage":  [
+                                 "Microsoft-Windows-Hello-Face-Package~31bf3856ad364e35~amd64~~10.0.26100.1"
+                             ],
+    "DisableWindowsOptionalFeature":  [
+                                          "WindowsMediaPlayer"
+                                      ],
+    "EnableWindowsOptionalFeature":  [
+                                         "TelnetClient"
+                                     ],
+    "Drivers":  [
+                    "Drivers\\Existing"
+                ],
+    "ExtraFiles":  [
+                       "ExtraFiles\\Existing"
+                   ],
+    "PSModulesOS":  null,
+    "PSModulesWinPE":  null,
+    "Scripts":  [
+                    "Scripts\\Existing.ps1"
+                ],
+    "StartLayoutXML":  "StartLayout\\Existing.xml",
+    "UnattendXML":  "Unattend\\Existing.xml",
+    "AddWindowsPackage":  [
+                              "Packages\\Existing.cab"
+                          ],
+    "AddFeatureOnDemand":  [
+                               "IsoExtract\\FOD\\Existing.cab"
+                           ],
+    "AddWindowsCapability":  [
+                                 "Language.Basic~~~de-DE~0.0.1.0"
+                             ],
+    "WinPEADKPE":  [
+                       "ADK\\x64\\WinPE_OCs\\WinPE-PowerShell.cab",
+                       "ADK\\x64\\WinPE_OCs\\WinPE-WMI.cab"
+                   ],
+    "WinPEADKRE":  [
+                       "ADK\\x64\\WinPE_OCs\\WinPE-WMI.cab"
+                   ],
+    "WinPEADKSE":  [
+                       "ADK\\x64\\WinPE_OCs\\WinPE-SecureStartup.cab"
+                   ],
+    "WinPEDaRT":  "DaRT\\10\\Toolsx64.cab",
+    "WinPEDrivers":  [
+                         "Drivers\\WinPE\\Existing"
+                     ],
+    "WinPEExtraFilesPE":  [
+                              "ExtraFiles\\WinPE\\Existing"
+                          ],
+    "WinPEExtraFilesRE":  [
+                              "ExtraFiles\\WinRE\\Existing"
+                          ],
+    "WinPEExtraFilesSE":  [
+                              "ExtraFiles\\WinSE\\Existing"
+                          ],
+    "WinPEScriptsPE":  [
+                           "Scripts\\WinPE\\Existing.ps1"
+                       ],
+    "WinPEScriptsRE":  [
+                           "Scripts\\WinRE\\Existing.ps1"
+                       ],
+    "WinPEScriptsSE":  [
+                           "Scripts\\WinSE\\Existing.ps1"
+                       ],
+    "LangSetAllIntl":  "de-DE",
+    "LangSetInputLocale":  "0407:00000407",
+    "LangSetSKUIntlDefaults":  "de-DE",
+    "LangSetSetupUILang":  "de-DE",
+    "LangSetSysLocale":  "de-DE",
+    "LangSetUILang":  "de-DE",
+    "LangSetUILangFallback":  "en-US",
+    "LangSetUserLocale":  "de-AT",
+    "LanguagePack":  [
+                         "IsoExtract\\Microsoft-Windows-Client-Language-Pack_x64_de-de.cab"
+                     ],
+    "LanguageInterfacePack":  [
+                                  "IsoExtract\\Microsoft-Windows-Lip-Language-Pack_x64_ca-es.cab"
+                              ],
+    "LocalExperiencePacks":  [
+                                 "IsoExtract\\LocalExperiencePack\\de-de\\LanguageExperiencePack.de-DE.Neutral.appx"
+                             ],
+    "LanguageFeature":  [
+                            "IsoExtract\\Microsoft-Windows-LanguageFeatures-Basic-de-de-Package~31bf3856ad364e35~amd64~~.cab"
+                        ],
+    "LanguageCopySources":  [
+                                "Enterprise x64 26200 de-DE"
+                            ]
+}
