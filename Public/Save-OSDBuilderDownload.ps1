@@ -196,7 +196,7 @@ function Save-OSDBuilderDownload {
             if ($FeatureEdition) {$FeatureUpdateDownloads = $FeatureUpdateDownloads | Where-Object {$_.FileName -match $FeatureEdition}}
             if ($FeatureLang) {
                 $regex = $FeatureLang.ForEach({ [RegEx]::Escape($_) }) -join '|'
-                $FeatureUpdateDownloads = $FeatureUpdateDownloads | Where-Object {$_.Name -match $regex}
+                $FeatureUpdateDownloads = $FeatureUpdateDownloads | Where-Object {$_.Title -match $regex}
             }
             #=================================================
             #   Select-Object
@@ -387,7 +387,7 @@ function Save-OSDBuilderDownload {
                         Remove-Item $Update -Recurse -Force | Out-Null
                     }
                 }
-                Break
+                Return
             }
             #=================================================
             #   Filters

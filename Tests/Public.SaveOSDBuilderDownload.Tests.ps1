@@ -284,8 +284,7 @@ Describe 'Save-OSDBuilderDownload' {
             $SetOSDBuilderPathUpdates | Should -Exist
         }
 
-        It 'returns to the loop of the caller after listing the superseded updates' -Skip {
-            # KnownBug: Save-OSDBuilderDownload.ps1:390 Break outside of a loop ends the loop of the caller instead of returning
+        It 'returns to the loop of the caller after listing the superseded updates' {
             $Runs = 0
             foreach ($Run in 1..2) {
                 Save-OSDBuilderDownload -Superseded List 4>$null 3>$null 6>$null
@@ -357,16 +356,15 @@ Describe 'Save-OSDBuilderDownload' {
             Should -Invoke Invoke-Expression -Times 1 -Exactly
         }
 
-        It 'downloads the ESD of -FeatureLang' -Skip {
-            # KnownBug: Save-OSDBuilderDownload.ps1:199 -FeatureLang filters on Name, Get-FeatureUpdateDownloads returns the name as Title, every ESD is removed
+        It 'downloads the ESD of -FeatureLang' {
             Save-OSDBuilderDownload -FeatureUpdates -SkipGridView -FeatureEdition 'Business' -FeatureLang 'de-de' -FeatureOS 'Windows 11' -FeatureArch 'x64' 6>$null 3>$null
             Should -Invoke Invoke-Expression -Times 1 -Exactly -ParameterFilter {$Command -like "*$($OperatingSystems[1].FileName)*"}
         }
 
-        It 'filters with -FeatureLang' {
-            #Documents the current behavior of the KnownBug above: no ESD matches
-            Save-OSDBuilderDownload -FeatureUpdates -SkipGridView -FeatureLang 'de-de', 'en-us' 6>$null 3>$null
-            Should -Invoke Invoke-Expression -Times 0 -Exactly
+        It 'downloads only the ESDs of the languages of -FeatureLang' {
+            Save-OSDBuilderDownload -FeatureUpdates -SkipGridView -FeatureLang 'de-de' 6>$null 3>$null
+            Should -Invoke Invoke-Expression -Times 2 -Exactly
+            Should -Invoke Invoke-Expression -Times 0 -Exactly -ParameterFilter {$Command -like "*$($OperatingSystems[0].FileName)*"}
         }
 
         It 'downloads the ESD with System.Net.WebClient without curl.exe' {
