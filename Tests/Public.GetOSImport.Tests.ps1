@@ -75,11 +75,9 @@ Describe 'Get-OSMedia' {
         (Get-OSMedia).Name | Should -Be 'Complete'
     }
 
-    It 'writes an error and still returns the OSMedia when Get-WindowsPackage.xml is missing' {
+    It 'requires Get-WindowsPackage.xml (Get-OSMedia.ps1 makes it optional)' {
         New-OSMediaFixture -Path (Join-Path $SetOSDBuilderPathOSMedia 'NoPackages') -NoWindowsPackage | Out-Null
-        $Result = Get-OSMedia -ErrorVariable ImportErrors -ErrorAction SilentlyContinue
-        $Result.Name | Should -Be 'NoPackages'
-        "$ImportErrors" | Should -BeLike '*Get-WindowsPackage.xml*'
+        {Get-OSMedia} | Should -Throw '*Get-WindowsPackage.xml*'
     }
 
     It 'maps the Architecture <Architecture> to <Arch>' -TestCases @(
