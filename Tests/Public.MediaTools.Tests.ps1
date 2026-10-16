@@ -146,6 +146,14 @@ Describe 'New-OSDBuilderISO' {
             }
         }
 
+        It 'labels a PEBuild of an unknown version WinPE, architecture and UBR' {
+            $Media = New-TestMedia -Name 'Media' -Property @{MediaType = 'PEBuild'; MajorVersion = 5; Version = '5.0.1'; UBR = '1.1'}
+            $OSMedia = @($Media)
+            $Result = New-OSDBuilderISO -FullName $Media.FullName -PassThru 6>$null
+            $Result.Label | Should -Be 'WinPE x64 1.1'
+            Should -Invoke Start-Process -Times 1 -Exactly -ParameterFilter {$ArgumentList[-3] -eq '-l"WinPE x64 1.1"'}
+        }
+
         It 'names the ISO of a PEBuild of an unknown version like the label' -Skip {
             # KnownBug: New-OSDBuilderISO.ps1:136 names the ISO of a PEBuild of an unknown version 'WinPE5 ...' instead of 'WinPE ...'
             $Media = New-TestMedia -Name 'Media' -Property @{MediaType = 'PEBuild'; MajorVersion = 5; Version = '5.0.1'; UBR = '1.1'}

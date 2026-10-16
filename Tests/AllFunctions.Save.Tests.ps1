@@ -14,6 +14,19 @@ BeforeAll {
         $Path
     }
 
+    function Assert-FormattedFile {
+        <#
+        .SYNOPSIS
+        Asserts a text file written with Out-File
+        .DESCRIPTION
+        Out-File formats a table with the width of the console, without a console (redirected output) the table can be empty
+        #>
+        param ([string]$Path, [string]$Like)
+        Test-Path -Path $Path -PathType Leaf | Should -BeTrue
+        $Text = Get-Content -Path $Path -Raw
+        if ($Text -and $Text.Trim()) {$Text | Should -BeLike $Like}
+    }
+
     function Get-InfoFile {
         <#
         .SYNOPSIS
@@ -78,8 +91,8 @@ Describe 'Save-InventoryOS' {
         @{Name = 'WindowsPackage'; Property = 'PackageName'; Value = 'Package_for_RollupFix~31bf3856ad364e35~amd64~~26100.6899.1.12'}
     ) {
         Save-InventoryOS -OSMediaPath $OSMediaPath 6>$null
-        Get-Content -Path (Join-Path $OSMediaPath "$Name.txt") -Raw | Should -BeLike "*$Value*"
-        Get-Content -Path (Join-Path $InfoPath "Get-$Name.txt") -Raw | Should -BeLike "*$Value*"
+        Assert-FormattedFile -Path (Join-Path $OSMediaPath "$Name.txt") -Like "*$Value*"
+        Assert-FormattedFile -Path (Join-Path $InfoPath "Get-$Name.txt") -Like "*$Value*"
         (Import-Clixml -Path (Join-Path (Join-Path $InfoPath 'xml') "Get-$Name.xml")).$Property | Should -Be $Value
         (Get-Content -Path (Join-Path (Join-Path $InfoPath 'json') "Get-$Name.json") -Raw | ConvertFrom-Json).$Property | Should -Be $Value
         (Get-InfoFile -Path $InfoPath -Folder 'logs' -Filter "*-Get-$Name.txt").Count | Should -Be 1
@@ -136,8 +149,8 @@ Describe 'Save-InventoryPE' {
         @{Wim = 'winse.wim'; Name = 'WinSE'}
     ) {
         Save-InventoryPE -OSMediaPath $OSMediaPath 6>$null
+        Assert-FormattedFile -Path (Join-Path $PEInfoPath "Get-WindowsImage-$Name.txt") -Like "*Microsoft Windows PE ($Wim)*"
         $Text = Get-Content -Path (Join-Path $PEInfoPath "Get-WindowsImage-$Name.txt")
-        ($Text -join "`n") | Should -BeLike "*Microsoft Windows PE ($Wim)*"
         $Text | Where-Object {-not $_.Trim()} | Should -BeNullOrEmpty
         @(Import-Clixml -Path (Join-Path (Join-Path $PEInfoPath 'xml') "Get-WindowsImage-$Name.xml"))[0].ImageName | Should -Be "Microsoft Windows PE ($Wim)"
         @(Get-Content -Path (Join-Path (Join-Path $PEInfoPath 'json') "Get-WindowsImage-$Name.json") -Raw | ConvertFrom-Json)[0].ImageIndex | Should -Be 1
@@ -195,7 +208,7 @@ Describe 'Save-PackageInventoryPE' {
         @{Name = 'WinPE'}, @{Name = 'WinRE'}, @{Name = 'WinSE'}
     ) {
         Save-PackageInventoryPE -OSMediaPath $OSMediaPath 6>$null
-        Get-Content -Path (Join-Path $PEInfoPath "Get-WindowsPackage-$Name.txt") -Raw | Should -BeLike "*WinPE-Package-$Name*"
+        Assert-FormattedFile -Path (Join-Path $PEInfoPath "Get-WindowsPackage-$Name.txt") -Like "*WinPE-Package-$Name*"
         (Import-Clixml -Path (Join-Path (Join-Path $PEInfoPath 'xml') "Get-WindowsPackage-$Name.xml")).PackageName | Should -Be "WinPE-Package-$Name"
         (Get-Content -Path (Join-Path (Join-Path $PEInfoPath 'json') "Get-WindowsPackage-$Name.json") -Raw | ConvertFrom-Json).PackageName | Should -Be "WinPE-Package-$Name"
         (Get-InfoFile -Path $PEInfoPath -Folder 'logs' -Filter "*-Get-WindowsPackage-$Name.txt").Count | Should -Be 1
@@ -212,8 +225,8 @@ Describe 'Save-RegistryCurrentVersionOS' {
         New-Item -Path $WorkingPath -ItemType Directory -Force | Out-Null
         $RegKeyCurrentVersion = [PSCustomObject]@{CurrentBuild = '26200'; DisplayVersion = '25H2'; UBR = 6899}
         Save-RegistryCurrentVersionOS
-        Get-Content -Path (Join-Path $Info 'CurrentVersion.txt') -Raw | Should -BeLike '*25H2*'
-        Get-Content -Path (Join-Path $WorkingPath 'CurrentVersion.txt') -Raw | Should -BeLike '*26200*'
+        Assert-FormattedFile -Path (Join-Path $Info 'CurrentVersion.txt') -Like '*25H2*'
+        Assert-FormattedFile -Path (Join-Path $WorkingPath 'CurrentVersion.txt') -Like '*26200*'
         (Import-Clixml -Path (Join-Path (Join-Path $Info 'xml') 'CurrentVersion.xml')).DisplayVersion | Should -Be '25H2'
         (Get-InfoFile -Path $Info -Folder 'logs' -Filter '*-CurrentVersion.txt').Count | Should -Be 1
         (Get-InfoFile -Path $Info -Folder 'xml' -Filter '*-CurrentVersion.xml').Count | Should -Be 1
@@ -248,7 +261,7 @@ Describe 'Save-SessionsXmlOS' {
     It 'copies Sessions.xml and writes txt and json' {
         Save-SessionsXmlOS -OSMediaPath $OSMediaPath 6>$null
         Get-Content -Path (Join-Path $InfoPath 'Sessions.xml') -Raw | Should -Be (Get-Content -Path (Join-Path $IMNRSFixtures 'Sessions.xml') -Raw)
-        Get-Content -Path (Join-Path $OSMediaPath 'Sessions.txt') -Raw | Should -BeLike '*KB5127648*'
+        Assert-FormattedFile -Path (Join-Path $OSMediaPath 'Sessions.txt') -Like '*KB5127648*'
         @(Get-Content -Path (Join-Path (Join-Path $InfoPath 'json') 'Sessions.json') -Raw | ConvertFrom-Json).KBNumber | Should -Be @('KB5127648', 'KB5065426')
         (Get-InfoFile -Path $InfoPath -Folder 'logs' -Filter '*-Sessions.txt').Count | Should -Be 1
         (Get-InfoFile -Path $InfoPath -Folder 'xml' -Filter '*-Sessions.xml').Count | Should -Be 1
@@ -441,8 +454,8 @@ Describe 'Set-WinREWimOS' {
 
     It 'exports the image information of the new winre.wim' {
         Set-WinREWimOS 6>$null
+        Assert-FormattedFile -Path (Join-Path $PEInfo 'Get-WindowsImage-WinRE.txt') -Like '*Microsoft Windows Recovery Environment (amd64)*'
         $Text = Get-Content -Path (Join-Path $PEInfo 'Get-WindowsImage-WinRE.txt')
-        ($Text -join "`n") | Should -BeLike '*Microsoft Windows Recovery Environment (amd64)*'
         $Text | Where-Object {-not $_.Trim()} | Should -BeNullOrEmpty
         (Import-Clixml -Path (Join-Path (Join-Path $PEInfo 'xml') 'Get-WindowsImage-WinRE.xml')).ImageName | Should -Be 'Microsoft Windows Recovery Environment (amd64)'
         (Get-Content -Path (Join-Path (Join-Path $PEInfo 'json') 'Get-WindowsImage-WinRE.json') -Raw | ConvertFrom-Json).Languages | Should -Be 'de-DE'

@@ -129,6 +129,19 @@ Describe 'Save-OSDBuilderDownload' {
             Should -Invoke Invoke-Expression -Times 0 -Exactly
         }
 
+        It 'downloads with System.Net.WebClient when a system proxy is set' {
+            [System.Net.WebRequest]::DefaultWebProxy = New-Object System.Net.WebProxy('http://proxy.contoso.com:8080')
+            try {
+                Save-OSDBuilderDownload -ContentDownload 'OneDriveSetup Production' 4>$null
+            }
+            finally {
+                [System.Net.WebRequest]::DefaultWebProxy = New-Object System.Net.WebProxy
+            }
+            $WebClientDownloads.Count | Should -Be 1
+            $WebClientDownloads[0].Address | Should -Be 'https://go.microsoft.com/fwlink/?linkid=844652'
+            Should -Invoke Invoke-Expression -Times 0 -Exactly
+        }
+
         It 'warns when OneDriveSetup could not be downloaded' {
             Mock Invoke-Expression {}
             $Warnings = (Save-OSDBuilderDownload -ContentDownload 'OneDriveSetup Enterprise' 4>$null 3>&1) -join "`n"

@@ -907,7 +907,7 @@ Describe 'New-OSBuild' {
     }
 
     Context 'OneDriveSetup.exe' {
-        It 'updates <Image> OneDriveSetup.exe from the Content directory on a <Architecture> Client' -TestCases @(
+        It 'updates <Image> from the Content directory on a Client with Architecture <Architecture>' -TestCases @(
             @{Architecture = 9; Image = 'Windows\SysWOW64\OneDriveSetup.exe'; Destination = 'Windows\SysWOW64'}
             @{Architecture = 0; Image = 'Windows\System32\OneDriveSetup.exe'; Destination = 'Windows\System32'}
         ) {
