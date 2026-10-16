@@ -21,10 +21,13 @@ BeforeAll {
         .DESCRIPTION
         Out-File formats a table with the width of the console, without a console (redirected output) the table can be empty
         #>
-        param ([string]$Path, [string]$Like)
+        param ([string]$Path, [string]$Like, [switch]$NoEmptyLines)
         Test-Path -Path $Path -PathType Leaf | Should -BeTrue
         $Text = Get-Content -Path $Path -Raw
-        if ($Text -and $Text.Trim()) {$Text | Should -BeLike $Like}
+        if ($Text -and $Text.Trim()) {
+            $Text | Should -BeLike $Like
+            if ($NoEmptyLines) {Get-Content -Path $Path | Where-Object {-not $_.Trim()} | Should -BeNullOrEmpty}
+        }
     }
 
     function Get-InfoFile {
@@ -149,9 +152,7 @@ Describe 'Save-InventoryPE' {
         @{Wim = 'winse.wim'; Name = 'WinSE'}
     ) {
         Save-InventoryPE -OSMediaPath $OSMediaPath 6>$null
-        Assert-FormattedFile -Path (Join-Path $PEInfoPath "Get-WindowsImage-$Name.txt") -Like "*Microsoft Windows PE ($Wim)*"
-        $Text = Get-Content -Path (Join-Path $PEInfoPath "Get-WindowsImage-$Name.txt")
-        $Text | Where-Object {-not $_.Trim()} | Should -BeNullOrEmpty
+        Assert-FormattedFile -Path (Join-Path $PEInfoPath "Get-WindowsImage-$Name.txt") -Like "*Microsoft Windows PE ($Wim)*" -NoEmptyLines
         @(Import-Clixml -Path (Join-Path (Join-Path $PEInfoPath 'xml') "Get-WindowsImage-$Name.xml"))[0].ImageName | Should -Be "Microsoft Windows PE ($Wim)"
         @(Get-Content -Path (Join-Path (Join-Path $PEInfoPath 'json') "Get-WindowsImage-$Name.json") -Raw | ConvertFrom-Json)[0].ImageIndex | Should -Be 1
         (Get-InfoFile -Path $PEInfoPath -Folder 'logs' -Filter "*-Get-WindowsImage-$Name.txt").Count | Should -Be 1
@@ -454,9 +455,7 @@ Describe 'Set-WinREWimOS' {
 
     It 'exports the image information of the new winre.wim' {
         Set-WinREWimOS 6>$null
-        Assert-FormattedFile -Path (Join-Path $PEInfo 'Get-WindowsImage-WinRE.txt') -Like '*Microsoft Windows Recovery Environment (amd64)*'
-        $Text = Get-Content -Path (Join-Path $PEInfo 'Get-WindowsImage-WinRE.txt')
-        $Text | Where-Object {-not $_.Trim()} | Should -BeNullOrEmpty
+        Assert-FormattedFile -Path (Join-Path $PEInfo 'Get-WindowsImage-WinRE.txt') -Like '*Microsoft Windows Recovery Environment (amd64)*' -NoEmptyLines
         (Import-Clixml -Path (Join-Path (Join-Path $PEInfo 'xml') 'Get-WindowsImage-WinRE.xml')).ImageName | Should -Be 'Microsoft Windows Recovery Environment (amd64)'
         (Get-Content -Path (Join-Path (Join-Path $PEInfo 'json') 'Get-WindowsImage-WinRE.json') -Raw | ConvertFrom-Json).Languages | Should -Be 'de-DE'
         (Get-InfoFile -Path $PEInfo -Folder 'logs' -Filter '*-Get-WindowsImage-WinRE.txt').Count | Should -Be 1

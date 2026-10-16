@@ -405,8 +405,9 @@ Describe 'Update-OSMedia' {
             $HostOutput = (Update-OSMedia -Name $Win11Name -Download 3>$null 6>&1) -join ' '
             Should -Invoke Get-OSDUpdateDownloads -Times 1 -Exactly
             Should -Invoke Get-OSDUpdateDownloads -Times 1 -Exactly -ParameterFilter {$FileName -like 'windows11.0-kb5066131-x64-ndp481*'}
-            #Optional updates are listed with the download command but not downloaded
-            $HostOutput | Should -BeLike "*Save-OSDBuilderDownload -UpdateOS 'Windows 11' -UpdateBuild 24H2 -UpdateArch x64 -UpdateGroup Optional -Download*"
+            #Update-OSMedia removes the Optional updates before, there is no download hint for them
+            $HostOutput | Should -Not -BeLike '*-UpdateGroup Optional*'
+            $HostOutput | Should -Not -BeLike '*KB5067036*'
             $HostOutput | Should -BeLike '*Microsoft Update Manifests Downloaded*KB5066835*'
         }
 
@@ -633,7 +634,7 @@ Describe 'Update-OSMedia' {
             Mock Rename-Item {
                 $script:RenameCalls++
                 if ($script:RenameCalls -eq 1) {throw 'locked'}
-                Microsoft.PowerShell.Management\Rename-Item -Path $Path -NewName $NewName
+                Move-Item -Path $Path -Destination (Join-Path (Split-Path -Path $Path -Parent) $NewName)
             }
             $Warnings = Invoke-UpdateOSMedia -Parameters $Parameters
             $Warnings | Should -Not -Contain 'Could not rename the the Build directory ...'
@@ -940,9 +941,11 @@ Describe 'Update-OSMedia' {
             $ByTaskName = 'Win11 Enterprise x64 24H2'
             $IncludeKB = '5066835', '5067036', '890830', '5066699'; $ExcludeKB = '5066699'
             Mock Update-OptionalOS {$script:Seen['Optional'] = @($OSDUpdateOptional.KBNumber); $script:Seen['SetupDU'] = @($OSDUpdateSetupDU | Where-Object {$_})}
-            Invoke-UpdateOSMedia -Command 'New-OSBuild' -Parameters $BuildParameters | Out-Null
+            $HostOutput = (New-OSBuild @BuildParameters 3>$null 6>&1) -join ' '
+            $HostOutput | Should -BeLike "*Save-OSDBuilderDownload -UpdateOS 'Windows 11' -UpdateBuild 24H2 -UpdateArch x64 -UpdateGroup Optional -Download*"
             $script:Seen['Optional'] | Should -Be @('890830', '5067036')
             $script:Seen['SetupDU'] | Should -BeNullOrEmpty
+            #New-OSBuild does not download Optional updates automatically, it shows the download command
             Should -Invoke Get-OSDUpdateDownloads -Times 0 -Exactly
         }
 

@@ -129,8 +129,8 @@ Describe 'Add-ContentPack' {
         @{PackType = 'PEPoshMods'; Function = 'Add-ContentPackPEPoshMods'; SystemFunction = 'Add-ContentPackPEPoshModsSystem'}
     ) {
         Add-ContentPack -PackType $PackType 6>$null
-        Should -Invoke $Function -Times 2 -Exactly -ParameterFilter {$ContentPackContent -like "*$PackType?ProgramFiles"}
-        Should -Invoke $SystemFunction -Times 2 -Exactly -ParameterFilter {$ContentPackContent -like "*$PackType?System"}
+        Should -Invoke $Function -Times 2 -Exactly -ParameterFilter {$ContentPackContent -like "*${PackType}?ProgramFiles"}
+        Should -Invoke $SystemFunction -Times 2 -Exactly -ParameterFilter {$ContentPackContent -like "*${PackType}?System"}
         Test-Path (Join-Path (Join-Path (Join-Path $SetOSDBuilderPathContentPacks 'Contoso') $PackType) 'System') | Should -BeTrue
     }
 
@@ -144,7 +144,7 @@ Describe 'Add-ContentPack' {
         New-Item -Path (Join-Path (Join-Path $ContentPackPath 'x64 Subdirs') 'Tools') -ItemType Directory -Force | Out-Null
         Add-ContentPack -PackType $PackType 6>$null
         Should -Invoke $Function -Times 5 -Exactly
-        Should -Invoke $Function -Times 1 -Exactly -ParameterFilter {$ContentPackContent -like "*$AllSubdirs?Wallpaper"}
+        Should -Invoke $Function -Times 1 -Exactly -ParameterFilter {$ContentPackContent -like "*${AllSubdirs}?Wallpaper"}
         Should -Invoke $Function -Times 1 -Exactly -ParameterFilter {$ContentPackContent -like '*x64 Subdirs?Tools'}
     }
 
@@ -573,7 +573,7 @@ Describe 'Add-ContentPackOSRegistry' {
             New-TestFile -Path (Join-Path $MountDirectory $Hive) | Out-Null
         }
         $Content = New-TestDirectory
-        New-TestFile -Path (Join-Path (Join-Path $Content 'Contoso') 'Settings.reg') -Value $RegFileContent | Out-Null
+        New-TestFile -Path (Join-Path (Join-Path $Content 'Contoso') 'Settings.reg') -Value ($RegFileContent -join [Environment]::NewLine) | Out-Null
         $script:Temp = $env:TEMP
         $env:TEMP = New-TestDirectory
         Mock Get-Random {4242}
@@ -687,11 +687,16 @@ Describe 'Add-ContentPackPEADK' {
         New-TestFile -Path (Join-Path $Content 'WinPE-Setup.cab') | Out-Null
         New-TestFile -Path (Join-Path $Content 'WinPE-WMI.cab') -Value ('x' * 4000) | Out-Null
         New-TestFile -Path (Join-Path $Content 'WinPE-SecureStartup.cab') -Value ('x' * 2000) | Out-Null
+        #The packages of the subdirectories ("$ContentPackContent\*\*" -Recurse) are returned by a mock:
+        #PowerShell 7 on Linux returns the files of the directory for a wildcard path with -Recurse
         $Lang = Join-Path $Content 'de-de'
-        New-TestFile -Path (Join-Path $Lang 'lp.cab') | Out-Null
-        foreach ($Name in 'WinPE-WMI_de-de.cab', 'WinPE-Setup_de-de.cab', 'WinPE-WiFi-Package_de-de.cab', 'WinPE-LegacySetup_de-de.cab', 'WinPE-Rejuv_de-de.cab') {
-            New-TestFile -Path (Join-Path $Lang $Name) -Value ('x' * 3000) | Out-Null
-        }
+        $script:SubPackages = @(
+            [PSCustomObject]@{Name = 'lp.cab'; FullName = (Join-Path $Lang 'lp.cab'); Length = 1000}
+            foreach ($Name in 'WinPE-WMI_de-de.cab', 'WinPE-Setup_de-de.cab', 'WinPE-WiFi-Package_de-de.cab', 'WinPE-LegacySetup_de-de.cab', 'WinPE-Rejuv_de-de.cab') {
+                [PSCustomObject]@{Name = $Name; FullName = (Join-Path $Lang $Name); Length = 3000}
+            }
+        )
+        Mock Get-ChildItem -ParameterFilter {"$Path".EndsWith('\*\*')} {$script:SubPackages}
         $global:ReapplyLCU = $false; $global:UpdateLanguageContent = $false
         $script:Added = [System.Collections.Generic.List[string]]::new()
         Mock Add-WindowsPackage {$script:Added.Add("$Path|$(Split-Path $PackagePath -Leaf)")}
@@ -742,6 +747,7 @@ Describe 'Add-ContentPackPEADK' {
 
     It 'adds nothing from an empty directory' {
         Add-ContentPackPEADK -ContentPackContent (New-TestDirectory) -Lang 6>$null
+        Should -Invoke Get-ChildItem -Times 0 -Exactly -ParameterFilter {"$Path".EndsWith('\*\*')}
         Should -Invoke Add-WindowsPackage -Times 0 -Exactly
         $global:UpdateLanguageContent | Should -BeFalse
     }
@@ -800,7 +806,7 @@ Describe 'Add-ContentPackPEDaRT' {
         New-TestFile -Path (Join-Path $Content 'DartConfig8.dat') -Value 'DartConfig8' | Out-Null
         $MountWinPE = New-TestMount 'WinPE'; $MountWinRE = New-TestMount 'WinRE'; $MountWinSE = New-TestMount 'WinSE'
         foreach ($Mount in $MountWinPE, $MountWinRE, $MountWinSE) {
-            New-TestFile -Path (Join-Path $Mount 'Windows/System32/winpeshl.ini') -Value @('[LaunchApps]', '%windir%\system32\netstart.exe, -prompt') | Out-Null
+            New-TestFile -Path (Join-Path $Mount 'Windows/System32/winpeshl.ini') -Value ('[LaunchApps]', '%windir%\system32\netstart.exe, -prompt' -join [Environment]::NewLine) | Out-Null
         }
         Mock expand.exe {}
     }
@@ -1013,7 +1019,7 @@ Describe 'Add-ContentPackPERegistry' {
     BeforeEach {
         $MountWinPE = New-TestMount 'WinPE'; $MountWinRE = New-TestMount 'WinRE'; $MountWinSE = New-TestMount 'WinSE'
         $Content = New-TestDirectory
-        New-TestFile -Path (Join-Path $Content 'Settings.reg') -Value $RegFileContent | Out-Null
+        New-TestFile -Path (Join-Path $Content 'Settings.reg') -Value ($RegFileContent -join [Environment]::NewLine) | Out-Null
         $script:Temp = $env:TEMP
         $env:TEMP = New-TestDirectory
         Mock Get-Random {4242}
