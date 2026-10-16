@@ -112,6 +112,23 @@ Content\IsoExtract\Windows 11 24H2 Language\LanguagesAndOptionalFeatures\Microso
 * The Windows 11 Language Interface Packs `Microsoft-Windows-Lip-Language-Pack_x64_<lang>.cab`
   (ca-ES, eu-ES, gl-ES, id-ID, vi-VN) are offered as Language Interface Packs and added after the Language Packs
 
+### Regional formats without a display language (de-AT, de-CH, fr-BE, ...)
+
+Windows has no display language for regions like German (Austria), they use the de-DE Language Pack
+([Available languages](https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/available-language-packs-for-windows)).
+The region is set with the regional format, system locale and keyboard
+([DISM international settings](https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/dism-languages-and-international-servicing-command-line-options)):
+
+```powershell
+.\Examples\New-Win11MultiLanguageBuild.ps1 -CustomerName 'Contoso' -Languages 'en-US','de-DE' -DefaultLanguage 'de-DE' -RegionalFormat 'de-AT'
+```
+
+* `-DefaultLanguage de-DE` sets `Set-AllIntl` (display language)
+* `-RegionalFormat de-AT` sets `Set-UserLocale`, `Set-SysLocale` and `Set-InputLocale` (default keyboard of de-AT: `0C07:00000407`, German keyboard),
+  these settings take precedence over `Set-AllIntl`
+* With `New-OSBuildTask` use `-SetAllIntl de-DE -SetUserLocale de-AT -SetSysLocale de-AT -SetInputLocale de-AT`
+* The example script stops with a hint when a region like `de-AT` is passed in `-Languages`
+
 ### Local Experience Packs (LXP)
 
 Windows 11 publishes 43 languages as `.cab` Language Packs (38) and Language Interface Packs (5) on the Languages and Optional Features ISO.

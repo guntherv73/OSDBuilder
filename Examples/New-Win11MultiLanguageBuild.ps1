@@ -31,6 +31,10 @@ About 60 GB of free space are required on the OSDBuilder drive.
 .\New-Win11MultiLanguageBuild.ps1 -CustomerName 'Contoso' -SourceIso 'D:\ISO\Win11_25H2_English_x64.iso' -SetupLanguages 'de-DE','fr-FR' -SetupLanguageIso 'D:\ISO\Win11_25H2_German_x64.iso','D:\ISO\Win11_25H2_French_x64.iso' -SetupUILanguage 'de-DE'
 
 .EXAMPLE
+.\New-Win11MultiLanguageBuild.ps1 -CustomerName 'Contoso' -Languages 'en-US','de-DE' -DefaultLanguage 'de-DE' -RegionalFormat 'de-AT'
+German display language with the Austrian regional format, system locale and keyboard
+
+.EXAMPLE
 .\New-Win11MultiLanguageBuild.ps1 -CustomerName 'Contoso' -Languages 'en-US','de-DE','fr-FR' -DefaultLanguage 'de-DE' -AddWindowsCapability 'Rsat.ActiveDirectory.DS-LDS.Tools~~~~0.0.1.0'
 #>
 #Requires -RunAsAdministrator
@@ -60,6 +64,11 @@ param (
 
     #Default language of Windows and WinRE (Dism /Set-AllIntl)
     [string]$DefaultLanguage = 'en-US',
+
+    #Regional format, system locale and keyboard of the image (Dism /Set-UserLocale, /Set-SysLocale, /Set-InputLocale)
+    #For regions without an own display language, for example 'de-AT' with -DefaultLanguage 'de-DE'
+    #The individual settings take precedence over Set-AllIntl, the display language stays -DefaultLanguage
+    [string]$RegionalFormat,
 
     #Language Features on Demand of each language, Fonts are added automatically when the language requires them
     [ValidateSet('Basic','Handwriting','OCR','TextToSpeech','Speech')]
@@ -97,6 +106,10 @@ param (
 )
 $ErrorActionPreference = 'Stop'
 if ($DefaultLanguage -notin $Languages) {throw "-DefaultLanguage $DefaultLanguage must be one of -Languages $($Languages -join ', ')"}
+if ($RegionalFormat) {
+    try {$RegionalFormat = ([System.Globalization.CultureInfo]::GetCultureInfo($RegionalFormat)).Name}
+    catch {throw "-RegionalFormat $RegionalFormat is not a valid locale name"}
+}
 if (-not $SetupUILanguage) {$SetupUILanguage = $MediaLanguage}
 if ($SetupUILanguage -notin (@($MediaLanguage) + $SetupLanguages)) {throw "-SetupUILanguage $SetupUILanguage must be -MediaLanguage $MediaLanguage or one of -SetupLanguages"}
 #Microsoft: Language Interface Packs are not supported on Windows Setup
@@ -250,7 +263,15 @@ foreach ($Language in ($Languages | ForEach-Object {$_.ToLower()} | Sort-Object 
         if (Test-Path (Join-Path $LofPath $Cab)) {$LanguageFeature += "$LofRelative\$Cab"}
     }
 }
-if ($Missing) {throw "No Language Pack was found in $LofPath and no Local Experience Pack in $IsoExtractPath for: $($Missing -join ', ')"}
+if ($Missing) {
+    #Regions like de-AT, de-CH or fr-BE use the display language of de-DE or fr-FR and are set with -RegionalFormat
+    $Hint = @($Missing | ForEach-Object {
+        $Parent = $_.Split('-')[0]
+        $ParentLp = @(Get-ChildItem -Path $LofPath -Filter "Microsoft-Windows-Client-Language-Pack_x64_$Parent-*.cab" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Name)
+        if ($ParentLp) {"$_ is not a display language, use the display language $(($ParentLp | ForEach-Object {($_ -replace '^.*_x64_' -replace '\.cab$')}) -join ' or ') in -Languages and -RegionalFormat $_"}
+    })
+    throw "No Language Pack was found in $LofPath and no Local Experience Pack in $IsoExtractPath for: $($Missing -join ', '). $($Hint -join '. ')"
+}
 $LanguageFeature = @($LanguageFeature | Sort-Object -Unique)
 
 $RemoveAppxPackageName = @()
@@ -278,6 +299,12 @@ $TaskParams = @{
     SetAllIntl  = $DefaultLanguage
 }
 if (-not $SkipNetFX3) {$TaskParams.EnableNetFX3 = $true}
+if ($RegionalFormat) {
+    $TaskParams.SetUserLocale   = $RegionalFormat
+    $TaskParams.SetSysLocale    = $RegionalFormat
+    #A locale name sets the default keyboard of the locale, de-AT: 0C07:00000407 (German keyboard)
+    $TaskParams.SetInputLocale  = $RegionalFormat
+}
 New-OSBuildTask @TaskParams
 
 $TaskPath = Join-Path $SetOSDBuilderPathTasks "OSBuild $MediaName.json"
