@@ -571,8 +571,7 @@ Describe 'New-OSBuild' {
             $State.WinPEOSDCloud | Should -Be 'True'
         }
 
-        # KnownBug: New-OSBuild.ps1:429 reads $Task.SetAllIntl, the Templates store the value as LangSetAllIntl
-        It 'applies LangSetAllIntl of a Template' -Skip {
+        It 'applies LangSetAllIntl of a Template' {
             Invoke-NewOSBuild @{ByTaskName = 'Contoso Win11 Ent x64 25H2'} | Out-Null
             $global:NewOSBuildState['Show-TaskInfo'].SetAllIntl | Should -Be 'de-DE'
         }
