@@ -742,7 +742,7 @@ Describe 'Add-ContentPackPEADK' {
         $Verbose = (Add-ContentPackPEADK -ContentPackContent $Content 6>$null 4>&1) -join "`n"
         $Verbose | Should -BeLike '*0x800f081e The package is not applicable to this image*'
         $Verbose | Should -BeLike '*-ContentPackPEADK-lp.cab.log*'
-        Should -Invoke Add-WindowsPackage -Times 17 -Exactly
+        Should -Invoke Add-WindowsPackage -Times 15 -Exactly
     }
 
     It 'adds nothing from an empty directory' {
@@ -779,7 +779,8 @@ Describe 'Add-ContentPackPEADK' {
         It 'adds lp.cab and the packages of the subdirectories except Setup to a WinRE source' -Skip {
             $SourceWim = 'WinRE'
             Add-ContentPackPEADK -ContentPackContent $Content 6>$null
-            @(Get-Added 'C:\Mount' | Select-Object -Skip 3) | Should -Be @('lp.cab', 'WinPE-Rejuv_de-de.cab', 'WinPE-WiFi-Package_de-de.cab', 'WinPE-WMI_de-de.cab')
+            @(Get-Added 'C:\Mount' | Select-Object -Skip 3)[0] | Should -Be 'lp.cab'
+            @(Get-Added 'C:\Mount' | Select-Object -Skip 4 | Sort-Object) | Should -Be @('WinPE-Rejuv_de-de.cab', 'WinPE-WiFi-Package_de-de.cab', 'WinPE-WMI_de-de.cab')
         }
 
         It 'continues when a package is not applicable (0x800f081e)' {

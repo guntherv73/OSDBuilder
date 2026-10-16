@@ -216,7 +216,9 @@ Describe 'New-PEBuild' {
 
     Context 'Execute WinPE' {
         It 'exports the WinPE wim and mounts it' {
+            Mock dism {$script:DismArgs = $RemainingArguments; $script:DismInput = $InputObject}
             Invoke-TestPEBuild @{Execute = $true}
+            Write-Host ("ARGS: " + ($script:DismArgs -join '|') + " INPUT: $script:DismInput")
             Should -Invoke dism -Times 1 -Exactly -ParameterFilter {
                 $Arguments = $RemainingArguments -join ' '
                 ($Arguments -like '/Export-Image*') -and
