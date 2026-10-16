@@ -86,4 +86,17 @@ Content\IsoExtract\Windows 11 24H2 Language\LanguagesAndOptionalFeatures\Microso
 * Windows 11 22H2 and 23H2 share the same ISO (22621)
 * Directories containing `Windows 10` are not offered for Windows 11 media (and vice versa)
 * Language Features are installed in the required order: Basic, Fonts, OCR, Handwriting, TextToSpeech, Speech
+
+### Features on Demand (Add-WindowsCapability)
+
+Features on Demand are added with `Add-WindowsCapability` as recommended by Microsoft
+([Features on Demand](https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/features-on-demand-v2--capabilities)).
+
+* `New-OSBuildTask -ContentFeaturesOnDemand` offers the Windows Capabilities that are NotPresent in the OSMedia
+  (inventory `info\xml\Get-WindowsCapability.xml`) and saves them in the Task as `AddWindowsCapability`
+* The source is every Features on Demand repository in `Content\IsoExtract` that matches the OSMedia
+  (a directory with a `metadata` directory, for example `LanguagesAndOptionalFeatures`), Windows Update is not used
+* Language Features are added with their capability name (for example `Language.Basic~~~de-DE~0.0.1.0`),
+  `Add-WindowsPackage` is only used when the capability cannot be added
+* Tasks with Features on Demand `.cab` files (`AddFeatureOnDemand`) still work, recreate the Task to switch to `AddWindowsCapability`
 * The LCU is reapplied once after Language and Feature on Demand content is added

@@ -575,14 +575,34 @@ function New-OSBuildTask {
                     Write-Host "$Item" -ForegroundColor DarkGray
                 }
             }
+            #Windows Capabilities require the OSMedia inventory and a Features on Demand repository
+            $UseWindowsCapability = (Test-Path "$($OSMedia.FullName)\info\xml\Get-WindowsCapability.xml") -and (@(Get-OSDBuilderCapabilitySource -OSMedia $OSMedia).Count -gt 0)
             $AddFeatureOnDemand = $null
-            if ($ContentFeaturesOnDemand.IsPresent) {
+            if ($ContentFeaturesOnDemand.IsPresent -and (-not $UseWindowsCapability)) {
                 [array]$AddFeatureOnDemand = (Get-TaskContentAddFeatureOnDemand).FullName
                 
                 $AddFeatureOnDemand = [array]$AddFeatureOnDemand + [array]$ExistingTask.AddFeatureOnDemand
                 $AddFeatureOnDemand = $AddFeatureOnDemand | Sort-Object -Unique
             } else {
                 if ($ExistingTask.AddFeatureOnDemand) {$AddFeatureOnDemand = $ExistingTask.AddFeatureOnDemand}
+            }
+            #=================================================
+            #   AddWindowsCapability
+            #=================================================
+            Write-Host "WindowsCapability" -ForegroundColor Green
+            if ($ExistingTask.AddWindowsCapability) {
+                foreach ($Item in $ExistingTask.AddWindowsCapability) {
+                    Write-Host "$Item" -ForegroundColor DarkGray
+                }
+            }
+            $AddWindowsCapability = $null
+            if ($ContentFeaturesOnDemand.IsPresent -and $UseWindowsCapability) {
+                [array]$AddWindowsCapability = (Get-TaskContentAddWindowsCapability).Name
+
+                $AddWindowsCapability = [array]$AddWindowsCapability + [array]$ExistingTask.AddWindowsCapability
+                $AddWindowsCapability = $AddWindowsCapability | Where-Object {$_} | Sort-Object -Unique
+            } else {
+                if ($ExistingTask.AddWindowsCapability) {$AddWindowsCapability = $ExistingTask.AddWindowsCapability}
             }
             #=================================================
             #   LanguagePack
@@ -956,6 +976,7 @@ function New-OSBuildTask {
             #=================================================
             "AddWindowsPackage" = [string[]]$AddWindowsPackage;
             "AddFeatureOnDemand" = [string[]]$AddFeatureOnDemand;
+            "AddWindowsCapability" = [string[]]$AddWindowsCapability;
             #=================================================
             #   Content WinPE
             #=================================================
