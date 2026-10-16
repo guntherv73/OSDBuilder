@@ -1,0 +1,10 @@
+{
+    "TaskType":  "OSBuild",
+    "TaskVersion":  "22.4.19.1",
+    "TaskName":  "Server 2025 Family",
+    "OSMFamily":  "Server ServerDatacenter x64 26100 en-US",
+    "EnableNetFX3":  "True",
+    "Drivers":  [
+                    "Drivers\\Server"
+                ]
+}

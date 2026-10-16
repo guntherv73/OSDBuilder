@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RegistrySettings clsid="{A3CCFC41-DFDB-43a5-8D26-0FE8B954DA51}">
+  <Registry clsid="{9CD4B2F4-923D-47f5-A062-E897DD1DAD50}" name="DisableWindowsConsumerFeatures" status="DisableWindowsConsumerFeatures" image="12" changed="2026-10-14 10:00:00" uid="{1B0F8A3E-0000-4000-8000-000000000001}">
+    <Properties action="U" displayDecimal="1" default="0" hive="HKEY_LOCAL_MACHINE" key="SOFTWARE\Policies\Microsoft\Windows\CloudContent" name="DisableWindowsConsumerFeatures" type="REG_DWORD" value="00000001"/>
+  </Registry>
+  <Registry clsid="{9CD4B2F4-923D-47f5-A062-E897DD1DAD50}" name="TaskbarAl" status="TaskbarAl" image="12" changed="2026-10-14 10:00:00" uid="{1B0F8A3E-0000-4000-8000-000000000002}">
+    <Properties action="C" displayDecimal="1" default="0" hive="HKEY_CURRENT_USER" key="Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" name="TaskbarAl" type="REG_DWORD" value="00000000"/>
+  </Registry>
+  <Registry clsid="{9CD4B2F4-923D-47f5-A062-E897DD1DAD50}" name="DefaultUserColor" status="DefaultUserColor" image="7" changed="2026-10-14 10:00:00" uid="{1B0F8A3E-0000-4000-8000-000000000003}">
+    <Properties action="U" displayDecimal="0" default="0" hive="HKEY_USERS" key=".DEFAULT\Control Panel\Colors" name="Background" type="REG_SZ" value="0 0 0"/>
+  </Registry>
+  <Registry clsid="{9CD4B2F4-923D-47f5-A062-E897DD1DAD50}" name="TimeZone" status="TimeZone" image="7" changed="2026-10-14 10:00:00" uid="{1B0F8A3E-0000-4000-8000-000000000004}">
+    <Properties action="U" displayDecimal="0" default="0" hive="HKEY_LOCAL_MACHINE" key="SYSTEM\CurrentControlSet\Control\TimeZoneInformation" name="RealTimeIsUniversal" type="REG_QWORD" value="0000000000000001"/>
+  </Registry>
+  <Registry clsid="{9CD4B2F4-923D-47f5-A062-E897DD1DAD50}" name="Binary" status="Binary" image="17" changed="2026-10-14 10:00:00" uid="{1B0F8A3E-0000-4000-8000-000000000005}">
+    <Properties action="U" displayDecimal="0" default="0" hive="HKEY_LOCAL_MACHINE" key="SOFTWARE\OSDBuilder" name="Settings" type="REG_BINARY" value="0a0b0c"/>
+  </Registry>
+  <Registry clsid="{9CD4B2F4-923D-47f5-A062-E897DD1DAD50}" name="Default" status="(Default)" image="7" changed="2026-10-14 10:00:00" uid="{1B0F8A3E-0000-4000-8000-000000000006}">
+    <Properties action="U" displayDecimal="0" default="1" hive="HKEY_LOCAL_MACHINE" key="SOFTWARE\OSDBuilder" name="" type="REG_EXPAND_SZ" value="%SystemRoot%\OSDBuilder"/>
+  </Registry>
+  <Registry clsid="{9CD4B2F4-923D-47f5-A062-E897DD1DAD50}" name="KeyOnly" status="KeyOnly" image="7" changed="2026-10-14 10:00:00" uid="{1B0F8A3E-0000-4000-8000-000000000007}">
+    <Properties action="U" displayDecimal="0" default="0" hive="HKEY_LOCAL_MACHINE" key="SOFTWARE\OSDBuilder\Empty" name="" type="" value=""/>
+  </Registry>
+  <Registry clsid="{9CD4B2F4-923D-47f5-A062-E897DD1DAD50}" name="Multi" status="Multi" image="7" changed="2026-10-14 10:00:00" uid="{1B0F8A3E-0000-4000-8000-000000000008}">
+    <Properties action="U" displayDecimal="0" default="0" hive="HKEY_LOCAL_MACHINE" key="SOFTWARE\OSDBuilder" name="Languages" type="REG_MULTI_SZ" value="de-DE"/>
+  </Registry>
+</RegistrySettings>

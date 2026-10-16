@@ -296,7 +296,7 @@ Describe 'Add-LanguagePacksWinRE' {
         $SetAllIntl = 'de-DE'
         Add-LanguagePacksWinRE 6>$null
         Should -Invoke dism -Times 1 -Exactly -ParameterFilter {
-            $script:DismArgs = $RemainingArguments -join ' '; $true
+            (@($InputObject) + @($RemainingArguments) -join ' ') -like "/Image:$MountWinRERoot /Set-AllIntl:de-DE /LogPath:*Dism-SetAllIntl-WinRE.log"
         }
     }
 

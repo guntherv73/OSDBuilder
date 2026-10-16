@@ -1,0 +1,13 @@
+{
+    "TaskType":  "OSBuild",
+    "TaskVersion":  "22.4.19.1",
+    "TaskName":  "Win11 Enterprise Family",
+    "OSMFamily":  "Client Enterprise x64 26200 en-US",
+    "EnableNetFX3":  "False",
+    "WinPEAutoExtraFiles":  "False",
+    "WinPEOSDCloud":  "False",
+    "WinREWiFi":  "False",
+    "EnableWindowsOptionalFeature":  [
+                                         "Microsoft-Windows-Subsystem-Linux"
+                                     ]
+}

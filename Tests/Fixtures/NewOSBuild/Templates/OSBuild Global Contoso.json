@@ -1,0 +1,45 @@
+{
+    "TaskType":  "OSBuild",
+    "TaskVersion":  "22.4.19.1",
+    "TaskName":  "Global Contoso",
+    "OSMFamily":  "",
+    "ContentPacks":  [
+                         "Contoso Global"
+                     ],
+    "EnableNetFX3":  "False",
+    "WinPEAutoExtraFiles":  "False",
+    "WinPEOSDCloud":  "True",
+    "WinREWiFi":  "False",
+    "WinPEDaRT":  "DaRT\\DaRT 10\\Toolsx64.cab",
+    "StartLayoutXML":  "StartLayout\\Global.xml",
+    "UnattendXML":  "Unattend\\Global.xml",
+    "Drivers":  [
+                    "Drivers\\Global"
+                ],
+    "ExtraFiles":  [
+                       "ExtraFiles\\Global"
+                   ],
+    "Scripts":  [
+                    "Scripts\\Global.ps1"
+                ],
+    "AddWindowsCapability":  [
+                                 "Rsat.ActiveDirectory.DS-LDS.Tools~~~~0.0.1.0"
+                             ],
+    "RemoveAppxProvisionedPackage":  [
+                                         "Microsoft.GamingApp_2509.1001.4.0_neutral_~_8wekyb3d8bbwe"
+                                     ],
+    "WinPEDrivers":  [
+                         "Drivers\\WinPE"
+                     ],
+    "LangSetAllIntl":  "de-DE",
+    "LangSetInputLocale":  "0407:00000407",
+    "LangSetSKUIntlDefaults":  "de-DE",
+    "LangSetSetupUILang":  "de-DE",
+    "LangSetSysLocale":  "de-AT",
+    "LangSetUILang":  "de-DE",
+    "LangSetUILangFallback":  "en-US",
+    "LangSetUserLocale":  "de-AT",
+    "LanguagePack":  [
+                         "IsoExtract\\Windows 11 24H2-26H2 x64 Languages and Optional Features\\LanguagesAndOptionalFeatures\\Microsoft-Windows-Client-Language-Pack_x64_de-de.cab"
+                     ]
+}

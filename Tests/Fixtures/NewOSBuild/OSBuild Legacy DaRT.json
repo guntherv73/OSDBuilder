@@ -1,0 +1,15 @@
+{
+    "TaskType":  "OSBuild",
+    "TaskVersion":  "19.1.4.0",
+    "TaskName":  "Legacy DaRT",
+    "CustomName":  "Legacy DaRT",
+    "OSMFamily":  "Client Enterprise x64 26200 en-US",
+    "OSMGuid":  "0d6c3b52-8f0e-4f7a-9a43-41d8b6a0c3f1",
+    "Name":  "Windows 11 Enterprise x64 25H2 26200.6584",
+    "EnableNetFX3":  "False",
+    "WinPEAddDaRT":  "DaRT\\DaRT 10\\Toolsx64.cab",
+    "LanguagePack":  [
+                         "IsoExtract\\Windows 11 24H2-26H2 x64 Languages and Optional Features\\LanguagesAndOptionalFeatures\\Microsoft-Windows-Client-Language-Pack_x64_de-de.cab"
+                     ],
+    "LangSetAllIntl":  "de-DE"
+}

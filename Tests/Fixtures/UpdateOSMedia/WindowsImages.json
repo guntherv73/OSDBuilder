@@ -1,0 +1,68 @@
+{
+    "Win11Enterprise24H2": {
+        "ImageIndex": 3, "ImageName": "Windows 11 Enterprise", "ImageDescription": "Windows 11 Enterprise",
+        "Architecture": 9, "EditionId": "Enterprise", "InstallationType": "Client", "Languages": ["en-US"],
+        "Version": "10.0.26100.1742", "MajorVersion": 10, "MinorVersion": 0, "Build": 26100, "SPBuild": 1742, "SPLevel": 0,
+        "ImageBootable": "No", "WIMBoot": false, "CreatedTime": "2024-09-07T06:02:31", "ModifiedTime": "2024-09-07T06:28:09"
+    },
+    "Win11Education24H2": {
+        "ImageIndex": 1, "ImageName": "Windows 11 Education", "ImageDescription": "Windows 11 Education",
+        "Architecture": 9, "EditionId": "Education", "InstallationType": "Client", "Languages": ["en-US"],
+        "Version": "10.0.26100.1742", "MajorVersion": 10, "MinorVersion": 0, "Build": 26100, "SPBuild": 1742, "SPLevel": 0,
+        "ImageBootable": "No", "WIMBoot": false, "CreatedTime": "2024-09-07T05:58:12", "ModifiedTime": "2024-09-07T06:24:51"
+    },
+    "Win11Pro24H2": {
+        "ImageIndex": 5, "ImageName": "Windows 11 Pro", "ImageDescription": "Windows 11 Pro",
+        "Architecture": 9, "EditionId": "Professional", "InstallationType": "Client", "Languages": ["en-US"],
+        "Version": "10.0.26100.1742", "MajorVersion": 10, "MinorVersion": 0, "Build": 26100, "SPBuild": 1742, "SPLevel": 0,
+        "ImageBootable": "No", "WIMBoot": false, "CreatedTime": "2024-09-07T06:06:44", "ModifiedTime": "2024-09-07T06:31:02"
+    },
+    "Win11ProWorkstations24H2": {
+        "ImageIndex": 9, "ImageName": "Windows 11 Pro for Workstations", "ImageDescription": "Windows 11 Pro for Workstations",
+        "Architecture": 9, "EditionId": "ProfessionalWorkstation", "InstallationType": "Client", "Languages": ["en-US"],
+        "Version": "10.0.26100.1742", "MajorVersion": 10, "MinorVersion": 0, "Build": 26100, "SPBuild": 1742, "SPLevel": 0,
+        "ImageBootable": "No", "WIMBoot": false, "CreatedTime": "2024-09-07T06:10:20", "ModifiedTime": "2024-09-07T06:35:40"
+    },
+    "Win11Enterprise24H2DeDE": {
+        "ImageIndex": 1, "ImageName": "Windows 11 Enterprise", "ImageDescription": "Windows 11 Enterprise",
+        "Architecture": 9, "EditionId": "Enterprise", "InstallationType": "Client", "Languages": ["en-US", "de-DE"],
+        "Version": "10.0.26100.1742", "MajorVersion": 10, "MinorVersion": 0, "Build": 26100, "SPBuild": 1742, "SPLevel": 0,
+        "ImageBootable": "No", "WIMBoot": false, "CreatedTime": "2024-09-07T06:02:31", "ModifiedTime": "2026-10-14T09:12:44"
+    },
+    "Win10Enterprise22H2": {
+        "ImageIndex": 3, "ImageName": "Windows 10 Enterprise", "ImageDescription": "Windows 10 Enterprise",
+        "Architecture": 9, "EditionId": "Enterprise", "InstallationType": "Client", "Languages": ["en-US"],
+        "Version": "10.0.19045.2965", "MajorVersion": 10, "MinorVersion": 0, "Build": 19041, "SPBuild": 2965, "SPLevel": 0,
+        "ImageBootable": "No", "WIMBoot": false, "CreatedTime": "2023-05-07T07:41:38", "ModifiedTime": "2023-05-07T08:06:12"
+    },
+    "Win10Enterprise1809": {
+        "ImageIndex": 3, "ImageName": "Windows 10 Enterprise", "ImageDescription": "Windows 10 Enterprise",
+        "Architecture": 9, "EditionId": "Enterprise", "InstallationType": "Client", "Languages": ["en-US"],
+        "Version": "10.0.17763.1", "MajorVersion": 10, "MinorVersion": 0, "Build": 17763, "SPBuild": 1, "SPLevel": 0,
+        "ImageBootable": "No", "WIMBoot": false, "CreatedTime": "2018-09-14T22:15:08", "ModifiedTime": "2018-09-14T22:41:56"
+    },
+    "Server2022Datacenter": {
+        "ImageIndex": 4, "ImageName": "Windows Server 2022 Datacenter (Desktop Experience)", "ImageDescription": "This option installs the full Windows graphical environment, consuming extra drive space.",
+        "Architecture": 9, "EditionId": "ServerDatacenter", "InstallationType": "Server", "Languages": ["en-US"],
+        "Version": "10.0.20348.587", "MajorVersion": 10, "MinorVersion": 0, "Build": 20348, "SPBuild": 587, "SPLevel": 0,
+        "ImageBootable": "No", "WIMBoot": false, "CreatedTime": "2022-03-02T00:27:16", "ModifiedTime": "2022-03-02T00:55:58"
+    },
+    "Server2022DatacenterCore": {
+        "ImageIndex": 3, "ImageName": "Windows Server 2022 Datacenter", "ImageDescription": "(Recommended) This option omits most of the Windows graphical environment.",
+        "Architecture": 9, "EditionId": "ServerDatacenterCor", "InstallationType": "Server Core", "Languages": ["en-US"],
+        "Version": "10.0.20348.587", "MajorVersion": 10, "MinorVersion": 0, "Build": 20348, "SPBuild": 587, "SPLevel": 0,
+        "ImageBootable": "No", "WIMBoot": false, "CreatedTime": "2022-03-02T00:20:41", "ModifiedTime": "2022-03-02T00:40:13"
+    },
+    "Win7Enterprise": {
+        "ImageIndex": 1, "ImageName": "Windows 7 ENTERPRISE", "ImageDescription": "Windows 7 ENTERPRISE",
+        "Architecture": 9, "EditionId": "Enterprise", "InstallationType": "Client", "Languages": ["en-US"],
+        "Version": "6.1.7601.17514", "MajorVersion": 6, "MinorVersion": 1, "Build": 7601, "SPBuild": 17514, "SPLevel": 1,
+        "ImageBootable": "No", "WIMBoot": false, "CreatedTime": "2010-11-21T03:42:51", "ModifiedTime": "2010-11-21T04:08:16"
+    },
+    "Server2012R2Standard": {
+        "ImageIndex": 2, "ImageName": "Windows Server 2012 R2 SERVERSTANDARD", "ImageDescription": "Windows Server 2012 R2 SERVERSTANDARD",
+        "Architecture": 9, "EditionId": "ServerStandard", "InstallationType": "Server", "Languages": ["en-US"],
+        "Version": "6.3.9600.17031", "MajorVersion": 6, "MinorVersion": 3, "Build": 9600, "SPBuild": 17031, "SPLevel": 0,
+        "ImageBootable": "No", "WIMBoot": false, "CreatedTime": "2014-03-18T11:35:25", "ModifiedTime": "2014-03-18T11:47:57"
+    }
+}
