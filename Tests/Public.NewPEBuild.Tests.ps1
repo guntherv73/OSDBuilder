@@ -227,7 +227,7 @@ Describe 'New-PEBuild' {
                 ($Arguments -like '*/Bootable*')
             }
             Should -Invoke Mount-PEBuild -Times 1 -Exactly -ParameterFilter {($MountDirectory -like (Join-Path $global:SetOSDBuilderPathMount 'pebuild*')) -and ($WorkingWim -eq "$WorkingPath\WimTemp\boot.wim")}
-            Should -Invoke Copy-Item -Times 1 -Exactly -ParameterFilter {($Path -eq "$($script:OSMedia.FullName)\OS\bootmgr") -and ($Destination -eq "$WorkingPath\OS\bootmgr")}
+            Should -Invoke Copy-Item -Times 1 -Exactly -ParameterFilter {($Path -eq "$($script:OSMedia.FullName)\OS\bootmgr") -and ($Destination -eq "$(Join-Path $WorkingPath 'OS')\bootmgr")}
             Should -Invoke Copy-Item -Times 1 -Exactly -ParameterFilter {($Path -eq "$($script:OSMedia.FullName)\OS\efi\") -and $Recurse}
             Should -Invoke Start-Transcript -Times 1 -Exactly
             Should -Invoke Stop-Transcript -Times 1 -Exactly

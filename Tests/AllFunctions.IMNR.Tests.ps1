@@ -463,7 +463,6 @@ Describe 'New-DirectoriesOSMedia' {
         $Info = Join-Path $Root 'info'; $OS = Join-Path $Root 'OS'; $WinPE = Join-Path $Root 'WinPE'; $PEInfo = Join-Path $WinPE 'info'
         $WimTemp = Join-Path $Root 'WimTemp'; $MountDirectory = Join-Path $Root 'Mount'
         $MountWinPE = Join-Path $Root 'MountWinPE'; $MountWinSE = Join-Path $Root 'MountWinSE'; $MountWinRE = Join-Path $Root 'MountWinRE'
-        New-Item -Path $OS -ItemType Directory -Force | Out-Null
         New-DirectoriesOSMedia
         foreach ($Path in @($Info, $OS, $WinPE, $PEInfo, $WimTemp, $MountDirectory, $MountWinPE, $MountWinSE, $MountWinRE)) {
             Test-Path -Path $Path -PathType Container | Should -BeTrue
@@ -472,6 +471,17 @@ Describe 'New-DirectoriesOSMedia' {
             Test-Path -Path (Join-Path $Info $Folder) -PathType Container | Should -BeTrue
             Test-Path -Path (Join-Path $PEInfo $Folder) -PathType Container | Should -BeTrue
         }
+    }
+
+    It 'keeps existing directories and their content' {
+        $Root = Join-Path $TestDrive 'OSMediaExisting'
+        $Info = Join-Path $Root 'info'; $OS = Join-Path $Root 'OS'; $WinPE = Join-Path $Root 'WinPE'; $PEInfo = Join-Path $WinPE 'info'
+        $WimTemp = Join-Path $Root 'WimTemp'; $MountDirectory = Join-Path $Root 'Mount'
+        $MountWinPE = Join-Path $Root 'MountWinPE'; $MountWinSE = Join-Path $Root 'MountWinSE'; $MountWinRE = Join-Path $Root 'MountWinRE'
+        $Existing = New-TestFile -Path (Join-Path (Join-Path $Info 'logs') 'Import-OSMedia.log') -Value 'existing log'
+        New-DirectoriesOSMedia
+        Get-Content -Path $Existing.FullName | Should -Be 'existing log'
+        Test-Path -Path (Join-Path $Info 'json') -PathType Container | Should -BeTrue
     }
 }
 

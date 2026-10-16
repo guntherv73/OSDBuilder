@@ -249,7 +249,7 @@ Describe 'Show-TaskInfo' {
         ($Output -join "`n") | Should -BeLike '*-OSMedia Path:*Windows 11 Enterprise x64 25H2 6899'
         $Task = Get-Content -Path (Join-Path $OSMediaDirectory 'OSBuild.json') -Raw | ConvertFrom-Json
         $Task.EnableNetFX3 | Should -Be 'False'
-        @($Task.ExtraFiles).Count | Should -Be 0
+        $Task.ExtraFiles | Should -BeNullOrEmpty
     }
 
     It 'does not show the ContentPacks with -SkipContentPacks' {
