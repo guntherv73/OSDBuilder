@@ -46,8 +46,8 @@ BeforeAll {
             InstallationType    = 'Client'
             MajorVersion        = $MajorVersion
             Build               = $Build
-            CreatedTime         = [datetime]'2026-10-01T10:00:00'
-            ModifiedTime        = [datetime]'2026-10-02T10:00:00'
+            CreatedTime         = [datetime]'2026-10-01T12:00:00'
+            ModifiedTime        = [datetime]'2026-10-02T12:00:00'
         }
     }
 
@@ -61,7 +61,7 @@ BeforeAll {
         $Task | ConvertTo-Json | Set-Content -Path (Join-Path $global:SetOSDBuilderPathTasks $FileName)
     }
 
-    function Item ([string]$Property, [string[]]$Value) {
+    function New-SelectionItem ([string]$Property, [string[]]$Value) {
         foreach ($Item in $Value) {[PSCustomObject]@{$Property = $Item}}
     }
 }
@@ -166,15 +166,15 @@ Describe 'New-PEBuildTask' {
         }
 
         It 'writes every selection to the Task JSON' {
-            Mock Get-TaskContentPacks {Item Name 'Contoso', '_Global'}
-            Mock Get-TaskWinPEDaRT {Item FullName 'DaRT\10\Toolsx64.cab'}
-            Mock Get-TaskWinPEDrivers {Item FullName 'Drivers\WinPE\Intel', 'Drivers\WinPE\Dell'}
-            Mock Get-TaskWinPEExtraFiles {Item FullName 'ExtraFiles\WinPE\Tools'}
-            Mock Get-TaskWinPEScripts {Item FullName 'Scripts\WinPE\Config.ps1'}
-            Mock Get-TaskContentIsoExtract {Item FullName 'IsoExtract\Windows 11\lp.cab', 'IsoExtract\Windows Preinstallation Environment\WinPE-WMI.cab'}
+            Mock Get-TaskContentPacks {New-SelectionItem Name 'Contoso', '_Global'}
+            Mock Get-TaskWinPEDaRT {New-SelectionItem FullName 'DaRT\10\Toolsx64.cab'}
+            Mock Get-TaskWinPEDrivers {New-SelectionItem FullName 'Drivers\WinPE\Intel', 'Drivers\WinPE\Dell'}
+            Mock Get-TaskWinPEExtraFiles {New-SelectionItem FullName 'ExtraFiles\WinPE\Tools'}
+            Mock Get-TaskWinPEScripts {New-SelectionItem FullName 'Scripts\WinPE\Config.ps1'}
+            Mock Get-TaskContentIsoExtract {New-SelectionItem FullName 'IsoExtract\Windows 11\lp.cab', 'IsoExtract\Windows Preinstallation Environment\WinPE-WMI.cab'}
             Mock Get-TaskWinPEADK {
                 $script:SeenIsoExtractWinPE = @($ContentIsoExtractWinPE.FullName)
-                Item FullName 'ADK\x64\WinPE_OCs\WinPE-PowerShell.cab', 'ADK\x64\WinPE_OCs\WinPE-WMI.cab'
+                New-SelectionItem FullName 'ADK\x64\WinPE_OCs\WinPE-PowerShell.cab', 'ADK\x64\WinPE_OCs\WinPE-WMI.cab'
             }
 
             $Warnings = New-PEBuildTask -TaskName 'Contoso' -SourceWim WinPE -AddContentPacks -ContentWinPEDart -ContentWinPEADK -ContentWinPEDrivers -ContentWinPEExtraFiles -ContentWinPEScripts 6>$null 3>&1 |
@@ -344,12 +344,12 @@ Describe 'New-PEBuildTask' {
 
         It 'merges the new selections with the existing Task' {
             Copy-ExistingTask
-            Mock Get-TaskContentPacks {Item Name 'Fabrikam', 'Contoso'}
-            Mock Get-TaskWinPEDaRT {Item FullName 'DaRT\10\New.cab'}
-            Mock Get-TaskWinPEADK {Item FullName 'ADK\x64\WinPE_OCs\WinPE-Scripting.cab', 'ADK\x64\WinPE_OCs\WinPE-WMI.cab'}
-            Mock Get-TaskWinPEDrivers {Item FullName 'Drivers\WinPE\New'}
-            Mock Get-TaskWinPEExtraFiles {Item FullName 'ExtraFiles\WinPE\New'}
-            Mock Get-TaskWinPEScripts {Item FullName 'Scripts\WinPE\New.ps1'}
+            Mock Get-TaskContentPacks {New-SelectionItem Name 'Fabrikam', 'Contoso'}
+            Mock Get-TaskWinPEDaRT {New-SelectionItem FullName 'DaRT\10\New.cab'}
+            Mock Get-TaskWinPEADK {New-SelectionItem FullName 'ADK\x64\WinPE_OCs\WinPE-Scripting.cab', 'ADK\x64\WinPE_OCs\WinPE-WMI.cab'}
+            Mock Get-TaskWinPEDrivers {New-SelectionItem FullName 'Drivers\WinPE\New'}
+            Mock Get-TaskWinPEExtraFiles {New-SelectionItem FullName 'ExtraFiles\WinPE\New'}
+            Mock Get-TaskWinPEScripts {New-SelectionItem FullName 'Scripts\WinPE\New.ps1'}
             New-PEBuildTask -TaskName 'Contoso' -SourceWim WinPE -AddContentPacks -ContentWinPEDart -ContentWinPEADK -ContentWinPEDrivers -ContentWinPEExtraFiles -ContentWinPEScripts 6>$null 3>$null | Out-Null
 
             $Task = Get-TestTask 'WinPE Contoso.json'

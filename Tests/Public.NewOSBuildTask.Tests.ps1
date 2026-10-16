@@ -54,8 +54,8 @@ BeforeAll {
             InstallationType    = $InstallationType
             MajorVersion        = $MajorVersion
             Build               = $Build
-            CreatedTime         = [datetime]'2026-10-01T10:00:00'
-            ModifiedTime        = [datetime]'2026-10-02T10:00:00'
+            CreatedTime         = [datetime]'2026-10-01T12:00:00'
+            ModifiedTime        = [datetime]'2026-10-02T12:00:00'
         }
     }
 
@@ -69,7 +69,7 @@ BeforeAll {
         $Task | ConvertTo-Json | Set-Content -Path (Join-Path $global:SetOSDBuilderPathTasks "OSBuild $Name.json")
     }
 
-    function Item ([string]$Property, [string[]]$Value) {
+    function New-SelectionItem ([string]$Property, [string[]]$Value) {
         foreach ($Item in $Value) {[PSCustomObject]@{$Property = $Item}}
     }
 }
@@ -322,36 +322,36 @@ Describe 'New-OSBuildTask' {
 
     Context 'Selections' {
         BeforeEach {
-            Mock Get-TaskContentPacks {Item Name 'Contoso', '_Global'}
-            Mock Get-TaskRemoveAppxProvisionedPackage {Item PackageName 'Microsoft.ZuneMusic_8wekyb3d8bbwe', 'Microsoft.BingWeather_8wekyb3d8bbwe'}
-            Mock Get-TaskRemoveWindowsCapability {Item Name 'App.StepsRecorder~~~~0.0.1.0'}
-            Mock Get-TaskRemoveWindowsPackage {Item PackageName 'Microsoft-Windows-Hello-Face-Package~31bf3856ad364e35~amd64~~10.0.26100.1'}
-            Mock Get-TaskDisableWindowsOptionalFeature {Item FeatureName 'WindowsMediaPlayer'}
-            Mock Get-TaskEnableWindowsOptionalFeature {Item FeatureName 'TelnetClient', 'TFTP'}
-            Mock Get-TaskContentDrivers {Item FullName 'Drivers\Dell'}
-            Mock Get-TaskContentExtraFiles {Item FullName 'ExtraFiles\Wallpaper'}
-            Mock Get-TaskContentScripts {Item FullName 'Scripts\Config.ps1'}
-            Mock Get-TaskContentStartLayoutXML {Item FullName 'StartLayout\Start.xml'}
-            Mock Get-TaskContentUnattendXML {Item FullName 'Unattend\Unattend.xml'}
-            Mock Get-TaskContentAddWindowsPackage {Item FullName 'Packages\Package.cab'}
-            Mock Get-TaskContentAddFeatureOnDemand {Item FullName 'IsoExtract\FOD\Microsoft-Windows-NetFx3-OnDemand-Package.cab'}
-            Mock Get-TaskContentAddWindowsCapability {Item Name 'Language.Basic~~~de-DE~0.0.1.0', $null, 'Language.Handwriting~~~de-DE~0.0.1.0'}
-            Mock Get-TaskContentLanguagePack {Item FullName 'IsoExtract\Microsoft-Windows-Client-Language-Pack_x64_de-de.cab'}
-            Mock Get-TaskContentLanguageFeature {Item FullName 'IsoExtract\Microsoft-Windows-LanguageFeatures-Basic-de-de-Package~31bf3856ad364e35~amd64~~.cab'}
-            Mock Get-TaskContentLanguageInterfacePack {Item FullName 'IsoExtract\Microsoft-Windows-Lip-Language-Pack_x64_ca-es.cab'}
-            Mock Get-TaskContentLocalExperiencePacks {Item FullName 'IsoExtract\LocalExperiencePack\de-de\LanguageExperiencePack.de-DE.Neutral.appx'}
-            Mock Get-TaskContentLanguageCopySources {Item OSMFamily 'Enterprise x64 26200 de-DE'}
-            Mock Get-TaskWinPEDaRT {Item FullName 'DaRT\10\Toolsx64.cab'}
-            Mock Get-TaskWinPEADKPE {Item FullName 'ADK\x64\WinPE_OCs\WinPE-PowerShell.cab', 'ADK\x64\WinPE_OCs\WinPE-WMI.cab'}
-            Mock Get-TaskWinPEADKRE {Item FullName 'ADK\x64\WinPE_OCs\WinPE-NetFx.cab'}
-            Mock Get-TaskWinPEADKSE {Item FullName 'ADK\x64\WinPE_OCs\WinPE-SecureStartup.cab'}
-            Mock Get-TaskWinPEDrivers {Item FullName 'Drivers\WinPE\Intel'}
-            Mock Get-TaskWinPEExtraFilesPE {Item FullName 'ExtraFiles\WinPE\Tools'}
-            Mock Get-TaskWinPEExtraFilesRE {Item FullName 'ExtraFiles\WinRE\Tools'}
-            Mock Get-TaskWinPEExtraFilesSE {Item FullName 'ExtraFiles\WinSE\Tools'}
-            Mock Get-TaskWinPEScriptsPE {Item FullName 'Scripts\WinPE\Config.ps1'}
-            Mock Get-TaskWinPEScriptsRE {Item FullName 'Scripts\WinRE\Config.ps1'}
-            Mock Get-TaskWinPEScriptsSE {Item FullName 'Scripts\WinSE\Config.ps1'}
+            Mock Get-TaskContentPacks {New-SelectionItem Name 'Contoso', '_Global'}
+            Mock Get-TaskRemoveAppxProvisionedPackage {New-SelectionItem PackageName 'Microsoft.ZuneMusic_8wekyb3d8bbwe', 'Microsoft.BingWeather_8wekyb3d8bbwe'}
+            Mock Get-TaskRemoveWindowsCapability {New-SelectionItem Name 'App.StepsRecorder~~~~0.0.1.0'}
+            Mock Get-TaskRemoveWindowsPackage {New-SelectionItem PackageName 'Microsoft-Windows-Hello-Face-Package~31bf3856ad364e35~amd64~~10.0.26100.1'}
+            Mock Get-TaskDisableWindowsOptionalFeature {New-SelectionItem FeatureName 'WindowsMediaPlayer'}
+            Mock Get-TaskEnableWindowsOptionalFeature {New-SelectionItem FeatureName 'TelnetClient', 'TFTP'}
+            Mock Get-TaskContentDrivers {New-SelectionItem FullName 'Drivers\Dell'}
+            Mock Get-TaskContentExtraFiles {New-SelectionItem FullName 'ExtraFiles\Wallpaper'}
+            Mock Get-TaskContentScripts {New-SelectionItem FullName 'Scripts\Config.ps1'}
+            Mock Get-TaskContentStartLayoutXML {New-SelectionItem FullName 'StartLayout\Start.xml'}
+            Mock Get-TaskContentUnattendXML {New-SelectionItem FullName 'Unattend\Unattend.xml'}
+            Mock Get-TaskContentAddWindowsPackage {New-SelectionItem FullName 'Packages\Package.cab'}
+            Mock Get-TaskContentAddFeatureOnDemand {New-SelectionItem FullName 'IsoExtract\FOD\Microsoft-Windows-NetFx3-OnDemand-Package.cab'}
+            Mock Get-TaskContentAddWindowsCapability {New-SelectionItem Name 'Language.Basic~~~de-DE~0.0.1.0', $null, 'Language.Handwriting~~~de-DE~0.0.1.0'}
+            Mock Get-TaskContentLanguagePack {New-SelectionItem FullName 'IsoExtract\Microsoft-Windows-Client-Language-Pack_x64_de-de.cab'}
+            Mock Get-TaskContentLanguageFeature {New-SelectionItem FullName 'IsoExtract\Microsoft-Windows-LanguageFeatures-Basic-de-de-Package~31bf3856ad364e35~amd64~~.cab'}
+            Mock Get-TaskContentLanguageInterfacePack {New-SelectionItem FullName 'IsoExtract\Microsoft-Windows-Lip-Language-Pack_x64_ca-es.cab'}
+            Mock Get-TaskContentLocalExperiencePacks {New-SelectionItem FullName 'IsoExtract\LocalExperiencePack\de-de\LanguageExperiencePack.de-DE.Neutral.appx'}
+            Mock Get-TaskContentLanguageCopySources {New-SelectionItem OSMFamily 'Enterprise x64 26200 de-DE'}
+            Mock Get-TaskWinPEDaRT {New-SelectionItem FullName 'DaRT\10\Toolsx64.cab'}
+            Mock Get-TaskWinPEADKPE {New-SelectionItem FullName 'ADK\x64\WinPE_OCs\WinPE-PowerShell.cab', 'ADK\x64\WinPE_OCs\WinPE-WMI.cab'}
+            Mock Get-TaskWinPEADKRE {New-SelectionItem FullName 'ADK\x64\WinPE_OCs\WinPE-NetFx.cab'}
+            Mock Get-TaskWinPEADKSE {New-SelectionItem FullName 'ADK\x64\WinPE_OCs\WinPE-SecureStartup.cab'}
+            Mock Get-TaskWinPEDrivers {New-SelectionItem FullName 'Drivers\WinPE\Intel'}
+            Mock Get-TaskWinPEExtraFilesPE {New-SelectionItem FullName 'ExtraFiles\WinPE\Tools'}
+            Mock Get-TaskWinPEExtraFilesRE {New-SelectionItem FullName 'ExtraFiles\WinRE\Tools'}
+            Mock Get-TaskWinPEExtraFilesSE {New-SelectionItem FullName 'ExtraFiles\WinSE\Tools'}
+            Mock Get-TaskWinPEScriptsPE {New-SelectionItem FullName 'Scripts\WinPE\Config.ps1'}
+            Mock Get-TaskWinPEScriptsRE {New-SelectionItem FullName 'Scripts\WinRE\Config.ps1'}
+            Mock Get-TaskWinPEScriptsSE {New-SelectionItem FullName 'Scripts\WinSE\Config.ps1'}
             $script:All = @{
                 AddContentPacks = $true; RemoveAppx = $true; RemoveCapability = $true; RemovePackage = $true; DisableFeature = $true; EnableFeature = $true
                 ContentDrivers = $true; ContentExtraFiles = $true; ContentScripts = $true; ContentStartLayout = $true; ContentUnattend = $true
@@ -412,7 +412,7 @@ Describe 'New-OSBuildTask' {
         }
 
         It 'generates the IsoExtract content and filters the WinPE and Windows Server content for a Client OSMedia' {
-            Mock Get-TaskContentIsoExtract {Item FullName 'IsoExtract\Windows 11 Client\lp.cab', 'IsoExtract\Windows Server 2025\lp.cab', 'IsoExtract\Windows Preinstallation Environment\lp.cab'}
+            Mock Get-TaskContentIsoExtract {New-SelectionItem FullName 'IsoExtract\Windows 11 Client\lp.cab', 'IsoExtract\Windows Server 2025\lp.cab', 'IsoExtract\Windows Preinstallation Environment\lp.cab'}
             Mock Get-TaskContentLanguagePack {$script:SeenIsoExtract = @($ContentIsoExtract.FullName); $script:SeenIsoExtractWinPE = @($ContentIsoExtractWinPE.FullName)}
             $Warnings = New-OSBuildTask -TaskName 'Contoso' -OSMedia $OSMedia -ContentLanguagePackages 6>$null 3>&1
             ($Warnings -join "`n") | Should -BeLike '*Generating IsoExtract Content*'
@@ -422,7 +422,7 @@ Describe 'New-OSBuildTask' {
 
         It 'keeps only the Windows Server IsoExtract content for a Server OSMedia' {
             $OSMedia = New-TestOSMedia -Name 'Windows Server 2025' -InstallationType 'Server' -Build '26100'
-            Mock Get-TaskContentIsoExtract {Item FullName 'IsoExtract\Windows 11 Client\lp.cab', 'IsoExtract\Windows Server 2025\lp.cab'}
+            Mock Get-TaskContentIsoExtract {New-SelectionItem FullName 'IsoExtract\Windows 11 Client\lp.cab', 'IsoExtract\Windows Server 2025\lp.cab'}
             Mock Get-TaskContentLanguagePack {$script:SeenIsoExtract = @($ContentIsoExtract.FullName)}
             New-OSBuildTask -TaskName 'Contoso' -OSMedia $OSMedia -ContentLanguagePackages 6>$null 3>$null | Out-Null
             $script:SeenIsoExtract | Should -Be @('IsoExtract\Windows Server 2025\lp.cab')
@@ -514,32 +514,32 @@ Describe 'New-OSBuildTask' {
 
         It 'merges the new selections with the existing Task' {
             Copy-ExistingTask
-            Mock Get-TaskContentPacks {Item Name 'Contoso', 'Fabrikam'}
-            Mock Get-TaskRemoveAppxProvisionedPackage {Item PackageName 'Microsoft.BingNews_8wekyb3d8bbwe', 'Microsoft.ZuneMusic_8wekyb3d8bbwe'}
-            Mock Get-TaskRemoveWindowsCapability {Item Name 'Browser.InternetExplorer~~~~0.0.11.0'}
-            Mock Get-TaskRemoveWindowsPackage {Item PackageName 'Package_B'}
-            Mock Get-TaskDisableWindowsOptionalFeature {Item FeatureName 'SMB1Protocol'}
-            Mock Get-TaskEnableWindowsOptionalFeature {Item FeatureName 'TelnetClient', 'TFTP'}
-            Mock Get-TaskContentDrivers {Item FullName 'Drivers\New'}
-            Mock Get-TaskContentExtraFiles {Item FullName 'ExtraFiles\New'}
-            Mock Get-TaskContentScripts {Item FullName 'Scripts\New.ps1'}
-            Mock Get-TaskContentAddWindowsPackage {Item FullName 'Packages\New.cab'}
-            Mock Get-TaskContentAddWindowsCapability {Item Name 'Language.Speech~~~de-DE~0.0.1.0'}
-            Mock Get-TaskContentLanguagePack {Item FullName 'IsoExtract\Microsoft-Windows-Client-Language-Pack_x64_fr-fr.cab'}
-            Mock Get-TaskContentLanguageFeature {Item FullName 'IsoExtract\Microsoft-Windows-LanguageFeatures-Basic-fr-fr-Package~31bf3856ad364e35~amd64~~.cab'}
+            Mock Get-TaskContentPacks {New-SelectionItem Name 'Contoso', 'Fabrikam'}
+            Mock Get-TaskRemoveAppxProvisionedPackage {New-SelectionItem PackageName 'Microsoft.BingNews_8wekyb3d8bbwe', 'Microsoft.ZuneMusic_8wekyb3d8bbwe'}
+            Mock Get-TaskRemoveWindowsCapability {New-SelectionItem Name 'Browser.InternetExplorer~~~~0.0.11.0'}
+            Mock Get-TaskRemoveWindowsPackage {New-SelectionItem PackageName 'Package_B'}
+            Mock Get-TaskDisableWindowsOptionalFeature {New-SelectionItem FeatureName 'SMB1Protocol'}
+            Mock Get-TaskEnableWindowsOptionalFeature {New-SelectionItem FeatureName 'TelnetClient', 'TFTP'}
+            Mock Get-TaskContentDrivers {New-SelectionItem FullName 'Drivers\New'}
+            Mock Get-TaskContentExtraFiles {New-SelectionItem FullName 'ExtraFiles\New'}
+            Mock Get-TaskContentScripts {New-SelectionItem FullName 'Scripts\New.ps1'}
+            Mock Get-TaskContentAddWindowsPackage {New-SelectionItem FullName 'Packages\New.cab'}
+            Mock Get-TaskContentAddWindowsCapability {New-SelectionItem Name 'Language.Speech~~~de-DE~0.0.1.0'}
+            Mock Get-TaskContentLanguagePack {New-SelectionItem FullName 'IsoExtract\Microsoft-Windows-Client-Language-Pack_x64_fr-fr.cab'}
+            Mock Get-TaskContentLanguageFeature {New-SelectionItem FullName 'IsoExtract\Microsoft-Windows-LanguageFeatures-Basic-fr-fr-Package~31bf3856ad364e35~amd64~~.cab'}
             Mock Get-TaskContentLanguageInterfacePack {}
-            Mock Get-TaskContentLocalExperiencePacks {Item FullName 'IsoExtract\LocalExperiencePack\fr-fr\LanguageExperiencePack.fr-FR.Neutral.appx'}
-            Mock Get-TaskContentLanguageCopySources {Item OSMFamily 'Enterprise x64 26200 fr-FR'}
-            Mock Get-TaskWinPEADKPE {Item FullName 'ADK\x64\WinPE_OCs\WinPE-Scripting.cab'}
-            Mock Get-TaskWinPEADKRE {Item FullName 'ADK\x64\WinPE_OCs\WinPE-WMI.cab'}
+            Mock Get-TaskContentLocalExperiencePacks {New-SelectionItem FullName 'IsoExtract\LocalExperiencePack\fr-fr\LanguageExperiencePack.fr-FR.Neutral.appx'}
+            Mock Get-TaskContentLanguageCopySources {New-SelectionItem OSMFamily 'Enterprise x64 26200 fr-FR'}
+            Mock Get-TaskWinPEADKPE {New-SelectionItem FullName 'ADK\x64\WinPE_OCs\WinPE-Scripting.cab'}
+            Mock Get-TaskWinPEADKRE {New-SelectionItem FullName 'ADK\x64\WinPE_OCs\WinPE-WMI.cab'}
             Mock Get-TaskWinPEADKSE {}
-            Mock Get-TaskWinPEDrivers {Item FullName 'Drivers\WinPE\New'}
-            Mock Get-TaskWinPEExtraFilesPE {Item FullName 'ExtraFiles\WinPE\New'}
-            Mock Get-TaskWinPEExtraFilesRE {Item FullName 'ExtraFiles\WinRE\New'}
-            Mock Get-TaskWinPEExtraFilesSE {Item FullName 'ExtraFiles\WinSE\New'}
-            Mock Get-TaskWinPEScriptsPE {Item FullName 'Scripts\WinPE\New.ps1'}
-            Mock Get-TaskWinPEScriptsRE {Item FullName 'Scripts\WinRE\New.ps1'}
-            Mock Get-TaskWinPEScriptsSE {Item FullName 'Scripts\WinSE\New.ps1'}
+            Mock Get-TaskWinPEDrivers {New-SelectionItem FullName 'Drivers\WinPE\New'}
+            Mock Get-TaskWinPEExtraFilesPE {New-SelectionItem FullName 'ExtraFiles\WinPE\New'}
+            Mock Get-TaskWinPEExtraFilesRE {New-SelectionItem FullName 'ExtraFiles\WinRE\New'}
+            Mock Get-TaskWinPEExtraFilesSE {New-SelectionItem FullName 'ExtraFiles\WinSE\New'}
+            Mock Get-TaskWinPEScriptsPE {New-SelectionItem FullName 'Scripts\WinPE\New.ps1'}
+            Mock Get-TaskWinPEScriptsRE {New-SelectionItem FullName 'Scripts\WinRE\New.ps1'}
+            Mock Get-TaskWinPEScriptsSE {New-SelectionItem FullName 'Scripts\WinSE\New.ps1'}
 
             New-OSBuildTask -TaskName 'Contoso' -OSMedia $OSMedia -AddContentPacks -RemoveAppx -RemoveCapability -RemovePackage -DisableFeature -EnableFeature `
                 -ContentDrivers -ContentExtraFiles -ContentScripts -ContentPackages -ContentFeaturesOnDemand -ContentLanguagePackages -SourcesLanguageCopy `
@@ -577,9 +577,9 @@ Describe 'New-OSBuildTask' {
 
         It 'replaces StartLayout, Unattend and DaRT with the new selection' {
             Copy-ExistingTask
-            Mock Get-TaskContentStartLayoutXML {Item FullName 'StartLayout\New.xml'}
-            Mock Get-TaskContentUnattendXML {Item FullName 'Unattend\New.xml'}
-            Mock Get-TaskWinPEDaRT {Item FullName 'DaRT\10\New.cab'}
+            Mock Get-TaskContentStartLayoutXML {New-SelectionItem FullName 'StartLayout\New.xml'}
+            Mock Get-TaskContentUnattendXML {New-SelectionItem FullName 'Unattend\New.xml'}
+            Mock Get-TaskWinPEDaRT {New-SelectionItem FullName 'DaRT\10\New.cab'}
             New-OSBuildTask -TaskName 'Contoso' -OSMedia $OSMedia -ContentStartLayout -ContentUnattend -ContentWinPEDart 6>$null 3>$null | Out-Null
             $Task = Get-TestTask
             $Task.StartLayoutXML | Should -Be 'StartLayout\New.xml'

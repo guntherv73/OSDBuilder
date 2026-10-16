@@ -49,10 +49,10 @@ BeforeAll {
         New-TestFile -Path (Join-Path $Path 'setup.exe') | Out-Null
         New-TestFile -Path (Join-Path $Sources 'boot.wim') | Out-Null
         $InstallWim = (New-TestFile -Path (Join-Path $Sources $FileName) -Value 'MSWIM').FullName
-        $Indexes = [ordered]@{}
+        $Indexes = @{}
         foreach ($Key in $Image) {
             $WindowsImage = New-TestWindowsImage -Key $Key -ImagePath $InstallWim -Property $ImageProperty
-            $Indexes[[int]$WindowsImage.ImageIndex] = $WindowsImage
+            $Indexes["$($WindowsImage.ImageIndex)"] = $WindowsImage
         }
         $script:ImageMap[$InstallWim] = $Indexes
         $InstallWim
@@ -110,18 +110,17 @@ Describe 'Import-OSMedia' {
             $Indexes = $script:ImageMap[$ImagePath]
             if (-not $Indexes) {return}
             if ($Index) {
-                $Indexes[[int]$Index] | Select-Object -Property *
+                $Indexes["$Index"] | Select-Object -Property *
             } else {
-                $Indexes.Values | Select-Object -Property ImagePath, ImageIndex, ImageName
+                $Indexes.Values | Sort-Object -Property {[int]$_.ImageIndex} | Select-Object -Property ImagePath, ImageIndex, ImageName
             }
         }
         #The exported image is the source image, registered for Get-WindowsImage -ImagePath <DestinationImagePath> -Index 1
         Mock Export-WindowsImage {
-            $Source = $script:ImageMap[$SourceImagePath][[int]$SourceIndex] | Select-Object -Property *
+            $Source = $script:ImageMap[$SourceImagePath]["$SourceIndex"] | Select-Object -Property *
             $Source.ImagePath = $DestinationImagePath
             $Source.ImageIndex = 1
-            $Exported = [ordered]@{}
-            $Exported[1] = $Source
+            $Exported = @{'1' = $Source}
             $script:ImageMap[$DestinationImagePath] = $Exported
             if ($DestinationImagePath -like "$($env:Temp)*") {New-TestFile -Path $DestinationImagePath | Out-Null}
         }
