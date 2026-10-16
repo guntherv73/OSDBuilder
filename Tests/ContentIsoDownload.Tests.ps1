@@ -198,7 +198,8 @@ Describe 'Save-OSDBuilderContentIso' {
             $script:DiskImage = [PSCustomObject]@{ImagePath = $IsoFile}
             Mock Mount-DiskImage {$script:DiskImage}
             Mock Dismount-DiskImage {}
-            Mock Get-Volume {[PSCustomObject]@{DriveLetter = 'X'}}
+            #On Windows the DiskImage parameter of Get-Volume takes MSFT_DiskImage CIM instances only
+            Mock Get-Volume {[PSCustomObject]@{DriveLetter = 'X'}} -RemoveParameterType 'DiskImage'
             Mock Start-Sleep {}
             #robocopy copies the content folder of the catalog item
             Mock robocopy {
@@ -245,14 +246,14 @@ Describe 'Save-OSDBuilderContentIso' {
 
         It 'waits for the drive letter of the mounted ISO' {
             $script:VolumeCalls = 0
-            Mock Get-Volume {$script:VolumeCalls++; if ($script:VolumeCalls -ge 3) {[PSCustomObject]@{DriveLetter = 'Y'}}}
+            Mock Get-Volume {$script:VolumeCalls++; if ($script:VolumeCalls -ge 3) {[PSCustomObject]@{DriveLetter = 'Y'}}} -RemoveParameterType 'DiskImage'
             Save-OSDBuilderContentIso -Name $Item.Name 6>$null 3>$null
             Should -Invoke Start-Sleep -Times 2 -Exactly
             Should -Invoke robocopy -Times 1 -Exactly -ParameterFilter {$InputObject -eq 'Y:\'}
         }
 
         It 'warns and dismounts when the ISO has no drive letter' {
-            Mock Get-Volume {}
+            Mock Get-Volume {} -RemoveParameterType 'DiskImage'
             $Warnings = (Save-OSDBuilderContentIso -Name $Item.Name 6>$null 3>&1) -join "`n"
             $Warnings | Should -BeLike "*Content ISO: Unable to get the drive letter of $IsoFile*"
             Should -Invoke Start-Sleep -Times 10 -Exactly
