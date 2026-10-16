@@ -15,6 +15,7 @@ function Save-OSDBuilderDownload {
         #Download OneDrive Sync Client or a Windows 11 Languages and Optional Features or Inbox Apps ISO
         #The Languages and Optional Features ISO is extracted to Content\IsoExtract for New-OSBuildTask
         #The Inbox Apps ISO is extracted to Content\InboxApps
+        #The Windows 10 Local Experience Pack ISO is extracted to Content\IsoExtract
         [Parameter(ParameterSetName='Content')]
         [ValidateSet(
             'OneDriveSetup Production',
@@ -22,7 +23,8 @@ function Save-OSDBuilderDownload {
             'Windows 11 22H2-23H2 x64 Languages and Optional Features',
             'Windows 11 24H2-26H2 x64 Languages and Optional Features',
             'Windows 11 22H2-23H2 Inbox Apps',
-            'Windows 11 24H2-26H2 Inbox Apps')]
+            'Windows 11 24H2-26H2 Inbox Apps',
+            'Windows 10 2004-22H2 x64 Local Experience Packs')]
         [string]$ContentDownload,
         
         #Download the selected Microsoft Updates
@@ -119,7 +121,21 @@ function Save-OSDBuilderDownload {
         [switch]$WebClient,
 
         [Parameter(ParameterSetName='OSDUpdate')]
-        [switch]$CheckFileHash
+        [switch]$CheckFileHash,
+
+        #Download Local Experience Packs from the Microsoft Store with winget, for example 'nn-NO','af-ZA'
+        #winget download --os-version and a Microsoft Entra ID Global, User or License Administrator are required
+        [Parameter(ParameterSetName='LocalExperiencePack', Mandatory = $true)]
+        [string[]]$LocalExperiencePack,
+
+        #Windows release of the Local Experience Packs
+        [Parameter(ParameterSetName='LocalExperiencePack')]
+        [ValidateSet('Windows 11 24H2-26H2','Windows 11 22H2-23H2','Windows 10 2004-22H2')]
+        [string]$LocalExperiencePackRelease = 'Windows 11 24H2-26H2',
+
+        #Microsoft Entra ID account for the Microsoft Store license
+        [Parameter(ParameterSetName='LocalExperiencePack')]
+        [string]$AuthenticationAccount
 
     )
 
@@ -129,6 +145,18 @@ function Save-OSDBuilderDownload {
     }
 
     Process {
+        #=================================================
+        #   Local Experience Packs (Microsoft Store)
+        #=================================================
+        if ($PSCmdlet.ParameterSetName -eq 'LocalExperiencePack') {
+            $LxpParams = @{
+                Language    = $LocalExperiencePack
+                Release     = $LocalExperiencePackRelease
+            }
+            if ($AuthenticationAccount) {$LxpParams.AuthenticationAccount = $AuthenticationAccount}
+            Save-OSDBuilderLocalExperiencePack @LxpParams
+            Return
+        }
         #=================================================
         #   Test WebClient
         #=================================================
@@ -258,7 +286,7 @@ function Save-OSDBuilderDownload {
             Write-Warning "Use Import-OSMedia to import this Feature Update to OSMedia"
         }
 
-        if (($PSCmdlet.ParameterSetName -eq 'Content') -and ($ContentDownload -like 'Windows 11 *')) {
+        if (($PSCmdlet.ParameterSetName -eq 'Content') -and ($ContentDownload -in (Get-OSDBuilderContentIsoCatalog).Name)) {
             #=================================================
             #   Windows 11 Languages and Optional Features or Inbox Apps ISO
             #=================================================

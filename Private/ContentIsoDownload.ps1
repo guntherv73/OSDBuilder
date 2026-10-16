@@ -1,7 +1,7 @@
 function Get-OSDBuilderContentIsoCatalog {
     <#
     .SYNOPSIS
-    Returns the Windows 11 Languages and Optional Features and Inbox Apps ISOs published by Microsoft
+    Returns the Windows 11 Languages and Optional Features and Inbox Apps ISOs and the Windows 10 Local Experience Pack ISO published by Microsoft
 
     .DESCRIPTION
     https://learn.microsoft.com/en-us/azure/virtual-desktop/windows-11-language-packs
@@ -41,6 +41,19 @@ function Get-OSDBuilderContentIsoCatalog {
             ContentFolder   = 'LanguagesAndOptionalFeatures'
         }
         [PSCustomObject]@{
+            #https://learn.microsoft.com/en-us/azure/virtual-desktop/language-packs
+            #Latest Local Experience Pack ISO for Windows 10 2004-22H2 (2022-06 C), LXP version 19041.x
+            #Microsoft does not publish a Local Experience Pack ISO for Windows 11
+            Name            = 'Windows 10 2004-22H2 x64 Local Experience Packs'
+            Type            = 'LocalExperiencePacks'
+            ReleaseId       = @('2004','20H2','21H1','21H2','22H2')
+            Build           = '19041'
+            Url             = 'https://software-static.download.prss.microsoft.com/dbazure/888969d5-f34g-4e03-ac9d-1f9786c66750/LanguageExperiencePack.2206C.iso'
+            FileName        = 'LanguageExperiencePack.2206C.iso'
+            Size            = [int64]1155354624
+            ContentFolder   = 'LocalExperiencePack'
+        }
+        [PSCustomObject]@{
             Name            = 'Windows 11 22H2-23H2 Inbox Apps'
             Type            = 'InboxApps'
             ReleaseId       = @('22H2','23H2')
@@ -65,7 +78,7 @@ function Get-OSDBuilderContentIsoCatalog {
 function Save-OSDBuilderContentIso {
     <#
     .SYNOPSIS
-    Downloads a Windows 11 Languages and Optional Features or Inbox Apps ISO and extracts it
+    Downloads a Windows 11 Languages and Optional Features, Inbox Apps or Windows 10 Local Experience Pack ISO and extracts it
 
     .DESCRIPTION
     The ISO is saved to Content\ISO and reused when it already exists with the expected size
@@ -197,6 +210,9 @@ function Save-OSDBuilderContentIso {
     Write-Host -ForegroundColor Green "Content ISO: Complete"
     if ($Item.Type -eq 'InboxApps') {
         Write-Host -ForegroundColor Cyan "The Inbox Apps for Windows 11 $($Item.ReleaseId -join ', ') are in $(Join-Path $ExtractPath $Item.ContentFolder)"
+    }
+    elseif ($Item.Type -eq 'LocalExperiencePacks') {
+        Write-Host -ForegroundColor Cyan "Use New-OSBuildTask -ContentLanguagePackages to select the Local Experience Packs for Windows 10 $($Item.ReleaseId -join ', ')"
     }
     else {
         Write-Host -ForegroundColor Cyan "Use New-OSBuildTask to select the Language Packs, Language Features and Features on Demand for Windows 11 $($Item.ReleaseId -join ', ')"

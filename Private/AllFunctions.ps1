@@ -1140,7 +1140,8 @@ function Add-ContentPackOSLocalExperiencePacks {
     #======================================================================================
     #   Import
     #======================================================================================
-    $OSLocalExperiencePacksFiles = Get-ChildItem "$ContentPackContent" *.appx -File -Recurse | Sort-Object Length -Descending | Select-Object Name, FullName
+    #Local Experience Packs only, a Neutral .appx with the License.xml in the same directory
+    $OSLocalExperiencePacksFiles = Get-ChildItem "$ContentPackContent" *.appx -File -Recurse | Where-Object {$_.Name -like 'LanguageExperiencePack*'} | Sort-Object FullName | Select-Object Name, FullName
 
     foreach ($OSLocalExperiencePacksFile in $OSLocalExperiencePacksFiles) {
         $CurrentLog = "$Info\logs\$((Get-Date).ToString('yyyy-MM-dd-HHmmss'))-ContentPackOSLocalExperiencePacks-$($OSLocalExperiencePacksFile.Name).log"
@@ -1148,16 +1149,8 @@ function Add-ContentPackOSLocalExperiencePacks {
         Write-Host "$($OSLocalExperiencePacksFile.FullName)" -ForegroundColor DarkGray
 
         if ($MountDirectory) {
-            $LicensePath = "$((Get-Item $OSLocalExperiencePacksFile.FullName).Directory.FullName)\License.xml"
-            if (!(Test-Path $LicensePath)) {
-                Write-Warning "Unable to find Appx License at $LicensePath"
-            } else {
-                Try {
-                    $global:ReapplyLCU = $true
-                    Add-AppxProvisionedPackage -Path "$MountDirectory" -PackagePath $OSLocalExperiencePacksFile.FullName -LicensePath $LicensePath -LogPath $CurrentLog | Out-Null
-                }
-                Catch {$ErrorMessage = $_.Exception.$ErrorMessage; Write-Warning "$CurrentLog"; Write-Host "$ErrorMessage"}
-            }
+            $LxpResult = Add-OSDBuilderLocalExperiencePack -Path "$MountDirectory" -PackagePath $OSLocalExperiencePacksFile.FullName -Build ([int]$OSBuild) -LogPath $CurrentLog
+            if ($LxpResult -eq 'Added') {$global:ReapplyLCU = $true}
         }
     }
 }
@@ -2198,14 +2191,17 @@ function Add-LocalExperiencePacksOS {
     #=================================================
     #   Execute
     #=================================================
-    foreach ($Update in $LocalExperiencePacks) {
-        if (Test-Path "$SetOSDBuilderPathContent\$Update") {
-            Write-Host "    $SetOSDBuilderPathContent\$Update" -ForegroundColor DarkGray
-            $global:ReapplyLCU = $true
-            Add-AppxProvisionedPackage -Path "$MountDirectory" -PackagePath "$SetOSDBuilderPathContent\$Update" -LicensePath "$((Get-Item $SetOSDBuilderPathContent\$Update).Directory.FullName)\License.xml" -LogPath "$Info\logs\$((Get-Date).ToString('yyyy-MM-dd-HHmmss'))-Add-LocalExperiencePacksOS.log" | Out-Null
-        } else {
-            Write-Warning "Not Found: $SetOSDBuilderPathContent\$Update"
-        }
+    $LxpFailed = @()
+    foreach ($Update in ($LocalExperiencePacks | Where-Object {$_})) {
+        Write-Host "    $SetOSDBuilderPathContent\$Update" -ForegroundColor DarkGray
+        $CurrentLog = "$Info\logs\$((Get-Date).ToString('yyyy-MM-dd-HHmmss'))-Add-LocalExperiencePacksOS.log"
+        $LxpResult = Add-OSDBuilderLocalExperiencePack -Path "$MountDirectory" -PackagePath "$SetOSDBuilderPathContent\$Update" -Build ([int]$OSBuild) -LogPath $CurrentLog
+        if ($LxpResult -eq 'Added') {$global:ReapplyLCU = $true}
+        if ($LxpResult -eq 'Failed') {$LxpFailed += $Update}
+    }
+    if ($LxpFailed.Count -gt 0) {
+        Write-Warning "Local Experience Packs: $($LxpFailed.Count) of $(@($LocalExperiencePacks | Where-Object {$_}).Count) were not added"
+        foreach ($Item in $LxpFailed) {Write-Warning "    $Item"}
     }
 }
 function Add-WindowsCapabilityOS {
