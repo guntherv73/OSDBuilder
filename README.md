@@ -32,6 +32,19 @@ Update-OSMedia -Name 'Windows 11 Enterprise x64 25H2 26200.6584' -Download -Exec
 Grid views (`Out-GridView`) are not available in a remote session, use the `-SkipGrid` / `-Name` parameters
 or create the Tasks once in an interactive session on the Windows host.
 
+## Example: fully patched multi-language Windows 11 image
+
+[`Examples/New-Win11MultiLanguageBuild.ps1`](Examples/New-Win11MultiLanguageBuild.ps1) runs the complete build unattended (no Out-GridView):
+download of the Languages and Optional Features and Inbox Apps ISOs, Import-OSMedia, Update-OSMedia,
+a Task with the Language Packs, Language Features and Windows Capabilities of the selected languages, and New-OSBuild.
+
+```powershell
+.\Examples\New-Win11MultiLanguageBuild.ps1 -CustomerName 'Contoso' -OSDBuilderHome 'G:\OSDBuilder' `
+    -SourceIso 'D:\ISO\Win11_25H2_x64.iso' -ReleaseId 25H2 -EditionId Enterprise `
+    -Languages 'en-US','de-DE','fr-FR','sv-SE','ru-RU','sk-SK','th-TH' -DefaultLanguage 'en-US' `
+    -EnableNetFX3 -CreateISO
+```
+
 ## Windows 11 support
 
 This fork supports Windows 11 x64 up to the latest releases:

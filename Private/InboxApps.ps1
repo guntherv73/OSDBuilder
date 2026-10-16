@@ -174,7 +174,12 @@ function Update-InboxAppsOS {
     #   Provisioned Apps
     #=================================================
     $Provisioned = @(Get-AppxProvisionedPackage -Path "$MountDirectory" -ErrorAction SilentlyContinue)
+    #Apps the Task removes are not reinstalled, RemoveAppxProvisionedPackage uses the PackageName of the current version
+    $RemoveDisplayName = @($RemoveAppx | Where-Object {$_} | ForEach-Object {($_ -split '_')[0]})
     foreach ($App in ($Provisioned | Sort-Object DisplayName)) {
+        if ($App.DisplayName -in $RemoveDisplayName) {
+            Write-Host -ForegroundColor DarkGray "REMOVED BY TASK   $($App.DisplayName)"; Continue
+        }
         #Prefer the package of the image architecture, then a bundle, then a neutral package
         $Source = $Applications | Where-Object {$_.Name -eq $App.DisplayName} | Sort-Object -Property @{Expression = {if ($_.Architecture -eq $OSArchitecture) {0} elseif ($_.IsBundle) {1} else {2}}} | Select-Object -First 1
         if ($null -eq $Source) {
