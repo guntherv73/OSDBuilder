@@ -140,7 +140,7 @@ Describe 'New-OSBuildTask' {
 
     Context 'New Task' {
         It 'writes the OSMedia and the switches to the Task JSON' {
-            $Result = New-OSBuildTask -TaskName 'Contoso' -OSMedia $OSMedia -CustomName 'Contoso 25H2' -EnableNetFX3 -WinPEAutoExtraFiles -WinPEOSDCloud -WinREWiFi -PSModulesOS 'OSD', 'PSWindowsUpdate' -PSModulesWinPE 'OSD' 6>$null
+            $Result = New-OSBuildTask -TaskName 'Contoso' -OSMedia $OSMedia -CustomName 'Contoso 25H2' -EnableNetFX3 -WinPEAutoExtraFiles -WinPEOSDCloud -WinREWiFi -PSModulesOS 'OSD', 'PSWindowsUpdate' -PSModulesWinPE 'OSD' 6>$null 3>$null
 
             $Task = Get-TestTask
             $Task.TaskType | Should -Be 'OSBuild'

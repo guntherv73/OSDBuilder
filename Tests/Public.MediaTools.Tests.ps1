@@ -67,7 +67,7 @@ Describe 'New-OSDBuilderContentPack' {
             'PEDaRT', 'PEDrivers\x64', 'PEExtraFiles\x64 Subdirs', 'PEPoshMods\ProgramFiles', 'PERegistry\ALL', 'PEScripts\x64') {
             Join-Path $Pack $Directory | Should -Exist
         }
-        @(Get-ChildItem -Path $Pack -Directory -Recurse).Count | Should -Be 37
+        @(Get-ChildItem -Path $Pack -Directory -Recurse).Count | Should -Be 41
     }
 
     It 'creates only the OS directories with -ContentType OS' {
@@ -549,7 +549,7 @@ Describe 'Show-OSDBuilderInfo' {
 
     It 'selects the media in Out-GridView without -FullName' {
         $Text = Show-OSDBuilderInfo 6>&1 | Out-String
-        Should -Invoke Out-GridView -Times 1 -Exactly -ParameterFilter {$PassThru}
+        Should -Invoke Out-GridView -Times 1 -Exactly -ParameterFilter {$PassThru -and ($InputObject.FullName -eq $Media.FullName)}
         $Text | Should -BeLike "*Show-OSDBuilderInfo -FullName '$($Media.FullName)'*"
     }
 

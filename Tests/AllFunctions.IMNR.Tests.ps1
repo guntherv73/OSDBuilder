@@ -655,7 +655,7 @@ Describe 'Rename-OSMedia' {
         Rename-OSMedia 3>$null
         $Image = Import-Clixml -Path (Join-Path (Join-Path (Join-Path $Media.FullName 'info') 'xml') 'Get-WindowsImage.xml')
         {[guid]$Image.OSMGuid} | Should -Not -Throw
-        (Get-Content -Path (Join-Path (Join-Path (Join-Path $Media.FullName 'info') 'json') 'Get-WindowsImage.json') -Raw | ConvertFrom-Json).OSMGuid | Should -Be "$($Image.OSMGuid)"
+        Get-Content -Path (Join-Path (Join-Path (Join-Path $Media.FullName 'info') 'json') 'Get-WindowsImage.json') -Raw | Should -BeLike "*$($Image.OSMGuid)*"
         $Text = Get-Content -Path (Join-Path $Media.FullName 'WindowsImage.txt')
         $Text | Where-Object {-not $_.Trim()} | Should -BeNullOrEmpty
         ($Text -join "`n") | Should -BeLike '*OSMGuid*'

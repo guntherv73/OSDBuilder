@@ -87,6 +87,40 @@ Describe 'Add-OSDBuilderWindowsCapability' {
         Add-OSDBuilderWindowsCapability -Path 'C:\Mount' -Name 'Language.OCR~~~de-DE~0.0.1.0' -Source $Repository 4>$null | Should -BeFalse
     }
 
+    It 'writes <Expected> when Add-WindowsCapability fails with <Message>' -ForEach @(
+        @{Message = 'Add-WindowsCapability failed. Error code = 0x800f081f'; Expected = '*0x800f081f The source files could not be found for Language.OCR~~~de-DE~0.0.1.0*'}
+        @{Message = 'Add-WindowsCapability failed. Error code = 0x800f081e'; Expected = '*0x800f081e Language.OCR~~~de-DE~0.0.1.0 is not applicable to this image*'}
+        @{Message = 'Access is denied'; Expected = '*OSDBuilder: Access is denied*'}
+    ) {
+        Mock Add-WindowsCapability {throw $Message}
+        $LogPath = Join-Path $TestDrive 'capability.log'
+        $Output = @(Add-OSDBuilderWindowsCapability -Path 'C:\Mount' -Name 'Language.OCR~~~de-DE~0.0.1.0' -Source $Repository -LogPath $LogPath 4>&1)
+        $Output[-1] | Should -BeFalse
+        ($Output -join "`n") | Should -BeLike $Expected
+        ($Output -join "`n") | Should -BeLike "*$LogPath*"
+        Should -Invoke Add-WindowsCapability -Times 1 -Exactly -ParameterFilter {$LogPath -eq (Join-Path $TestDrive 'capability.log')}
+    }
+
+    It 'does not write the log path without -LogPath' {
+        Mock Add-WindowsCapability {throw 'Access is denied'}
+        $Output = @(Add-OSDBuilderWindowsCapability -Path 'C:\Mount' -Name 'NetFX3~~~~' -Source $Repository 4>&1)
+        $Output.Count | Should -Be 2
+        Should -Invoke Add-WindowsCapability -Times 1 -Exactly -ParameterFilter {-not $LogPath}
+    }
+
+    It 'does not use LimitAccess when Add-WindowsCapability does not support it' {
+        Mock Get-Command {[PSCustomObject]@{Parameters = @{Path = $null; Name = $null; Source = $null}}} -ParameterFilter {$Name -eq 'Add-WindowsCapability'}
+        Mock Add-WindowsCapability {}
+        Add-OSDBuilderWindowsCapability -Path 'C:\Mount' -Name 'NetFX3~~~~' -Source $Repository, $Repository, '' | Should -BeTrue
+        Should -Invoke Add-WindowsCapability -Times 1 -Exactly -ParameterFilter {(-not $LimitAccess) -and (@($Source).Count -eq 1)}
+    }
+
+    It 'warns without a repository' {
+        Mock Add-WindowsCapability {}
+        $Warnings = (Add-OSDBuilderWindowsCapability -Path 'C:\Mount' -Name 'NetFX3~~~~' 3>&1) -join "`n"
+        $Warnings | Should -BeLike '*No Features on Demand repository for NetFX3~~~~*'
+    }
+
     It 'returns $false without a repository and does not call DISM' {
         Mock Add-WindowsCapability {}
         Add-OSDBuilderWindowsCapability -Path 'C:\Mount' -Name 'NetFX3~~~~' -Source (Join-Path $TestDrive 'Missing') 3>$null | Should -BeFalse
