@@ -201,8 +201,7 @@ Describe 'Get-OSBuilds' {
         }
     }
 
-    # KnownBug: Get-OSBuilds.ps1:181 [string]$RegValueCurrentBuild is never $null, OSMFamily uses an empty CurrentBuild instead of Build
-    It 'uses the Build in OSMFamily when CurrentVersion.xml has no CurrentBuild' -Skip {
+    It 'uses the Build in OSMFamily when CurrentVersion.xml has no CurrentBuild' {
         New-OSMediaFixture -Path (Join-Path $SetOSDBuilderPathOSBuilds 'Build') -CurrentBuild '' | Out-Null
         (Get-OSBuilds).OSMFamily | Should -Be 'Client Enterprise x64 26100 en-US'
     }
@@ -323,8 +322,7 @@ Describe 'Get-PEBuilds' {
         Should -Invoke Out-GridView -ParameterFilter {$PassThru -and ($Title -eq 'PEBuilds')}
     }
 
-    # KnownBug: Get-PEBuilds.ps1:144 [string]$RegValueCurrentBuild is never $null, OSMFamily uses an empty CurrentBuild instead of Build
-    It 'uses the Build in OSMFamily when CurrentVersion.xml has no CurrentBuild' -Skip {
+    It 'uses the Build in OSMFamily when CurrentVersion.xml has no CurrentBuild' {
         New-OSMediaFixture -Path (Join-Path $SetOSDBuilderPathPEBuilds 'WinPE') -CurrentBuild '' @WinPE | Out-Null
         (Get-PEBuilds).OSMFamily | Should -Be 'WindowsPE WindowsPE x64 26100 en-US'
     }

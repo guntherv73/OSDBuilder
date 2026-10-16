@@ -314,8 +314,7 @@ Describe 'Get-OSMedia' {
         $SetOSDBuilderPathTemplates | Should -Not -Exist
     }
 
-    # KnownBug: Get-OSImport.ps1:194 [string]$RegValueCurrentBuild is never $null, OSMFamily uses an empty CurrentBuild instead of Build
-    It 'uses the Build in OSMFamily when CurrentVersion.xml has no CurrentBuild' -Skip {
+    It 'uses the Build in OSMFamily when CurrentVersion.xml has no CurrentBuild' {
         New-OSMediaFixture -Path (Join-Path $SetOSDBuilderPathOSMedia 'Media') -CurrentBuild '' | Out-Null
         (Get-OSMedia).OSMFamily | Should -Be 'Client Enterprise x64 26100 en-US'
     }

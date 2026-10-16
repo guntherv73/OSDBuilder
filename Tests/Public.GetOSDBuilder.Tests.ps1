@@ -387,8 +387,7 @@ Describe 'Get-OSDBuilder' {
         Should -Invoke Show-OSDBuilderHomeTips -Times 1 -Exactly
     }
 
-    # KnownBug: Get-OSDBuilder.ps1:78 catch [Net.WebException] does not catch the HttpRequestException of Invoke-WebRequest in PowerShell 7
-    It 'shows OFFLINE when Invoke-WebRequest fails with another exception' -Skip {
+    It 'shows OFFLINE when Invoke-WebRequest fails with another exception' {
         Mock Invoke-WebRequest {throw (New-Object -TypeName System.Exception -ArgumentList 'No such host is known')}
 
         {Get-OSDBuilder -ErrorAction Stop 6>$null 4>$null} | Should -Not -Throw
