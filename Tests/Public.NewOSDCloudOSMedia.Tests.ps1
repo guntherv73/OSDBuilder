@@ -131,7 +131,10 @@ Describe 'New-OSDCloudOSMedia' {
         Should -Invoke Out-GridView -Times 1 -Exactly -ParameterFilter {$PassThru -and ($InputObject.Name -eq $OSImport.Name)}
         Should -Invoke Get-WindowsImage -Times 1 -Exactly -ParameterFilter {($ImagePath -eq "$SetOSDBuilderPathOSImport\$($OSImport.Name)\OS\sources\install.wim") -and ($Index -eq 1)}
         Should -Invoke Get-AdkPaths -Times 1 -Exactly -ParameterFilter {$Arch -eq 'amd64'}
-        Should -Invoke Start-Transcript -Times 1 -Exactly -ParameterFilter {$Path -like "$ExpectedInfo\logs*New-OSDCloudOSMedia.log"}
+        Should -Invoke Start-Transcript -Times 1 -Exactly -ParameterFilter {
+            #Join-Path normalizes the separators on Linux
+            ($Path -replace '\\', '/') -like ("$ExpectedLogs\2026-10-16-090807-New-OSDCloudOSMedia.log" -replace '\\', '/')
+        }
 
         #The boot images are mounted from the new OSMedia
         foreach ($Name in 'Mount-WinPEwim', 'Mount-WinREwim', 'Mount-WinSEwim', 'Save-PackageInventoryPE', 'Dismount-WimsPE', 'Export-PEWims', 'Export-PEBootWim', 'Save-InventoryPE', 'Save-AutoExtraFilesOS', 'Save-SessionsXmlOS', 'Save-InventoryOS') {

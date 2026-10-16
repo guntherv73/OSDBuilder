@@ -641,6 +641,19 @@ Describe 'Update-OSMedia' {
             Get-RenamedOSMedia | Should -Be @($Win11NewName)
         }
 
+        It 'names the architecture <Architecture> of the updated image <Expected>' -ForEach @(
+            @{Architecture = 0; Expected = 'x86'}
+            @{Architecture = 6; Expected = 'ia64'}
+            @{Architecture = 12; Expected = 'x64 ARM'}
+        ) {
+            $script:SourceImages[$Win11Name].Architecture = $Architecture
+            $script:PostImage.Architecture = $Architecture
+            $Warnings = Invoke-UpdateOSMedia -Parameters $Parameters
+            #there are no updates for these architectures in the fixture
+            Should -Invoke Get-OSDUpdateDownloads -Times 0 -Exactly
+            Get-RenamedOSMedia | Should -Be @("Windows 11 Enterprise $Expected 24H2 26100.6899")
+        }
+
         Context 'OneDriveSetup.exe' {
             BeforeEach {
                 $script:OneDriveFolder = 'SysWOW64'
@@ -806,6 +819,7 @@ Describe 'Update-OSMedia' {
 
         It 'uses the task of $ByTaskName without Out-GridView' {
             $ByTaskName = 'Win11 Enterprise x64 24H2'
+            New-TestOSMedia -Name $Win11Name -Image 'Win11Enterprise24H2' -Registry 'Win11-24H2-1742' | Out-Null
             Invoke-UpdateOSMedia -Command 'New-OSBuild' -Parameters $BuildParameters | Out-Null
             Should -Invoke Out-GridView -Times 0 -Exactly
             Get-RenamedOSMedia -Path $global:SetOSDBuilderPathOSBuilds | Should -Be @('Win11 Ent 24H2 Corp 26100.6899')
@@ -884,6 +898,10 @@ Describe 'Update-OSMedia' {
             New-Item -Path $global:SetOSDBuilderPathTemplates -ItemType Directory -Force | Out-Null
             $TemplateBase = Get-Content -Path $script:FixtureTask -Raw | ConvertFrom-Json
             $GlobalTemplate = $TemplateBase | Select-Object -Property *
+            #every list of the Global template has an item
+            foreach ($Property in @($GlobalTemplate.PSObject.Properties | Where-Object {$_.Value -is [array]} | Select-Object -ExpandProperty Name)) {
+                $GlobalTemplate.$Property = @("$Property-Global")
+            }
             $GlobalTemplate.TaskName = 'Global Corp'; $GlobalTemplate.Drivers = @('Global\Drivers'); $GlobalTemplate.EnableNetFX3 = $true; $GlobalTemplate.ContentPacks = @('GlobalPack')
             $GlobalTemplate | Add-Member -NotePropertyName SetAllIntl -NotePropertyValue 'de-DE'
             foreach ($Property in 'StartLayoutXML', 'UnattendXML', 'LangSetInputLocale', 'LangSetSKUIntlDefaults', 'LangSetSetupUILang', 'LangSetSysLocale', 'LangSetUILang', 'LangSetUILangFallback', 'LangSetUserLocale') {
@@ -898,8 +916,18 @@ Describe 'Update-OSMedia' {
             $Other.TaskName = 'Win10 Other'; $Other.OSMFamily = '19041 Enterprise x64 Client en-US'; $Other.Drivers = @('Other\Drivers')
             $Other | ConvertTo-Json | Set-Content -Path (Join-Path $global:SetOSDBuilderPathTemplates 'OSBuild Win10 Other.json')
 
-            Mock Add-ContentDriversOS {$script:Seen['Drivers'] = @($Drivers); $script:Seen['EnableNetFX3'] = $EnableNetFX3; $script:Seen['WinPEDaRT'] = $WinPEDaRT; $script:Seen['SetUILang'] = $SetUILang}
+            Mock Add-ContentDriversOS {
+                $script:Seen['Drivers'] = @($Drivers); $script:Seen['EnableNetFX3'] = $EnableNetFX3; $script:Seen['WinPEDaRT'] = $WinPEDaRT; $script:Seen['SetUILang'] = $SetUILang
+                $script:Seen['RemoveAppx'] = @($RemoveAppx); $script:Seen['LanguagePacks'] = @($LanguagePacks); $script:Seen['AddWindowsCapability'] = @($AddWindowsCapability)
+                $script:Seen['WinPEADKSE'] = @($WinPEADKSE); $script:Seen['ContentPacks'] = @($ContentPacks)
+            }
             Invoke-UpdateOSMedia -Command 'New-OSBuild' -Parameters $BuildParameters | Out-Null
+            $script:Seen['RemoveAppx'] | Should -Be @('Microsoft.BingNews_4.55.62231.0_neutral_~_8wekyb3d8bbwe', 'RemoveAppxProvisionedPackage-Global')
+            $script:Seen['LanguagePacks'] | Should -Be @('LanguagePack-Global')
+            $script:Seen['AddWindowsCapability'] | Should -Be @('OpenSSH.Server~~~~0.0.1.0', 'AddWindowsCapability-Global', 'OpenSSH.Server~~~~0.0.1.0')
+            $script:Seen['WinPEADKSE'] | Should -Be @('WinPEADKSE-Global')
+            $script:Seen['ContentPacks'] | Should -Be @('GlobalPack', 'Corp')
+            Should -Invoke Set-LanguageSettingsOS -Times 1 -Exactly
             $script:Seen['Drivers'] | Should -Be @('Corp\Drivers', 'Global\Drivers', 'Family\Drivers')
             $script:Seen['EnableNetFX3'] | Should -BeTrue
             $script:Seen['WinPEDaRT'] | Should -Be 'DaRT10'

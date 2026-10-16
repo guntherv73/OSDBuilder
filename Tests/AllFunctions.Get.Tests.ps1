@@ -327,7 +327,7 @@ Describe 'Get-Value' {
         $Result[1] | Should -Be 'HP'
     }
 
-    # KnownBug: Private/AllFunctions.ps1:4562 returns the ArrayList with return, PowerShell unrolls it: a one item array becomes a scalar, an empty array $null
+    # KnownBug: Private/AllFunctions.ps1:4564 (and 3133) returns the ArrayList with return, PowerShell unrolls it: a one item array becomes a scalar, an empty array $null
     It 'keeps a JSON array with one item as a list' -Skip {
         $Result = Get-Value -value ([PSCustomObject]@{Languages = @('de-DE'); Drivers = @()})
         , $Result.Languages | Should -BeOfType [System.Collections.IList]
@@ -1111,6 +1111,7 @@ Describe 'Get-TaskContentLanguageInterfacePack' {
         $Warnings | Should -BeLike '*Install.wim Language Interface Packs: Not Found*'
         Should -Invoke Out-GridView -Times 0 -Exactly
     }
+
     # KnownBug: Private/AllFunctions.ps1:3923-3924 an empty array is not $null, without Content\Updates the warning is Skipping instead of Not Found
     It 'warns Not Found when there is no content and no Updates directory' -Skip {
         $ContentIsoExtract = $null

@@ -479,37 +479,38 @@ Describe 'New-OSBuild' {
             $State.OSDUpdateLCU.UpdateOS | Should -Be $UpdateOS
         }
 
-        It 'reads the ReleaseId <ReleaseId> from the DisplayVersion or ReleaseId of CurrentVersion.xml' -TestCases @(
-            @{CurrentVersion = [PSCustomObject]@{CurrentBuild = '19045'; DisplayVersion = '22H2'; ReleaseId = '2009'}; ReleaseId = '22H2'}
-            @{CurrentVersion = [PSCustomObject]@{CurrentBuild = '17763'; ReleaseId = '1809'}; ReleaseId = '1809'}
+        It 'reads the ReleaseId <ExpectedReleaseId> from the DisplayVersion or ReleaseId of CurrentVersion.xml' -TestCases @(
+            @{CurrentVersion = [PSCustomObject]@{CurrentBuild = '19045'; DisplayVersion = '22H2'; ReleaseId = '2009'}; ExpectedReleaseId = '22H2'}
+            @{CurrentVersion = [PSCustomObject]@{CurrentBuild = '17763'; ReleaseId = '1809'}; ExpectedReleaseId = '1809'}
         ) {
+            #The expected value is not named ReleaseId, New-OSBuild would read it from the calling scope
             $script:OSMediaList = @(New-TestOSMedia -CurrentVersion $CurrentVersion)
             Invoke-NewOSBuild @{ByTaskName = 'Contoso Win11 Ent x64 25H2'} | Out-Null
-            $global:NewOSBuildState['Show-TaskInfo'].ReleaseId | Should -Be $ReleaseId
+            $global:NewOSBuildState['Show-TaskInfo'].ReleaseId | Should -Be $ExpectedReleaseId
         }
 
-        It 'maps the build <Build> to the ReleaseId <ReleaseId> without CurrentVersion.xml' -TestCases @(
-            @{Build = 10240; ReleaseId = '1507'}
-            @{Build = 14393; ReleaseId = '1607'}
-            @{Build = 15063; ReleaseId = '1703'}
-            @{Build = 16299; ReleaseId = '1709'}
-            @{Build = 17134; ReleaseId = '1803'}
-            @{Build = 17763; ReleaseId = '1809'}
+        It 'maps the build <Build> to the ReleaseId <ExpectedReleaseId> without CurrentVersion.xml' -TestCases @(
+            @{Build = 10240; ExpectedReleaseId = '1507'}
+            @{Build = 14393; ExpectedReleaseId = '1607'}
+            @{Build = 15063; ExpectedReleaseId = '1703'}
+            @{Build = 16299; ExpectedReleaseId = '1709'}
+            @{Build = 17134; ExpectedReleaseId = '1803'}
+            @{Build = 17763; ExpectedReleaseId = '1809'}
         ) {
             $script:WindowsImage = New-TestWindowsImage -ImageName 'Windows 10 Enterprise' -Build $Build -SPBuild 1
             $script:FinalWindowsImage = New-TestWindowsImage -ImageName 'Windows 10 Enterprise' -Build $Build -SPBuild 2
             $script:RegCurrentVersion = @([PSCustomObject]@{CurrentBuild = "$Build"; UBR = '2'})
             $script:OSMediaList = @(New-TestOSMedia -CurrentVersion $null)
             $script:Updates = @(
-                New-TestUpdate -UpdateGroup 'LCU' -KBNumber '1' -UpdateOS 'Windows 10' -UpdateBuild $ReleaseId
+                New-TestUpdate -UpdateGroup 'LCU' -KBNumber '1' -UpdateOS 'Windows 10' -UpdateBuild $ExpectedReleaseId
                 New-TestUpdate -UpdateGroup 'LCU' -KBNumber '2' -UpdateOS 'Windows 10' -UpdateBuild '22H2'
             )
             Invoke-NewOSBuild @{ByTaskName = 'Contoso Win11 Ent x64 25H2'; Execute = $true} | Out-Null
             $State = $global:NewOSBuildState['Mount-InstallwimOS']
-            "$($State.ReleaseId)" | Should -Be $ReleaseId
+            "$($State.ReleaseId)" | Should -Be $ExpectedReleaseId
             $State.OSDUpdateLCU.KBNumber | Should -Be '1'
             #The ReleaseId of the new OSBuild is mapped from the build of the exported install.wim
-            (Get-ChildItem -Path $SetOSDBuilderPathOSBuilds -Directory).Name | Should -Be "Windows 10 Enterprise x64 $ReleaseId $Build.2"
+            (Get-ChildItem -Path $SetOSDBuilderPathOSBuilds -Directory).Name | Should -Be "Windows 10 Enterprise x64 $ExpectedReleaseId $Build.2"
         }
 
         It 'maps the Architecture <Architecture> to <OSArchitecture>' -TestCases @(

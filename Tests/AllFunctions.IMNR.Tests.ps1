@@ -16,6 +16,7 @@ BeforeAll {
     #Remove-ItemProperty -Name is mandatory, Import-RegistryXmlOS calls it without -Name to remove a key
     #a mock of the cmdlet would prompt for the Name, the placeholder has no mandatory parameter
     function Remove-ItemProperty {
+        [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidOverwritingBuiltInCmdlets', '', Justification = 'Test placeholder without the mandatory Name')]
         [CmdletBinding()]
         param ($LiteralPath, $Name, [switch]$Force)
     }
