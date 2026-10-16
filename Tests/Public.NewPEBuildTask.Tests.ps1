@@ -361,8 +361,7 @@ Describe 'New-PEBuildTask' {
             $Task.WinPEScripts | Should -Be @('Scripts\WinPE\Existing.ps1', 'Scripts\WinPE\New.ps1')
         }
 
-        # KnownBug: New-PEBuildTask.ps1:340 never applies, -ScratchSpace defaults to '512' and an update resets the ScratchSpace of the existing Task
-        It 'keeps the ScratchSpace of the existing Task when -ScratchSpace is not given' -Skip {
+        It 'keeps the ScratchSpace of the existing Task when -ScratchSpace is not given' {
             Copy-ExistingTask
             New-PEBuildTask -TaskName 'Contoso' -SourceWim WinPE 6>$null 3>$null | Out-Null
             (Get-TestTask 'WinPE Contoso.json').ScratchSpace | Should -Be '256'

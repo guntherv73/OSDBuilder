@@ -337,7 +337,7 @@ function New-PEBuildTask {
         #=================================================
         if (!($CustomName) -and $ExistingTask.CustomName) {$CustomName = $ExistingTask.CustomName}
         if (!($MDTDeploymentShare) -and $ExistingTask.MDTDeploymentShare) {$MDTDeploymentShare = $ExistingTask.MDTDeploymentShare}
-        if (!($ScratchSpace) -and $ExistingTask.ScratchSpace) {$ScratchSpace = $ExistingTask.ScratchSpace}
+        if (!($PSBoundParameters.ContainsKey('ScratchSpace')) -and $ExistingTask.ScratchSpace) {$ScratchSpace = $ExistingTask.ScratchSpace}
         if ($ExistingTask.WinPEAutoExtraFiles -eq $true) {$WinPEAutoExtraFiles = $true}
         #=================================================
         #   PEBuildTask
