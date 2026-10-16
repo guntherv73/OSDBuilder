@@ -1040,6 +1040,12 @@ Describe 'Get-TaskContentLanguageFeature' {
         $Warnings | Should -BeLike '*Install.wim Language Features On Demand: Not Found*'
         Should -Invoke Out-GridView -Times 0 -Exactly
     }
+    # KnownBug: Private/AllFunctions.ps1:3890-3891 an empty array is not $null, without Content\Updates the warning is Skipping instead of Not Found
+    It 'warns Not Found when there is no content and no Updates directory' -Skip {
+        $ContentIsoExtract = $null
+        $Warnings = (Get-TaskContentLanguageFeature 6>$null 3>&1) -join "`n"
+        $Warnings | Should -BeLike '*Install.wim Language Features On Demand: Not Found*'
+    }
 }
 
 Describe 'Get-TaskContentLanguageInterfacePack' {
@@ -1104,6 +1110,12 @@ Describe 'Get-TaskContentLanguageInterfacePack' {
         $Warnings = (Get-TaskContentLanguageInterfacePack 6>$null 3>&1) -join "`n"
         $Warnings | Should -BeLike '*Install.wim Language Interface Packs: Not Found*'
         Should -Invoke Out-GridView -Times 0 -Exactly
+    }
+    # KnownBug: Private/AllFunctions.ps1:3923-3924 an empty array is not $null, without Content\Updates the warning is Skipping instead of Not Found
+    It 'warns Not Found when there is no content and no Updates directory' -Skip {
+        $ContentIsoExtract = $null
+        $Warnings = (Get-TaskContentLanguageInterfacePack 6>$null 3>&1) -join "`n"
+        $Warnings | Should -BeLike '*Install.wim Language Interface Packs: Not Found*'
     }
 }
 

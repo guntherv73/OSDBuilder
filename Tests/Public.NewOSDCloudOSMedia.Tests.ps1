@@ -53,36 +53,8 @@ AfterAll {
 }
 
 Describe 'New-OSDCloudOSMedia' {
-    BeforeEach {
-        $Root = Join-Path $TestDrive ([guid]::NewGuid())
-        $SetOSDBuilderPathOSImport = Join-Path $Root 'OSImport'
-        $SetOSDBuilderPathOSMedia = Join-Path $Root 'OSMedia'
-        $SetOSDBuilderPathMount = Join-Path $Root 'Mount'
-        $GetOSDBuilderPathContentOneDrive = Join-Path (Join-Path $Root 'Content') 'OneDrive'
-        $ExpectedWorkingPath = "$SetOSDBuilderPathOSMedia\Windows 11 Enterprise x64 24H2 26100.1742 OSDCloud"
-        $ExpectedMountOS = Join-Path $SetOSDBuilderPathMount "os$Stamp"
-        $ExpectedMountPE = Join-Path $SetOSDBuilderPathMount "winpe$Stamp"
-        $ExpectedMountRE = Join-Path $SetOSDBuilderPathMount "winre$Stamp"
-        $ExpectedMountSE = Join-Path $SetOSDBuilderPathMount "setup$Stamp"
-
-        #WinPE optional components of the ADK
-        $ExpectedWinPEOCs = Join-Path $Root 'WinPE_OCs'
-        foreach ($File in 'WinPE-WMI.cab', 'WinPE-PowerShell.cab', 'en-us\lp.cab', 'en-us\WinPE-WMI_en-us.cab') {
-            New-TestFile -Path (Join-Path $ExpectedWinPEOCs $File) | Out-Null
-        }
-        #The mounted boot images
-        foreach ($Mount in $ExpectedMountPE, $ExpectedMountRE, $ExpectedMountSE) {
-            New-TestFile -Path (Join-Path $Mount 'Windows\System32\winpeshl.ini') -Value "[LaunchApps]`r`n%SYSTEMDRIVE%\sources\recovery\recenv.exe -prompt" | Out-Null
-        }
-        New-Item -Path $ExpectedMountOS -ItemType Directory -Force | Out-Null
-
-        $OSImport = New-TestOSImport
-        $Image = @{
-            ImageName = 'Windows 11 Enterprise'; ImageDescription = 'Windows 11 Enterprise'; Architecture = 9; EditionId = 'Enterprise'
-            InstallationType = 'Client'; Languages = @('en-US'); Version = '10.0.26100.1742'; MajorVersion = 10; MinorVersion = 0
-            Build = 26100; SPBuild = 1742; SPLevel = 0; ImageBootable = $false; WIMBoot = $false
-        }
-
+    BeforeAll {
+        #The mocks of the Describe block, the tests replace single ones
         Mock Get-OSDBuilder {}
         foreach ($Name in 'Block-WinPE', 'Block-StandardUser', 'Block-WindowsVersionNe10', 'Block-PowerShellVersionLt5', 'Block-NoCurl') {Mock $Name {}}
         foreach ($Name in $BuildFunctions) {Mock $Name {}}
@@ -90,7 +62,6 @@ Describe 'New-OSDCloudOSMedia' {
             foreach ($Directory in 'xml', 'json', 'logs') {New-Item -Path (Join-Path $Info $Directory) -ItemType Directory -Force | Out-Null}
         }
         #Captures the boot images before New-OSDCloudOSMedia removes the mount directories
-        $Captured = @{}
         Mock Import-AutoExtraFilesPE {
             $Captured.WinPEIni = Test-Path (Join-Path $ExpectedMountPE 'Windows\System32\winpeshl.ini')
             $Captured.WinSEIni = Test-Path (Join-Path $ExpectedMountSE 'Windows\System32\winpeshl.ini')
@@ -113,6 +84,41 @@ Describe 'New-OSDCloudOSMedia' {
         Mock Test-Path {$false} -ParameterFilter {$Path -like 'C:\Program Files\*'}
     }
 
+    BeforeEach {
+        $Root = Join-Path $TestDrive ([guid]::NewGuid())
+        $SetOSDBuilderPathOSImport = Join-Path $Root 'OSImport'
+        $SetOSDBuilderPathOSMedia = Join-Path $Root 'OSMedia'
+        $SetOSDBuilderPathMount = Join-Path $Root 'Mount'
+        $GetOSDBuilderPathContentOneDrive = Join-Path (Join-Path $Root 'Content') 'OneDrive'
+        $ExpectedWorkingPath = "$SetOSDBuilderPathOSMedia\Windows 11 Enterprise x64 24H2 26100.1742 OSDCloud"
+        $ExpectedInfo = Join-Path $ExpectedWorkingPath 'info'
+        $ExpectedLogs = Join-Path $ExpectedInfo 'logs'
+        $ExpectedMountOS = Join-Path $SetOSDBuilderPathMount "os$Stamp"
+        $ExpectedMountPE = Join-Path $SetOSDBuilderPathMount "winpe$Stamp"
+        $ExpectedMountRE = Join-Path $SetOSDBuilderPathMount "winre$Stamp"
+        $ExpectedMountSE = Join-Path $SetOSDBuilderPathMount "setup$Stamp"
+
+        #WinPE optional components of the ADK
+        $ExpectedWinPEOCs = Join-Path $Root 'WinPE_OCs'
+        foreach ($File in 'WinPE-WMI.cab', 'WinPE-PowerShell.cab', 'en-us\lp.cab', 'en-us\WinPE-WMI_en-us.cab') {
+            New-TestFile -Path (Join-Path $ExpectedWinPEOCs $File) | Out-Null
+        }
+        #The mounted boot images
+        foreach ($Mount in $ExpectedMountPE, $ExpectedMountRE, $ExpectedMountSE) {
+            New-TestFile -Path (Join-Path $Mount 'Windows\System32\winpeshl.ini') -Value "[LaunchApps]`r`n%SYSTEMDRIVE%\sources\recovery\recenv.exe -prompt" | Out-Null
+        }
+        New-Item -Path $ExpectedMountOS -ItemType Directory -Force | Out-Null
+
+        $OSImport = New-TestOSImport
+        $Captured = @{}
+        $Image = @{
+            ImageName = 'Windows 11 Enterprise'; ImageDescription = 'Windows 11 Enterprise'; Architecture = 9; EditionId = 'Enterprise'
+            InstallationType = 'Client'; Languages = @('en-US'); Version = '10.0.26100.1742'; MajorVersion = 10; MinorVersion = 0
+            Build = 26100; SPBuild = 1742; SPLevel = 0; ImageBootable = $false; WIMBoot = $false
+        }
+
+    }
+
     It 'builds the OSDCloud OSMedia of the selected OSImport' {
         $Warnings = (Invoke-OSDCloudOSMedia) -join "`n"
         $Warnings | Should -Not -BeLike '*Exiting*'
@@ -123,9 +129,9 @@ Describe 'New-OSDCloudOSMedia' {
         }
         Should -Invoke Get-OSMedia -Times 1 -Exactly -ParameterFilter {$OSMajorVersion -eq 10}
         Should -Invoke Out-GridView -Times 1 -Exactly -ParameterFilter {$PassThru -and ($InputObject.Name -eq $OSImport.Name)}
-        Should -Invoke Get-WindowsImage -Times 1 -Exactly -ParameterFilter {($ImagePath -eq "$($OSImport.FullName)\OS\sources\install.wim") -and ($Index -eq 1)}
+        Should -Invoke Get-WindowsImage -Times 1 -Exactly -ParameterFilter {($ImagePath -eq "$SetOSDBuilderPathOSImport\$($OSImport.Name)\OS\sources\install.wim") -and ($Index -eq 1)}
         Should -Invoke Get-AdkPaths -Times 1 -Exactly -ParameterFilter {$Arch -eq 'amd64'}
-        Should -Invoke Start-Transcript -Times 1 -Exactly -ParameterFilter {$Path -like "$ExpectedWorkingPath\info\logs*New-OSDCloudOSMedia.log"}
+        Should -Invoke Start-Transcript -Times 1 -Exactly -ParameterFilter {$Path -like "$ExpectedInfo\logs*New-OSDCloudOSMedia.log"}
 
         #The boot images are mounted from the new OSMedia
         foreach ($Name in 'Mount-WinPEwim', 'Mount-WinREwim', 'Mount-WinSEwim', 'Save-PackageInventoryPE', 'Dismount-WimsPE', 'Export-PEWims', 'Export-PEBootWim', 'Save-InventoryPE', 'Save-AutoExtraFilesOS', 'Save-SessionsXmlOS', 'Save-InventoryOS') {
@@ -148,7 +154,7 @@ Describe 'New-OSDCloudOSMedia' {
         Invoke-OSDCloudOSMedia | Out-Null
         foreach ($Mount in $ExpectedMountPE, $ExpectedMountRE, $ExpectedMountSE) {
             foreach ($File in 'WinPE-WMI.cab', 'WinPE-PowerShell.cab', 'lp.cab', 'WinPE-WMI_en-us.cab') {
-                Should -Invoke Add-WindowsPackage -Times 1 -Exactly -ParameterFilter {($Path -eq $Mount) -and ($PackagePath -like "*$File") -and ($LogPath -like "$ExpectedWorkingPath\info\logs\*")}
+                Should -Invoke Add-WindowsPackage -Times 1 -Exactly -ParameterFilter {($Path -eq $Mount) -and ($PackagePath -like "*$File") -and ($LogPath -like "$ExpectedLogs\*")}
             }
             Should -Invoke Save-WindowsImage -Times 1 -Exactly -ParameterFilter {$Path -eq $Mount}
         }
@@ -190,7 +196,10 @@ Describe 'New-OSDCloudOSMedia' {
         Mock Copy-Item {} -ParameterFilter {$Path -eq $DartConfig}
         Invoke-OSDCloudOSMedia | Out-Null
         foreach ($Mount in $ExpectedMountPE, $ExpectedMountRE, $ExpectedMountSE) {
-            Should -Invoke expand.exe -Times 1 -Exactly -ParameterFilter {((@($InputObject) + @($RemainingArguments)) -join '|') -eq "$DartCab|-F:*.*|$Mount"}
+            Should -Invoke expand.exe -Times 1 -Exactly -ParameterFilter {
+                #The placeholder function receives -F:*.* as two arguments
+                (((@($InputObject) + @($RemainingArguments)) -join ' ') -replace '-F: ', '-F:') -eq "$DartCab -F:*.* $Mount"
+            }
             Should -Invoke Copy-Item -Times 1 -Exactly -ParameterFilter {$Destination -eq "$Mount\Windows\System32\DartConfig.dat"}
         }
     }
@@ -204,7 +213,7 @@ Describe 'New-OSDCloudOSMedia' {
 
     It 'exports the configuration of the new install.wim with the UBR of the registry' {
         Invoke-OSDCloudOSMedia | Out-Null
-        Should -Invoke Get-WindowsImage -Times 1 -Exactly -ParameterFilter {($ImagePath -eq "$ExpectedWorkingPath\OS\sources\install.wim") -and ($Index -eq 1)}
+        Should -Invoke Get-WindowsImage -Times 1 -Exactly -ParameterFilter {($ImagePath -eq "$(Join-Path $ExpectedWorkingPath 'OS')\sources\install.wim") -and ($Index -eq 1)}
         $Info = Join-Path $ExpectedWorkingPath 'info'
         (Import-Clixml -Path (Join-Path (Join-Path $Info 'xml') 'Get-WindowsImage.xml')).UBR | Should -Be '26100.2033'
         (Get-Content -Path (Join-Path (Join-Path $Info 'json') 'Get-WindowsImage.json') -Raw | ConvertFrom-Json).UBR | Should -Be '26100.2033'
@@ -316,7 +325,7 @@ Describe 'New-OSDCloudOSMedia' {
             Should -Invoke robocopy -Times 1 -Exactly -ParameterFilter {
                 $Arguments = @($InputObject) + @($RemainingArguments)
                 ($Arguments[0] -eq $GetOSDBuilderPathContentOneDrive) -and ($Arguments[1] -eq "$ExpectedMountOS\Windows\SysWOW64") -and ($Arguments[2] -eq 'OneDriveSetup.exe') -and
-                ($Arguments[-1] -like "/Log+:$ExpectedWorkingPath\info\logs\*-Update-OneDriveSetup.log")
+                ($Arguments[-1] -like "/Log+:$ExpectedInfo\logs\*-Update-OneDriveSetup.log")
             }
         }
 

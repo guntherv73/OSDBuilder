@@ -154,7 +154,8 @@ Describe 'Save-InventoryPE' {
         Save-InventoryPE -OSMediaPath $OSMediaPath 6>$null
         Assert-FormattedFile -Path (Join-Path $PEInfoPath "Get-WindowsImage-$Name.txt") -Like "*Microsoft Windows PE ($Wim)*" -NoEmptyLines
         @(Import-Clixml -Path (Join-Path (Join-Path $PEInfoPath 'xml') "Get-WindowsImage-$Name.xml"))[0].ImageName | Should -Be "Microsoft Windows PE ($Wim)"
-        @(Get-Content -Path (Join-Path (Join-Path $PEInfoPath 'json') "Get-WindowsImage-$Name.json") -Raw | ConvertFrom-Json)[0].ImageIndex | Should -Be 1
+        $Json = Get-Content -Path (Join-Path (Join-Path $PEInfoPath 'json') "Get-WindowsImage-$Name.json") -Raw | ConvertFrom-Json
+        $Json[0].ImageIndex | Should -Be 1
         (Get-InfoFile -Path $PEInfoPath -Folder 'logs' -Filter "*-Get-WindowsImage-$Name.txt").Count | Should -Be 1
         (Get-InfoFile -Path $PEInfoPath -Folder 'xml' -Filter "*-Get-WindowsImage-$Name.xml").Count | Should -Be 1
         (Get-InfoFile -Path $PEInfoPath -Folder 'json' -Filter "*-Get-WindowsImage-$Name.json").Count | Should -Be 1
@@ -263,7 +264,8 @@ Describe 'Save-SessionsXmlOS' {
         Save-SessionsXmlOS -OSMediaPath $OSMediaPath 6>$null
         Get-Content -Path (Join-Path $InfoPath 'Sessions.xml') -Raw | Should -Be (Get-Content -Path (Join-Path $IMNRSFixtures 'Sessions.xml') -Raw)
         Assert-FormattedFile -Path (Join-Path $OSMediaPath 'Sessions.txt') -Like '*KB5127648*'
-        @(Get-Content -Path (Join-Path (Join-Path $InfoPath 'json') 'Sessions.json') -Raw | ConvertFrom-Json).KBNumber | Should -Be @('KB5127648', 'KB5065426')
+        $Json = Get-Content -Path (Join-Path (Join-Path $InfoPath 'json') 'Sessions.json') -Raw | ConvertFrom-Json
+        $Json.KBNumber | Should -Be @('KB5127648', 'KB5065426')
         (Get-InfoFile -Path $InfoPath -Folder 'logs' -Filter '*-Sessions.txt').Count | Should -Be 1
         (Get-InfoFile -Path $InfoPath -Folder 'xml' -Filter '*-Sessions.xml').Count | Should -Be 1
         (Get-InfoFile -Path $InfoPath -Folder 'json' -Filter '*-Sessions.json').Count | Should -Be 1
