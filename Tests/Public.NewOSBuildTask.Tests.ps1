@@ -130,14 +130,8 @@ Describe 'New-OSBuildTask' {
 
         It 'reads the switch defaults from $global:SetOSDBuilder' {
             $global:SetOSDBuilder = @{NewOSBuildTaskEnableNetFX3 = $true; NewOSBuildTaskCustomName = 'Default Name'}
-            try {
-                . (Join-Path (Join-Path $RepoRoot 'Public') 'New-OSBuildTask.ps1')
-                New-OSBuildTask -TaskName 'Contoso' -OSMedia $OSMedia 6>$null | Out-Null
-            }
-            finally {
-                $global:SetOSDBuilder = @{}
-                . (Join-Path (Join-Path $RepoRoot 'Public') 'New-OSBuildTask.ps1')
-            }
+            try {New-OSBuildTask -TaskName 'Contoso' -OSMedia $OSMedia 6>$null | Out-Null}
+            finally {$global:SetOSDBuilder = @{}}
             $Task = Get-TestTask
             $Task.EnableNetFX3 | Should -Be 'True'
             $Task.CustomName | Should -Be 'Default Name'
@@ -436,7 +430,7 @@ Describe 'New-OSBuildTask' {
 
         It 'uses Windows Capabilities for Features on Demand with a capability inventory and a repository' {
             New-OSBuildTask -TaskName 'Contoso' -OSMedia $OSMedia -ContentFeaturesOnDemand 6>$null 3>$null | Out-Null
-            Should -Invoke Get-OSDBuilderCapabilitySource -Times 1 -Exactly -ParameterFilter {$OSMedia.OSMGuid -eq $script:OSMediaGuid} -Scope It -ModuleName $null -ErrorAction SilentlyContinue
+            Should -Invoke Get-OSDBuilderCapabilitySource -Times 1 -Exactly -ParameterFilter {$OSMedia.Name -eq 'Windows 11 Enterprise x64 25H2 26200.6899'}
             Should -Invoke Get-TaskContentAddWindowsCapability -Times 1 -Exactly
             Should -Invoke Get-TaskContentAddFeatureOnDemand -Times 0 -Exactly
             (Get-TestTask).AddWindowsCapability | Should -Be @('Language.Basic~~~de-DE~0.0.1.0', 'Language.Handwriting~~~de-DE~0.0.1.0')
