@@ -68,6 +68,10 @@ Download and extract the Windows 11 *Languages and Optional Features* ISO publis
 ```powershell
 Save-OSDBuilderDownload -ContentDownload 'Windows 11 24H2-26H2 x64 Languages and Optional Features'
 Save-OSDBuilderDownload -ContentDownload 'Windows 11 22H2-23H2 x64 Languages and Optional Features'
+
+# Inbox Apps (app packages, license files and framework dependencies), extracted to Content\InboxApps
+Save-OSDBuilderDownload -ContentDownload 'Windows 11 24H2-26H2 Inbox Apps'
+Save-OSDBuilderDownload -ContentDownload 'Windows 11 22H2-23H2 Inbox Apps'
 ```
 
 * The ISO (6-7 GB) is saved to `Content\ISO` and reused, an interrupted download is resumed on the next run
@@ -86,4 +90,41 @@ Content\IsoExtract\Windows 11 24H2 Language\LanguagesAndOptionalFeatures\Microso
 * Windows 11 22H2 and 23H2 share the same ISO (22621)
 * Directories containing `Windows 10` are not offered for Windows 11 media (and vice versa)
 * Language Features are installed in the required order: Basic, Fonts, OCR, Handwriting, TextToSpeech, Speech
+* The Windows 11 Language Interface Packs `Microsoft-Windows-Lip-Language-Pack_x64_<lang>.cab`
+  (ca-ES, eu-ES, gl-ES, id-ID, vi-VN) are offered as Language Interface Packs and added after the Language Packs
+
+### Windows Recovery Environment languages
+
+Microsoft distributes the WinRE language packs on the Languages and Optional Features ISO and recommends
+the same languages in WinRE as in the Windows image
+([Customize Windows RE](https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/customize-windows-re)).
+
+* `New-OSBuild` adds the Language Packs and Language Interface Packs of the Task to WinRE from
+  `Windows Preinstallation Environment\x64\WinPE_OCs` of the extracted ISO:
+  `lp.cab`, the language pack of every optional component in WinRE (not WinPE-WiFi) and the font support for Japanese, Korean and Chinese
+* Optional components added to WinRE by the Task also get the language packs of the languages already in WinRE
+* `SetAllIntl` of the Task is also set in WinRE
+* With the ISO extracted, the WinRE ADK selection of `New-OSBuildTask` no longer offers the ADK language packs
+
+### Inbox Apps
+
+Microsoft recommends to reinstall the inbox apps after adding languages and updates, so the apps include the language resources.
+
+* When the Task adds languages, `New-OSBuild` reinstalls the provisioned apps of the image from `Content\InboxApps`
+* Only apps that are provisioned in the image are reinstalled, removed apps are not added again, and an app is skipped when the image contains a newer version
+* The dependencies are read from the AppxManifest of each app (x64 and x86 frameworks for an x64 image), the license is the `.xml` with the same name
+* `RemoveAppxProvisionedPackage` of the Task runs afterwards
+
+### Features on Demand (Add-WindowsCapability)
+
+Features on Demand are added with `Add-WindowsCapability` as recommended by Microsoft
+([Features on Demand](https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/features-on-demand-v2--capabilities)).
+
+* `New-OSBuildTask -ContentFeaturesOnDemand` offers the Windows Capabilities that are NotPresent in the OSMedia
+  (inventory `info\xml\Get-WindowsCapability.xml`) and saves them in the Task as `AddWindowsCapability`
+* The source is every Features on Demand repository in `Content\IsoExtract` that matches the OSMedia
+  (a directory with a `metadata` directory, for example `LanguagesAndOptionalFeatures`), Windows Update is not used
+* Language Features are added with their capability name (for example `Language.Basic~~~de-DE~0.0.1.0`),
+  `Add-WindowsPackage` is only used when the capability cannot be added
+* Tasks with Features on Demand `.cab` files (`AddFeatureOnDemand`) still work, recreate the Task to switch to `AddWindowsCapability`
 * The LCU is reapplied once after Language and Feature on Demand content is added

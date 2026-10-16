@@ -2017,11 +2017,30 @@ function Add-FeaturesOnDemandOS {
     if ([string]::IsNullOrWhiteSpace($FeaturesOnDemand)) {Return}
     #=================================================
     #   Execute
+    #   Features on Demand selected as .cab files (Tasks created before AddWindowsCapability)
+    #   Language Features are added with Add-WindowsCapability, other packages with Add-WindowsPackage
+    #   Microsoft recommends Add-WindowsCapability, recreate the Task to select Windows Capabilities
     #=================================================
     Show-ActionTime; Write-Host -ForegroundColor Green "OS: Features On Demand"
+    $CapabilitySource = @(Get-OSDBuilderCapabilitySource -OSMedia ([PSCustomObject]@{OperatingSystem = $UpdateOS; ReleaseId = $ReleaseId; InstallationType = $OSInstallationType}))
+    $LegacyPackageWarning = $false
     foreach ($FOD in $FeaturesOnDemand) {
         $global:ReapplyLCU = $true
         Write-Host "    $SetOSDBuilderPathContent\$FOD" -ForegroundColor DarkGray
+
+        $CapabilityName = Get-OSDBuilderLanguageCapabilityName -Name $FOD
+        if ($CapabilityName) {
+            $CurrentLog = "$Info\logs\$((Get-Date).ToString('yyyy-MM-dd-HHmmss'))-Add-FeaturesOnDemandOS-Capability.log"
+            $Source = @((Split-Path "$SetOSDBuilderPathContent\$FOD" -Parent)) + $CapabilitySource
+            Write-Host "    Add-WindowsCapability $CapabilityName" -ForegroundColor DarkGray
+            if (Add-OSDBuilderWindowsCapability -Path "$MountDirectory" -Name $CapabilityName -Source $Source -LogPath $CurrentLog) {Continue}
+            Write-Warning "Add-WindowsCapability failed, adding $FOD with Add-WindowsPackage"
+        }
+        elseif ($LegacyPackageWarning -eq $false) {
+            Write-Warning "Features on Demand .cab files are added with Add-WindowsPackage. Recreate the Task with New-OSBuildTask -ContentFeaturesOnDemand to add them with Add-WindowsCapability"
+            $LegacyPackageWarning = $true
+        }
+
         $CurrentLog = "$Info\logs\$((Get-Date).ToString('yyyy-MM-dd-HHmmss'))-Add-FeaturesOnDemandOS.log"
         Write-Verbose "CurrentLog: $CurrentLog"
         Try {
@@ -2033,11 +2052,6 @@ function Add-FeaturesOnDemandOS {
             Write-Verbose "$CurrentLog" -Verbose
         }
     }
-    #=================================================
-    #   PostAction
-    #=================================================
-    #Update-CumulativeOS -Force
-    #Invoke-DismCleanupImage
 }
 function Add-LanguageFeaturesOnDemandOS {
     [CmdletBinding()]
@@ -2051,13 +2065,25 @@ function Add-LanguageFeaturesOnDemandOS {
     #=================================================
     #   Execute
     #   Basic must be installed before Fonts, OCR, Handwriting, TextToSpeech and Speech
+    #   Language Features are added with Add-WindowsCapability from the directory of the .cab
+    #   Add-WindowsPackage is used when the capability name is unknown or Add-WindowsCapability fails
     #=================================================
     Show-ActionTime; Write-Host -ForegroundColor Green "OS: Language Features On Demand"
+    $CapabilitySource = @(Get-OSDBuilderCapabilitySource -OSMedia ([PSCustomObject]@{OperatingSystem = $UpdateOS; ReleaseId = $ReleaseId; InstallationType = $OSInstallationType}))
     $SortedLanguageFeatures = $LanguageFeatures | Where-Object {-not [string]::IsNullOrWhiteSpace($_)} | Sort-Object -Property @{Expression = {Get-OSDBuilderLanguageFeatureOrder -Name $_}}, @{Expression = {$_}}
     foreach ($Update in $SortedLanguageFeatures) {
         $global:ReapplyLCU = $true
         if (Test-Path "$SetOSDBuilderPathContent\$Update") {
             Write-Host "    $SetOSDBuilderPathContent\$Update" -ForegroundColor DarkGray
+
+            $CapabilityName = Get-OSDBuilderLanguageCapabilityName -Name $Update
+            if ($CapabilityName) {
+                $CurrentLog = "$Info\logs\$((Get-Date).ToString('yyyy-MM-dd-HHmmss'))-Add-LanguageFeaturesOnDemandOS-Capability.log"
+                $Source = @((Split-Path "$SetOSDBuilderPathContent\$Update" -Parent)) + $CapabilitySource
+                Write-Host "    Add-WindowsCapability $CapabilityName" -ForegroundColor DarkGray
+                if (Add-OSDBuilderWindowsCapability -Path "$MountDirectory" -Name $CapabilityName -Source $Source -LogPath $CurrentLog) {Continue}
+                Write-Warning "Add-WindowsCapability failed, adding $Update with Add-WindowsPackage"
+            }
 
             $CurrentLog = "$Info\logs\$((Get-Date).ToString('yyyy-MM-dd-HHmmss'))-Add-LanguageFeaturesOnDemandOS.log"
             Try {Add-WindowsPackage -Path "$MountDirectory" -PackagePath "$SetOSDBuilderPathContent\$Update" -LogPath $CurrentLog | Out-Null}
@@ -2168,6 +2194,43 @@ function Add-LocalExperiencePacksOS {
             Add-AppxProvisionedPackage -Path "$MountDirectory" -PackagePath "$SetOSDBuilderPathContent\$Update" -LicensePath "$((Get-Item $SetOSDBuilderPathContent\$Update).Directory.FullName)\License.xml" -LogPath "$Info\logs\$((Get-Date).ToString('yyyy-MM-dd-HHmmss'))-Add-LocalExperiencePacksOS.log" | Out-Null
         } else {
             Write-Warning "Not Found: $SetOSDBuilderPathContent\$Update"
+        }
+    }
+}
+function Add-WindowsCapabilityOS {
+    [CmdletBinding()]
+    param ()
+    #=================================================
+    #   Abort
+    #=================================================
+    if ($ScriptName -ne 'New-OSBuild') {Return}
+    if ($OSMajorVersion -ne 10) {Return}
+    if ([string]::IsNullOrWhiteSpace($AddWindowsCapability)) {Return}
+    #=================================================
+    #   Header
+    #=================================================
+    Show-ActionTime; Write-Host -ForegroundColor Green "OS: Add-WindowsCapability"
+    $CapabilitySource = @(Get-OSDBuilderCapabilitySource -OSMedia ([PSCustomObject]@{OperatingSystem = $UpdateOS; ReleaseId = $ReleaseId; InstallationType = $OSInstallationType}))
+    if ($CapabilitySource.Count -eq 0) {
+        Write-Warning "Add-WindowsCapability: No Features on Demand repository was found in $GetOSDBuilderPathContentIsoExtract for $UpdateOS $ReleaseId"
+        Write-Warning "Use Save-OSDBuilderDownload -ContentDownload to download the Languages and Optional Features ISO"
+        Return
+    }
+    foreach ($Item in $CapabilitySource) {Write-Host "    Source: $Item" -ForegroundColor DarkGray}
+    #=================================================
+    #   Execute
+    #=================================================
+    $InstalledCapability = @(Get-WindowsCapability -Path "$MountDirectory" -ErrorAction SilentlyContinue | Where-Object {$_.State -eq 'Installed'} | Select-Object -ExpandProperty Name)
+    foreach ($Name in ($AddWindowsCapability | Where-Object {$_} | Sort-Object -Unique)) {
+        if ($Name -in $InstalledCapability) {
+            Write-Host -ForegroundColor Gray "INSTALLED         $Name"; Continue
+        }
+        Write-Host -ForegroundColor Cyan "INSTALLING        " -NoNewline
+        Write-Host -ForegroundColor Gray "$Name"
+        $global:ReapplyLCU = $true
+        $CurrentLog = "$Info\logs\$((Get-Date).ToString('yyyy-MM-dd-HHmmss'))-Add-WindowsCapabilityOS.log"
+        if (-not (Add-OSDBuilderWindowsCapability -Path "$MountDirectory" -Name $Name -Source $CapabilitySource -LogPath $CurrentLog)) {
+            Write-Warning "Add-WindowsCapability: $Name could not be added"
         }
     }
 }
@@ -3599,6 +3662,42 @@ function Get-TaskContentAddFeatureOnDemand {
     foreach ($Item in $AddFeatureOnDemand) {Write-Host "$($Item.FullName)" -ForegroundColor White}
     Return $AddFeatureOnDemand
 }
+function Get-TaskContentAddWindowsCapability {
+    #=================================================
+    #   Install.Wim Windows Capabilities (Features on Demand)
+    #   The capabilities are read from the OSMedia inventory, State 0 is NotPresent
+    #   Language capabilities are selected with the Language Features
+    #=================================================
+    [CmdletBinding()]
+    param ()
+    $AddWindowsCapability = @()
+    $CapabilityXml = "$($OSMedia.FullName)\info\xml\Get-WindowsCapability.xml"
+    if (!(Test-Path $CapabilityXml)) {
+        Write-Warning "Install.wim Windows Capabilities: $CapabilityXml was not found, update the OSMedia to create the inventory"
+        Return
+    }
+    $CapabilitySource = @(Get-OSDBuilderCapabilitySource -OSMedia $OSMedia)
+    if ($CapabilitySource.Count -eq 0) {
+        Write-Warning "Install.wim Windows Capabilities: No Features on Demand repository was found in $GetOSDBuilderPathContentIsoExtract"
+        Write-Warning "Use Save-OSDBuilderDownload -ContentDownload to download the Languages and Optional Features ISO"
+        Return
+    }
+    foreach ($Item in $CapabilitySource) {Write-Host "Source: $Item" -ForegroundColor DarkGray}
+
+    $AddWindowsCapability = Import-CliXml $CapabilityXml | Where-Object {[string]$_.State -in @('0','NotPresent')} | Where-Object {$_.Name -notlike 'Language.*'} | Select-Object -Property Name, State
+    if ($ExistingTask.AddWindowsCapability) {
+        foreach ($Item in $ExistingTask.AddWindowsCapability) {
+            $AddWindowsCapability = $AddWindowsCapability | Where-Object {$_.Name -ne $Item}
+        }
+    }
+    if ($null -eq $AddWindowsCapability) {Write-Warning "Install.wim Windows Capabilities: Not Found"}
+    else {
+        $AddWindowsCapability = $AddWindowsCapability | Sort-Object -Property Name | Out-GridView -Title "Add-WindowsCapability: Select Windows Capabilities (Features on Demand) to ADD and press OK (Esc or Cancel to Skip)" -PassThru
+        if ($null -eq $AddWindowsCapability) {Write-Warning "Install.wim Windows Capabilities: Skipping"}
+    }
+    foreach ($Item in $AddWindowsCapability) {Write-Host "$($Item.Name)" -ForegroundColor White}
+    Return $AddWindowsCapability
+}
 function Get-TaskContentAddWindowsPackage {
     #=================================================
     #   Content Packages
@@ -3748,7 +3847,8 @@ function Get-TaskContentLanguageInterfacePack {
     [CmdletBinding()]
     param ()
     $LanguageLipIsoExtractDir = @()
-    $LanguageLipIsoExtractDir = $ContentIsoExtract | Where-Object {$_.Name -like "*Language-Interface-Pack*"}
+    #Windows 11 Languages and Optional Features ISO: Microsoft-Windows-Lip-Language-Pack_x64_ca-es.cab
+    $LanguageLipIsoExtractDir = $ContentIsoExtract | Where-Object {$_.Name -like "*Language-Interface-Pack*" -or $_.Name -like "Microsoft-Windows-Lip-Language-Pack_*.cab"}
     $LanguageLipIsoExtractDir = $LanguageLipIsoExtractDir | Where-Object {$_.Name -like "*$($OSMedia.Arch)*"}
 
     $LanguageLipUpdatesDir = @()
@@ -4110,6 +4210,11 @@ function Get-TaskWinPEADKRE {
 
     $WinPEADKRE = $WinPEADKRE | Where-Object {$_.FullName -match (Get-OSDBuilderLanguageReleasePattern -OSMedia $OSMedia)}
     $WinPEADKRE = $WinPEADKRE | Where-Object {$_.FullName -notmatch (Get-OSDBuilderLanguageExcludePattern -OSMedia $OSMedia)}
+    #Microsoft: WinRE language packs are distributed on the Languages and Optional Features ISO, don't use the ADK language packs
+    #New-OSBuild adds the Languages of the Task to WinRE from the Languages and Optional Features ISO
+    if ($OSMedia.OperatingSystem -eq 'Windows 11' -and (Get-OSDBuilderWinPELanguageSource -OSMedia $OSMedia -Architecture $OSMedia.Arch)) {
+        $WinPEADKRE = $WinPEADKRE | Where-Object {$_.FullName -notmatch '\\WinPE_OCs\\[a-z]{2,3}(-[a-z0-9]{2,4}){1,2}\\'}
+    }
 
     if ($OSMedia.Arch -eq 'x86') {$WinPEADKRE = $WinPEADKRE | Where-Object {$_.FullName -like "*x86*"}
     } else {$WinPEADKRE = $WinPEADKRE | Where-Object {($_.FullName -like "*x64*") -or ($_.FullName -like "*amd64*")}}
@@ -6235,6 +6340,10 @@ function Show-TaskInfo {
     if ($FeaturesOnDemand) {
         Write-Host "-Features On Demand:"
         foreach ($item in $FeaturesOnDemand)    {Write-Host -ForegroundColor Cyan "   $SetOSDBuilderPathContent\$item"}}
+
+    if ($AddWindowsCapability) {
+        Write-Host "-Windows Capabilities:"
+        foreach ($item in $AddWindowsCapability) {Write-Host -ForegroundColor Cyan "   $item"}}
     
     if ($Packages) {
         Write-Host "-Packages:"
@@ -6352,6 +6461,7 @@ function Show-TaskInfo {
         "AddWindowsPackage" = [string[]]$($Packages | Sort-Object -Unique);
         "RemoveWindowsPackage" = [string[]]$($RemovePackage | Sort-Object -Unique);
         "AddFeatureOnDemand" = [string[]]$($FeaturesOnDemand | Sort-Object -Unique);
+        "AddWindowsCapability" = [string[]]$($AddWindowsCapability | Sort-Object -Unique);
         "EnableWindowsOptionalFeature" = [string[]]$($EnableFeature | Sort-Object -Unique);
         "DisableWindowsOptionalFeature" = [string[]]$($DisableFeature | Sort-Object -Unique);
         "RemoveAppxProvisionedPackage" = [string[]]$($RemoveAppx | Sort-Object -Unique);

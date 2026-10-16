@@ -258,6 +258,7 @@ function Update-OSMedia {
                 $Packages = $Task.AddWindowsPackage
                 $RemovePackage = $Task.RemoveWindowsPackage
                 $FeaturesOnDemand = $Task.AddFeatureOnDemand
+                $AddWindowsCapability = @($Task.AddWindowsCapability | Where-Object {$_})
                 $EnableFeature = $Task.EnableWindowsOptionalFeature
                 $DisableFeature = $Task.DisableWindowsOptionalFeature
                 $RemoveAppx = $Task.RemoveAppxProvisionedPackage
@@ -387,6 +388,7 @@ function Update-OSMedia {
                     $Packages += @($Task.AddWindowsPackage | Where-Object {$_})
                     $RemovePackage += @($Task.RemoveWindowsPackage | Where-Object {$_})
                     $FeaturesOnDemand += @($Task.AddFeatureOnDemand | Where-Object {$_})
+                    $AddWindowsCapability = @($AddWindowsCapability) + @($Task.AddWindowsCapability | Where-Object {$_})
                     $EnableFeature += @($Task.EnableWindowsOptionalFeature | Where-Object {$_})
                     $DisableFeature += @($Task.DisableWindowsOptionalFeature | Where-Object {$_})
                     $RemoveAppx += @($Task.RemoveAppxProvisionedPackage | Where-Object {$_})
@@ -861,6 +863,7 @@ function Update-OSMedia {
                 Add-ContentADKWinSE
                 Add-ContentPack -PackType PEADK
                 Add-ContentPack -PackType PEADKLang
+                Add-LanguagePacksWinRE
                 #=================================================
                 #   WinPE DaRT
                 #=================================================
@@ -944,6 +947,7 @@ function Update-OSMedia {
                 Add-ContentPack -PackType OSPackages
                 Add-WindowsPackageOS
                 Add-FeaturesOnDemandOS
+                Add-WindowsCapabilityOS
                 #=================================================
                 #   Install.wim Updates
                 #=================================================
@@ -1046,6 +1050,7 @@ function Update-OSMedia {
                 #=================================================
                 Enable-WindowsOptionalFeatureOS
                 Enable-NetFXOS
+                Update-InboxAppsOS
                 Remove-AppxProvisionedPackageOS
                 Remove-WindowsPackageOS
                 Remove-WindowsCapabilityOS
