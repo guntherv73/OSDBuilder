@@ -3314,6 +3314,12 @@ function Get-OSDUpdates {
             $KBPattern = '(kb\d{7})'
             $FileKBNumber = [regex]::matches($FileName, $KBPattern).Value
             $FileKBNumber = $FileKBNumber -replace 'kb', ''
+
+            #Windows 11 24H2 and newer: the LCU download contains the checkpoint cumulative update (KB5043080)
+            $Title = $Item.Title
+            if (($Item.Source -eq 'Microsoft Update Catalog') -and ($UpdateGroup -eq 'LCU') -and $FileKBNumber -and ($FileKBNumber -ne $Item.Id)) {
+                $Title = "$($Item.Title) - Checkpoint Cumulative Update (KB$FileKBNumber)"
+            }
         
             $ObjectProperties = [ordered]@{
                 Catalog                   = "$UpdateOS $UpdateBuild"
@@ -3326,7 +3332,7 @@ function Get-OSDUpdates {
                 CreationDate              = $Item.LastModified
                 KBNumber                  = $Item.Id
                 FileKBNumber              = $FileKBNumber
-                Title                     = $Item.Title
+                Title                     = $Title
                 UpdateID                  = $Item.UpdateId
                 LegacyName                = $null
                 FileName                  = $FileName
@@ -5943,8 +5949,10 @@ function Save-RegistryCurrentVersionOS {
     $RegKeyCurrentVersion | Out-File "$Info\logs\$((Get-Date).ToString('yyyy-MM-dd-HHmmss'))-CurrentVersion.txt"
     $RegKeyCurrentVersion | Export-Clixml -Path "$Info\xml\CurrentVersion.xml"
     $RegKeyCurrentVersion | Export-Clixml -Path "$Info\xml\$((Get-Date).ToString('yyyy-MM-dd-HHmmss'))-CurrentVersion.xml"
-    $RegKeyCurrentVersion | ConvertTo-Json | Out-File "$Info\json\CurrentVersion.json"
-    $RegKeyCurrentVersion | ConvertTo-Json | Out-File "$Info\json\$((Get-Date).ToString('yyyy-MM-dd-HHmmss'))-CurrentVersion.json"
+    #Get-ItemProperty adds PSProvider and PSDrive, PowerShell 7 warns that the JSON is truncated at depth 2
+    $RegKeyCurrentVersionJson = $RegKeyCurrentVersion | Select-Object -Property * -ExcludeProperty PSPath, PSParentPath, PSChildName, PSDrive, PSProvider | ConvertTo-Json
+    $RegKeyCurrentVersionJson | Out-File "$Info\json\CurrentVersion.json"
+    $RegKeyCurrentVersionJson | Out-File "$Info\json\$((Get-Date).ToString('yyyy-MM-dd-HHmmss'))-CurrentVersion.json"
 }
 function Save-SessionsXmlOS {
     [CmdletBinding()]
@@ -6627,6 +6635,13 @@ function Update-ComponentOS {
     if ($SkipUpdatesOS) {Return}
     if ($null -eq $OSDUpdateComponentDU) {Return}
     #=================================================
+    #   Safe OS Dynamic Update
+    #   Microsoft applies the Safe OS Dynamic Update to WinRE only (Update-SafeOSPE)
+    #   Add-WindowsPackage returns 0x800f081e (not applicable) for install.wim
+    #=================================================
+    $OSDUpdateComponentOS = @($OSDUpdateComponentDU | Where-Object {$_.UpdateGroup -ne 'ComponentDU SafeOS'})
+    if ($OSDUpdateComponentOS.Count -eq 0) {Return}
+    #=================================================
     #   Header
     #=================================================
     Show-ActionTime
@@ -6638,7 +6653,7 @@ function Update-ComponentOS {
     #=================================================
     #   Execute
     #=================================================
-    foreach ($Update in $OSDUpdateComponentDU) {
+    foreach ($Update in $OSDUpdateComponentOS) {
         $UpdateComp = $(Get-ChildItem -Path $SetOSDBuilderPathUpdates -File -Recurse | Where-Object {$_.Name -match $(Split-Path $Update.OriginUri -Leaf)}).FullName | Select-Object -First 1
         if ($null -eq $UpdateComp) {Write-Warning "Update-ComponentOS is Null"; Continue}
         if (!(Test-Path "$UpdateComp")) {Write-Warning "Update-ComponentOS was not found"; Continue}
