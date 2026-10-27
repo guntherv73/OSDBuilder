@@ -6,7 +6,8 @@ function Get-OSDBuilderAppxManifest {
     .DESCRIPTION
     For a bundle the identity is read from AppxMetadata\AppxBundleManifest.xml
     With -Detailed the application package for the Architecture is read from the bundle,
-    its version and dependencies are the values that DISM uses for provisioning
+    its architecture and dependencies are the values that DISM uses for provisioning
+    BundleVersion is the version of the bundle identity, the version that Get-AppxProvisionedPackage reports for a bundle
     #>
     [CmdletBinding()]
     param (
@@ -52,6 +53,7 @@ function Get-OSDBuilderAppxManifest {
             $Manifest = ConvertFrom-AppxManifest (Read-ZipEntryText $Zip 'AppxManifest.xml')
             $Manifest | Add-Member -NotePropertyName Path -NotePropertyValue $Path
             $Manifest | Add-Member -NotePropertyName IsBundle -NotePropertyValue $false
+            $Manifest | Add-Member -NotePropertyName BundleVersion -NotePropertyValue $null
             Return $Manifest
         }
 
@@ -60,6 +62,7 @@ function Get-OSDBuilderAppxManifest {
             Path            = $Path
             IsBundle        = $true
             Name            = $BundleXml.Bundle.Identity.Name
+            BundleVersion   = $BundleXml.Bundle.Identity.Version
             Version         = $null
             Architecture    = $null
             IsFramework     = $false
@@ -191,7 +194,10 @@ function Update-InboxAppsOS {
             $Source = Get-OSDBuilderAppxManifest -Path $Source.Path -Architecture @($OSArchitecture,'neutral','x86') -Detailed
             if ($null -eq $Source -or -not $Source.Version) {Write-Warning "Inbox Apps: Unable to read $($App.DisplayName)"; Continue}
         }
-        if ([version]$Source.Version -lt [version]$App.Version) {
+        #DISM provisions and reports the bundle version, the application package in a bundle has its own version
+        #(Microsoft.WindowsCalculator_2021.2502.2.0_neutral_~_8wekyb3d8bbwe contains Microsoft.WindowsCalculator 11.2502.2.0)
+        $SourceVersion = if ($Source.IsBundle -and $Source.BundleVersion) {$Source.BundleVersion} else {$Source.Version}
+        if ([version]$SourceVersion -lt [version]$App.Version) {
             Write-Host -ForegroundColor DarkGray "NEWER IN IMAGE    $($App.DisplayName) $($App.Version)"; Continue
         }
         #=================================================
@@ -217,7 +223,7 @@ function Update-InboxAppsOS {
         if (Test-Path $License) {$Params.LicensePath = $License} else {$Params.SkipLicense = $true}
 
         Write-Host -ForegroundColor Cyan "REINSTALLING      " -NoNewline
-        Write-Host -ForegroundColor Gray "$($App.DisplayName) $($Source.Version)"
+        Write-Host -ForegroundColor Gray "$($App.DisplayName) $SourceVersion"
         try {Add-AppxProvisionedPackage @Params | Out-Null}
         catch {
             Write-Warning "Inbox Apps: $($App.DisplayName) could not be reinstalled, $($_.Exception.Message)"
