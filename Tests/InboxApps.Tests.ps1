@@ -98,6 +98,23 @@ Describe 'Get-OSDBuilderAppxManifest' {
         $Manifest.Dependencies.Name | Should -Be 'Microsoft.WindowsAppRuntime.1.7'
     }
 
+    It 'reads the bundle version that DISM reports for a provisioned bundle' {
+        #Calculator: bundle Microsoft.WindowsCalculator_2021.2502.2.0_neutral_~_8wekyb3d8bbwe, application package 11.2502.2.0
+        $Bundle = New-TestAppxBundleCustom -Path (Join-Path (Join-Path $TestDrive 'bundle3') 'calculator.msixbundle') -Name 'Microsoft.WindowsCalculator' -Version '2021.2502.2.0' -Packages @(
+            @{Version = '11.2502.2.0'; Architecture = 'x64'; FileName = 'Microsoft.WindowsCalculator_11.2502.2.0_x64.appx'}
+        )
+        $Manifest = Get-OSDBuilderAppxManifest -Path $Bundle.FullName
+        $Manifest.BundleVersion | Should -Be '2021.2502.2.0'
+        $Manifest = Get-OSDBuilderAppxManifest -Path $Bundle.FullName -Detailed
+        $Manifest.BundleVersion | Should -Be '2021.2502.2.0'
+        $Manifest.Version | Should -Be '11.2502.2.0'
+    }
+
+    It 'has no bundle version for an .appx' {
+        $Appx = New-TestAppx -Path (Join-Path (Join-Path $TestDrive 'bundle4') 'plain.appx') -Name 'Contoso.Plain' -Version '1.0.0.0' -Architecture 'x64'
+        (Get-OSDBuilderAppxManifest -Path $Appx.FullName).BundleVersion | Should -BeNullOrEmpty
+    }
+
     It 'returns the bundle identity without version when no application matches the architecture' {
         $Bundle = New-TestAppxBundleCustom -Path (Join-Path (Join-Path $TestDrive 'edge1') 'arm.msixbundle') -Name 'Contoso.Arm' -Packages @(
             @{Version = '2.0.0.0'; Architecture = 'arm64'; FileName = 'Contoso.Arm_2.0.0.0_arm64.appx'}
@@ -315,7 +332,7 @@ Describe 'Update-InboxAppsOS' {
             New-TestAppxBundleCustom -Path (Join-Path $BundlePackages 'Contoso.Pref.msixbundle') -Name 'Contoso.Pref' -Packages @(@{Version = '1.0.0.2'; Architecture = 'x64'; FileName = 'Contoso.Pref_x64_inner.appx'}) | Out-Null
             #The bundle wins over the neutral package, its application package has a dependency that is not in the Inbox Apps
             New-TestAppx -Path (Join-Path $BundlePackages 'Contoso.Bundle_neutral.appx') -Name 'Contoso.Bundle' -Version '2.0.0.1' -Architecture 'neutral' | Out-Null
-            New-TestAppxBundleCustom -Path (Join-Path $BundlePackages 'Contoso.Bundle.msixbundle') -Name 'Contoso.Bundle' -Packages @(
+            New-TestAppxBundleCustom -Path (Join-Path $BundlePackages 'Contoso.Bundle.msixbundle') -Name 'Contoso.Bundle' -Version '2.0.0.64' -Packages @(
                 @{Version = '2.0.0.64'; Architecture = 'x64'; FileName = 'Contoso.Bundle_x64.appx'; Dependency = @('Microsoft.UI.Xaml.2.8')}
             ) | Out-Null
             New-TestFile -Path (Join-Path $BundlePackages 'Contoso.Bundle.xml') | Out-Null
@@ -359,6 +376,40 @@ Describe 'Update-InboxAppsOS' {
             $Output = (Update-InboxAppsOS 6>&1 3>$null | ForEach-Object {"$_"}) -join "`n"
             $Output | Should -BeLike '*NOT IN ISO*Contoso.ArmOnly*'
             Should -Invoke Add-AppxProvisionedPackage -Times 2 -Exactly
+        }
+    }
+
+    Context 'Bundle versions' {
+        BeforeAll {
+            $SetOSDBuilderPathContent = Join-Path $TestDrive 'BundleVersionContent'
+            $BundlePackages = Join-Path (Join-Path (Join-Path $SetOSDBuilderPathContent 'InboxApps') 'Windows 11 24H2-26H2 Inbox Apps') 'packages'
+            #DISM provisions and reports the bundle version (Microsoft.WindowsCalculator_2021.2502.2.0_neutral_~_8wekyb3d8bbwe),
+            #the application package in the bundle has its own version (11.2502.2.0)
+            New-TestAppxBundleCustom -Path (Join-Path $BundlePackages 'Contoso.Calculator.msixbundle') -Name 'Contoso.Calculator' -Version '2021.2502.2.0' -Packages @(
+                @{Version = '11.2502.2.0'; Architecture = 'x64'; FileName = 'Contoso.Calculator_11.2502.2.0_x64.appx'}
+            ) | Out-Null
+            New-TestAppxBundleCustom -Path (Join-Path $BundlePackages 'Contoso.Alarms.msixbundle') -Name 'Contoso.Alarms' -Version '2021.2400.0.0' -Packages @(
+                @{Version = '11.2400.0.0'; Architecture = 'x64'; FileName = 'Contoso.Alarms_11.2400.0.0_x64.appx'}
+            ) | Out-Null
+        }
+
+        BeforeEach {
+            Mock Get-AppxProvisionedPackage {
+                [PSCustomObject]@{DisplayName = 'Contoso.Calculator'; Version = '2021.2502.2.0'; PackageName = 'Contoso.Calculator_2021.2502.2.0_neutral_~_8wekyb3d8bbwe'}
+                [PSCustomObject]@{DisplayName = 'Contoso.Alarms'; Version = '2021.2512.0.0'; PackageName = 'Contoso.Alarms_2021.2512.0.0_neutral_~_8wekyb3d8bbwe'}
+            }
+        }
+
+        It 'reinstalls a bundle of the provisioned version although its application package version is lower' {
+            $Output = (Update-InboxAppsOS 6>&1 | ForEach-Object {"$_"}) -join "`n"
+            Should -Invoke Add-AppxProvisionedPackage -Times 1 -Exactly -ParameterFilter {$PackagePath -eq (Join-Path $BundlePackages 'Contoso.Calculator.msixbundle')}
+            $Output | Should -BeLike '*REINSTALLING*Contoso.Calculator 2021.2502.2.0*'
+        }
+
+        It 'keeps a bundle that is newer in the image by its bundle version' {
+            $Output = (Update-InboxAppsOS 6>&1 | ForEach-Object {"$_"}) -join "`n"
+            Should -Invoke Add-AppxProvisionedPackage -Times 0 -Exactly -ParameterFilter {$PackagePath -like '*Contoso.Alarms*'}
+            $Output | Should -BeLike '*NEWER IN IMAGE*Contoso.Alarms 2021.2512.0.0*'
         }
     }
 
