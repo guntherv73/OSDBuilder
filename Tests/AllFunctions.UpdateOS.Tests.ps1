@@ -242,7 +242,7 @@ Describe 'Update-CumulativeOS' {
 
     It 'installs the LCU with the type returned by Test-WindowsPackageCAB and a KB log' {
         $Output = (Update-CumulativeOS 6>&1 4>$null) -join "`n"
-        $script:Installed | Should -Be @(Join-Path $SetOSDBuilderPathUpdates 'windows10.0-kb5066791-x64_0123456789abcdef.msu')
+        $script:Installed | Should -Be @(Join-Path (Join-Path $SetOSDBuilderPathUpdates '_LCU') 'windows10.0-kb5066791-x64_0123456789abcdef.msu')
         Should -Invoke Test-WindowsPackageCAB -Times 1 -Exactly -ParameterFilter {($Path -eq 'C:\Mount') -and ($PackagePath -like '*kb5066791*')}
         Should -Invoke Add-WindowsPackage -Times 1 -Exactly -ParameterFilter {($Path -eq 'C:\Mount') -and ($LogPath -like 'C:\Info\logs\*-Update-CumulativeOS-KB5066791.log')}
         Should -Invoke Add-WindowsPackageSSU -Times 0 -Exactly
@@ -298,12 +298,14 @@ Describe 'Update-CumulativeOS' {
             New-UpdateFile $SetOSDBuilderPathUpdates $OSDUpdateLCU
             $Cab = Join-Path $SetOSDBuilderPathUpdates 'windows11.0-kb5066793-x64_0123456789abcdef.cab'
             $Msu = Join-Path $SetOSDBuilderPathUpdates 'windows11.0-kb5066793-x64_0123456789abcdef.msu'
+            #The LCU is installed from a folder that contains only the LCU and its checkpoint cumulative updates
+            $LCUFolder = Join-Path $SetOSDBuilderPathUpdates '_LCU'
         }
 
         It 'copies the combined LCU to an .msu and installs the .msu without Test-WindowsPackageCAB' {
             $Verbose = (Update-CumulativeOS 6>$null 4>&1) -join "`n"
             Test-Path $Msu | Should -BeTrue
-            $script:Installed | Should -Be @($Msu)
+            $script:Installed | Should -Be @(Join-Path $LCUFolder (Split-Path $Msu -Leaf))
             Should -Invoke Test-WindowsPackageCAB -Times 0 -Exactly
             $Verbose | Should -BeLike '*Applying Combined LCU as an MSU Package*'
         }
@@ -314,13 +316,13 @@ Describe 'Update-CumulativeOS' {
             Update-CumulativeOS 6>$null 4>$null
             Should -Invoke Copy-Item -Times 0 -Exactly
             Get-Content -Path $Msu | Should -Be 'existing'
-            $script:Installed | Should -Be @($Msu)
+            $script:Installed | Should -Be @(Join-Path $LCUFolder (Split-Path $Msu -Leaf))
         }
 
         It 'installs the .cab when the .msu cannot be created' {
             Mock Copy-Item {}
             $Verbose = (Update-CumulativeOS 6>$null 4>&1) -join "`n"
-            $script:Installed | Should -Be @($Cab)
+            $script:Installed | Should -Be @(Join-Path $LCUFolder (Split-Path $Cab -Leaf))
             $Verbose | Should -Not -BeLike '*Applying Combined LCU as an MSU Package*'
         }
     }

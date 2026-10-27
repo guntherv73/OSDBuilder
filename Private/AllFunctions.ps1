@@ -6766,6 +6766,16 @@ function Update-CumulativeOS {
             Mount-WindowsImage -Path "$MountDirectory" -ImagePath $MountedWindowsImage.ImagePath -Index $MountedWindowsImage.ImageIndex
         }
 
+        #DISM uses every MSU in the folder of the LCU as a source and installs the checkpoint cumulative updates in it
+        #Only the LCU and its checkpoint cumulative updates may be in this folder, other LCUs fail for added languages (0x80070570)
+        $LCUFolder = Join-Path $SetOSDBuilderPathUpdates '_LCU'
+        $LCUPackages = @($UpdateLCU)
+        foreach ($Checkpoint in ($OSDUpdateLCU | Where-Object {($_.KBNumber -eq $Update.KBNumber) -and ($_.FileKBNumber -ne $Update.FileKBNumber)})) {
+            $LCUPackages += $(Get-ChildItem -Path $SetOSDBuilderPathUpdates -File | Where-Object {$_.Name -match $(Split-Path $Checkpoint.OriginUri -Leaf)}).FullName | Select-Object -First 1
+        }
+        New-OSDBuilderLCUFolder -PackagePath ($LCUPackages | Where-Object {$_}) -Destination $LCUFolder
+        $UpdateLCU = Join-Path $LCUFolder (Split-Path $UpdateLCU -Leaf)
+
         $CurrentLog = "$Info\logs\$((Get-Date).ToString('yyyy-MM-dd-HHmmss'))-Update-CumulativeOS-KB$($Update.FileKBNumber).log"
         Write-Verbose "CurrentLog: $CurrentLog"
         Try {Add-WindowsPackage -Path "$MountDirectory" -PackagePath "$UpdateLCU" -LogPath "$CurrentLog" -Verbose | Out-Null}
@@ -6788,6 +6798,34 @@ function Update-CumulativeOS {
             }
             Write-Verbose "$CurrentLog" -Verbose
         }
+        Remove-Item -Path $LCUFolder -Recurse -Force -ErrorAction Ignore
+    }
+}
+function New-OSDBuilderLCUFolder {
+    <#
+    .SYNOPSIS
+    Creates a folder that contains only the given LCU and checkpoint cumulative update packages
+    .DESCRIPTION
+    Add-WindowsPackage uses the folder of an LCU to discover its checkpoint cumulative updates.
+    Only the target cumulative update and checkpoint cumulative updates should be in this folder
+    https://learn.microsoft.com/en-us/windows/deployment/update/media-dynamic-update#checkpoint-cumulative-updates
+    The packages are hard linked, a package is copied when the hard link cannot be created (other volume)
+    #>
+    [CmdletBinding(SupportsShouldProcess = $true)]
+    param (
+        [Parameter(Mandatory = $true)]
+        [string[]]$PackagePath,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Destination
+    )
+    if (!($PSCmdlet.ShouldProcess($Destination, 'Create LCU folder'))) {Return}
+    if (Test-Path $Destination) {Remove-Item -Path $Destination -Recurse -Force}
+    New-Item -Path $Destination -ItemType Directory -Force | Out-Null
+    foreach ($Package in $PackagePath) {
+        $Target = Join-Path $Destination (Split-Path $Package -Leaf)
+        try {New-Item -Path $Target -ItemType HardLink -Value $Package -ErrorAction Stop | Out-Null}
+        catch {Copy-Item -Path $Package -Destination $Target -Force}
     }
 }
 function Update-CumulativePE {

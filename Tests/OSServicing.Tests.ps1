@@ -146,6 +146,56 @@ Describe 'Update-CumulativeOS' {
         $script:Installed.Count | Should -Be 1
         $script:Installed[0] | Should -BeLike '*kb5127648*'
     }
+
+    It 'installs the LCU from a folder that contains only the LCU and its checkpoint cumulative update' {
+        #DISM uses every MSU in the folder of the LCU as a source, an older LCU breaks languages added to the image (0x80070570)
+        New-TestFile -Path (Join-Path $SetOSDBuilderPathUpdates 'windows11.0-kb5051987-x64_0123456789.msu') | Out-Null
+        Mock Get-SessionsXml {[PSCustomObject]@{TargetState = 'Installed'}}
+        $script:Folders = [System.Collections.Generic.List[string]]::new()
+        Mock Add-WindowsPackage {
+            $Folder = Split-Path $PackagePath -Parent
+            $script:Folders.Add($Folder)
+            $script:Installed.Add(((Get-ChildItem -Path $Folder -File).Name | Sort-Object) -join ',')
+        }
+        Update-CumulativeOS -Force 6>$null 4>$null
+        $script:Installed | Should -Be @('windows11.0-kb5043080-x64_0123456789.msu,windows11.0-kb5127648-x64_0123456789.msu')
+        $script:Folders[0] | Should -Not -Be $SetOSDBuilderPathUpdates
+        Test-Path $script:Folders[0] | Should -BeFalse
+    }
+
+    It 'removes the folder of the LCU when the installation fails' {
+        Mock Get-SessionsXml {[PSCustomObject]@{TargetState = 'Installed'}}
+        $script:Folders = [System.Collections.Generic.List[string]]::new()
+        Mock Add-WindowsPackage {$script:Folders.Add((Split-Path $PackagePath -Parent)); throw '0x80070570'}
+        Update-CumulativeOS -Force 6>$null 4>$null
+        $script:Folders.Count | Should -Be 1
+        Test-Path $script:Folders[0] | Should -BeFalse
+    }
+}
+
+Describe 'New-OSDBuilderLCUFolder' {
+    BeforeEach {
+        $Source = Join-Path $TestDrive 'Updates'
+        $PackagePath = @(
+            New-TestFile -Path (Join-Path $Source 'windows11.0-kb5043080-x64_0123456789.msu') -Value 'checkpoint'
+            New-TestFile -Path (Join-Path $Source 'windows11.0-kb5127648-x64_0123456789.msu') -Value 'lcu'
+        ) | ForEach-Object {"$_"}
+        $Destination = Join-Path $Source '_LCU'
+    }
+
+    It 'adds only the packages to an empty folder' {
+        New-TestFile -Path (Join-Path $Destination 'windows11.0-kb5051987-x64_0123456789.msu') | Out-Null
+        New-OSDBuilderLCUFolder -PackagePath $PackagePath -Destination $Destination
+        (Get-ChildItem -Path $Destination -File).Name | Sort-Object | Should -Be @('windows11.0-kb5043080-x64_0123456789.msu', 'windows11.0-kb5127648-x64_0123456789.msu')
+        Get-Content (Join-Path $Destination 'windows11.0-kb5127648-x64_0123456789.msu') | Should -Be 'lcu'
+        Test-Path $PackagePath[1] | Should -BeTrue
+    }
+
+    It 'copies a package that cannot be hard linked' {
+        Mock New-Item {throw 'The hard link could not be created'} -ParameterFilter {$ItemType -eq 'HardLink'}
+        New-OSDBuilderLCUFolder -PackagePath $PackagePath -Destination $Destination
+        Get-Content (Join-Path $Destination 'windows11.0-kb5043080-x64_0123456789.msu') | Should -Be 'checkpoint'
+    }
 }
 
 Describe 'Save-RegistryCurrentVersionOS' {
