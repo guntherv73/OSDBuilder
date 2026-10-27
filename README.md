@@ -174,7 +174,9 @@ The other languages are only available as Local Experience Packs (`.appx`)
   Content\IsoExtract\Windows 11 24H2 LXP\LocalExperiencePack\nn-no\LanguageExperiencePack.nn-no.Neutral.appx
   Content\IsoExtract\Windows 11 24H2 LXP\LocalExperiencePack\nn-no\License.xml
   ```
-* `New-OSBuildTask -ContentLanguagePackages` offers them as Local Experience Packs, the example script uses an LXP for every language without a `.cab`
+* `New-OSBuildTask -ContentLanguagePackages` offers them as Local Experience Packs, the example script adds the LXP in `Content\IsoExtract`
+  of every language, also of languages with a `.cab`, a language without a `.cab` requires an LXP
+* The example script replaces the ContentPacks of an existing Task with `-ContentPacks` (none by default)
 * `New-OSBuild` adds each LXP with `Add-AppxProvisionedPackage` and checks:
   * the AppxManifest identity is a `Microsoft.LanguageExperiencePack*`
   * the LXP version starts with the servicing branch of the image (`19041.x` for Windows 10 2004 - 22H2, `22621.x` for Windows 11 22H2 - 23H2,

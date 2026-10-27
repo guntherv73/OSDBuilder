@@ -142,6 +142,32 @@ Describe 'New-Win11MultiLanguageBuild.ps1 with the stub module' {
         (Get-ExampleTask).LocalExperiencePacks | Should -BeLike '*LocalExperiencePack*nn-no*LanguageExperiencePack.nn-no.Neutral.appx'
     }
 
+    It 'adds the Local Experience Packs from IsoExtract for languages with a .cab without downloading them' {
+        $LxpRoot = Join-Path (Join-Path (Join-Path (Join-Path $OSDBuilderHome 'Content') 'IsoExtract') 'Windows 11 24H2-26H2 x64 Local Experience Packs') 'LocalExperiencePack'
+        foreach ($Language in 'en-us', 'de-de', 'fr-fr') {
+            New-TestFile -Path (Join-Path (Join-Path $LxpRoot $Language) "LanguageExperiencePack.$Language.Neutral.appx") | Out-Null
+            New-TestFile -Path (Join-Path (Join-Path $LxpRoot $Language) 'License.xml') | Out-Null
+        }
+        Invoke-Example -Parameters @{Languages = @('en-US', 'de-DE')}
+        $Task = Get-ExampleTask
+        $Task.LocalExperiencePacks | Should -HaveCount 2
+        $Task.LocalExperiencePacks -like '*LocalExperiencePack\de-de\LanguageExperiencePack.de-de.Neutral.appx' | Should -HaveCount 1
+        $Task.LocalExperiencePacks -like '*LocalExperiencePack\en-us\LanguageExperiencePack.en-us.Neutral.appx' | Should -HaveCount 1
+        $Task.LanguagePack -like '*_x64_de-de.cab' | Should -HaveCount 1
+        $global:OSDBuilderStubLog -like 'Save-OSDBuilderDownload -LocalExperiencePack*' | Should -HaveCount 0
+    }
+
+    It 'replaces the ContentPacks of an existing Task with -ContentPacks' {
+        $Tasks = Join-Path $OSDBuilderHome 'Tasks'
+        New-Item -Path $Tasks -ItemType Directory -Force | Out-Null
+        @{TaskName = 'Contoso-Windows 11 Ent x64 25H2 - MUI'; ContentPacks = @('MUI_Pack_de-de')} | ConvertTo-Json |
+            Out-File -FilePath (Join-Path $Tasks 'OSBuild Contoso-Windows 11 Ent x64 25H2 - MUI.json')
+        Invoke-Example
+        @((Get-ExampleTask).ContentPacks) | Should -HaveCount 0
+        Invoke-Example -Parameters @{ContentPacks = @('Contoso-Defaults')}
+        (Get-ExampleTask).ContentPacks | Should -Be 'Contoso-Defaults'
+    }
+
     It 'does not download content with -SkipContentDownload' {
         Invoke-Example -Parameters @{SkipContentDownload = $true}
         $global:OSDBuilderStubLog -like 'Save-OSDBuilderDownload*' | Should -HaveCount 0

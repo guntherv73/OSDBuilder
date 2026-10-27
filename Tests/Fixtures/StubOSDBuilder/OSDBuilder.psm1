@@ -65,9 +65,14 @@ function Update-OSMedia {
 function New-OSBuildTask {
     param ($TaskName, $CustomName, $OSMedia, $SetAllIntl, $SetUserLocale, $SetSysLocale, $SetInputLocale, [switch]$EnableNetFX3)
     Add-StubLog "New-OSBuildTask -TaskName $TaskName -SetAllIntl $SetAllIntl -SetUserLocale $SetUserLocale -SetSysLocale $SetSysLocale -SetInputLocale $SetInputLocale -EnableNetFX3:$EnableNetFX3"
+    #New-OSBuildTask keeps the ContentPacks of an existing Task
+    $TaskPath = Join-Path $global:SetOSDBuilderPathTasks "OSBuild $TaskName.json"
+    $ContentPacks = @()
+    if (Test-Path $TaskPath) {$ContentPacks = @((Get-Content -Path $TaskPath -Raw | ConvertFrom-Json).ContentPacks | Where-Object {$_})}
     #The fields of the Task JSON written by New-OSBuildTask that the example script changes
     [ordered]@{
         TaskName                        = $TaskName
+        ContentPacks                    = [string[]]$ContentPacks
         CustomName                      = $CustomName
         LangSetAllIntl                  = [string]$SetAllIntl
         LangSetUserLocale               = [string]$SetUserLocale
@@ -82,7 +87,7 @@ function New-OSBuildTask {
         AddWindowsCapability            = @()
         RemoveAppxProvisionedPackage    = @()
         LanguageCopySources             = @()
-    } | ConvertTo-Json | Out-File -FilePath (Join-Path $global:SetOSDBuilderPathTasks "OSBuild $TaskName.json")
+    } | ConvertTo-Json | Out-File -FilePath $TaskPath
 }
 
 function New-OSBuild {

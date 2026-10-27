@@ -16,7 +16,8 @@ LanguageCopySources: Windows Setup shows these display languages and the languag
 
 New-OSBuild then:
 - adds the Language Packs, Language Interface Packs and Language Features, reapplies the LCU once
-- adds a Local Experience Pack for languages without a .cab, downloaded from the Microsoft Store with winget (see README)
+- adds the Local Experience Packs of the languages from Content\IsoExtract, the Local Experience Pack of a language
+  without a .cab is downloaded from the Microsoft Store with winget (see README)
 - adds the same languages to WinRE from the Languages and Optional Features ISO
 - enables .NET Framework 3.5 (NetFx3) from the Languages and Optional Features ISO and applies the .NET CU (-SkipNetFX3 to skip)
 - reinstalls the inbox apps from the Inbox Apps ISO so they include the language resources
@@ -60,7 +61,7 @@ param (
 
     #Languages of the image, the first language of the OSMedia (usually en-US) is already installed
     #Englisch, Deutsch, Franzoesisch, Schwedisch, Russisch, Slowakisch, Thailaendisch
-    [string[]]$Languages = @('en-US','de-DE','fr-FR','sv-SE','ru-RU','sk-SK','th-TH'),
+    [string[]]$Languages = @('en-US','de-DE','fr-FR','sv-SE','sk-SK','th-TH'),
 
     #Default language of Windows and WinRE (Dism /Set-AllIntl)
     [string]$DefaultLanguage = 'en-US',
@@ -76,6 +77,9 @@ param (
 
     #Windows Capabilities (Features on Demand), for example 'Rsat.Dns.Tools~~~~0.0.1.0'
     [string[]]$AddWindowsCapability = @(),
+
+    #ContentPacks of the Task, for example 'Contoso-Defaults', ContentPacks of an existing Task are replaced
+    [string[]]$ContentPacks = @(),
 
     #Provisioned apps to remove, by DisplayName, for example 'Microsoft.BingNews','Microsoft.GamingApp'
     [string[]]$RemoveAppxDisplayName = @(),
@@ -245,6 +249,10 @@ $LxpFiles = @(Get-ChildItem -Path $IsoExtractPath -Filter 'LanguageExperiencePac
     Where-Object {Test-Path (Join-Path $_.DirectoryName 'License.xml')})
 
 foreach ($Language in ($Languages | ForEach-Object {$_.ToLower()} | Sort-Object -Unique)) {
+    #The Local Experience Pack in IsoExtract is added for every language, also for the language of the OSMedia and languages with a .cab
+    $Lxp = $LxpFiles | Where-Object {$_.Name -eq "LanguageExperiencePack.$Language.Neutral.appx"} | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+    #New-OSBuild expects the path relative to the Content directory
+    if ($Lxp) {$LocalExperiencePack += $Lxp.FullName.Substring($SetOSDBuilderPathContent.TrimEnd('\', '/').Length + 1)}
     if ($Language -in $ImageLanguages) {
         Write-Host "$Language is the language of the OSMedia" -ForegroundColor DarkGray; Continue
     }
@@ -252,12 +260,7 @@ foreach ($Language in ($Languages | ForEach-Object {$_.ToLower()} | Sort-Object 
     $LipLp = "Microsoft-Windows-Lip-Language-Pack_x64_$Language.cab"
     if (Test-Path (Join-Path $LofPath $ClientLp)) {$LanguagePack += "$LofRelative\$ClientLp"}
     elseif (Test-Path (Join-Path $LofPath $LipLp)) {$LanguageInterfacePack += "$LofRelative\$LipLp"}
-    else {
-        $Lxp = $LxpFiles | Where-Object {$_.Name -eq "LanguageExperiencePack.$Language.Neutral.appx"} | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-        #New-OSBuild expects the path relative to the Content directory
-        if ($Lxp) {$LocalExperiencePack += $Lxp.FullName.Substring($SetOSDBuilderPathContent.TrimEnd('\', '/').Length + 1)}
-        else {$Missing += $Language; Continue}
-    }
+    elseif (-not $Lxp) {$Missing += $Language; Continue}
 
     $Types = @($LanguageFeatures)
     foreach ($Type in $Types) {
@@ -323,6 +326,8 @@ $TaskPath = Join-Path $SetOSDBuilderPathTasks "OSBuild $MediaName.json"
 if (!(Test-Path $TaskPath)) {throw "The Task $TaskPath was not created"}
 $Task = Get-Content -Path $TaskPath -Raw | ConvertFrom-Json
 $Task.CustomName                    = $ExportName
+#New-OSBuildTask keeps the ContentPacks of an existing Task, the Task only uses the -ContentPacks of this script
+$Task | Add-Member -NotePropertyName ContentPacks -NotePropertyValue ([string[]]$ContentPacks) -Force
 $Task.LanguagePack                  = [string[]]$LanguagePack
 $Task.LanguageInterfacePack         = [string[]]$LanguageInterfacePack
 $Task | Add-Member -NotePropertyName LocalExperiencePacks -NotePropertyValue ([string[]]$LocalExperiencePack) -Force
