@@ -450,6 +450,67 @@ Describe 'Update-DotNetOS' {
     }
 }
 
+Describe 'Update-OneDriveSetupOS' {
+    BeforeEach {
+        #$TestDrive is shared by the tests of a Describe block, every test gets its own directories
+        $Root = Join-Path $TestDrive ([guid]::NewGuid().Guid.Substring(0, 8))
+        $MountDirectory = Join-Path $Root 'Mount'
+        $Info = Join-Path $Root 'Info'
+        $GetOSDBuilderPathContentOneDrive = Join-Path $Root 'OneDrive'
+        $OSMajorVersion = 10; $OSInstallationType = 'Client'
+        $ContentFile = New-TestFile -Path (Join-Path $GetOSDBuilderPathContentOneDrive 'OneDriveSetup.exe')
+        #Creates OneDriveSetup.exe in <Mount>\Windows\<Folder>
+        function New-ImageOneDriveSetup ([string[]]$Folder) {
+            foreach ($Item in $Folder) {New-TestFile -Path (Join-Path (Join-Path (Join-Path $MountDirectory 'Windows') $Item) 'OneDriveSetup.exe') | Out-Null}
+        }
+        $script:Robocopy = [System.Collections.Generic.List[string]]::new()
+        #The first positional argument of the mocked program is bound to $InputObject
+        Mock robocopy {$script:Robocopy.Add(((@($InputObject) + @($RemainingArguments)) -join ' '))}
+        Mock Show-ActionTime {}
+    }
+
+    It 'updates OneDriveSetup.exe in <Folder> of the image' -ForEach @(
+        @{Folder = 'System32'}
+        @{Folder = 'SysWOW64'}
+    ) {
+        New-ImageOneDriveSetup $Folder
+        $Output = (Update-OneDriveSetupOS 6>&1) -join "`n"
+        $Output | Should -BeLike '*OS: Update OneDriveSetup.exe*'
+        $Output | Should -BeLike "*Existing Image Version *Windows\$Folder*"
+        $script:Robocopy.Count | Should -Be 1
+        $script:Robocopy[0] | Should -BeLike "$GetOSDBuilderPathContentOneDrive $MountDirectory\Windows\$Folder OneDriveSetup.exe /ndl /xx /b /np /ts /tee /r:0 /w:0 /Log+:$Info\logs\*-Update-OneDriveSetup.log"
+    }
+
+    It 'updates OneDriveSetup.exe in System32 and SysWOW64 when the image has both' {
+        New-ImageOneDriveSetup 'System32', 'SysWOW64'
+        Update-OneDriveSetupOS 6>$null
+        $script:Robocopy.Count | Should -Be 2
+        $script:Robocopy[0] | Should -BeLike "* $MountDirectory\Windows\System32 OneDriveSetup.exe *"
+        $script:Robocopy[1] | Should -BeLike "* $MountDirectory\Windows\SysWOW64 OneDriveSetup.exe *"
+    }
+
+    It 'shows the download commands and does not copy without OneDriveSetup.exe in the Content directory' {
+        New-ImageOneDriveSetup 'System32'
+        Remove-Item -Path $ContentFile.FullName
+        $Output = (Update-OneDriveSetupOS 6>&1) -join "`n"
+        $Output | Should -BeLike "*Save-OSDBuilderDownload -ContentDownload 'OneDriveSetup Production'*"
+        $Output | Should -BeLike "*Save-OSDBuilderDownload -ContentDownload 'OneDriveSetup Enterprise'*"
+        $script:Robocopy.Count | Should -Be 0
+    }
+
+    It 'does nothing when <Description>' -ForEach @(
+        @{Description = 'the image has no OneDriveSetup.exe'; Major = 10; Type = 'Client'; Folder = @()}
+        @{Description = 'the image is Windows Server'; Major = 10; Type = 'Server'; Folder = @('SysWOW64')}
+        @{Description = 'the image is not Windows 10 or 11'; Major = 6; Type = 'Client'; Folder = @('SysWOW64')}
+    ) {
+        $OSMajorVersion = $Major; $OSInstallationType = $Type
+        if ($Folder) {New-ImageOneDriveSetup $Folder}
+        $Output = (Update-OneDriveSetupOS 6>&1) -join "`n"
+        $Output | Should -Not -BeLike '*OS: Update OneDriveSetup.exe*'
+        $script:Robocopy.Count | Should -Be 0
+    }
+}
+
 Describe 'Update-OptionalOS' {
     BeforeEach {
         $SetOSDBuilderPathUpdates = Join-Path $TestDrive 'Optional'

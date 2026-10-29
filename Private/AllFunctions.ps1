@@ -7172,6 +7172,48 @@ function Update-ModuleOSDBuilder {
     #=================================================
     Write-Warning "Close all open PowerShell sessions before using OSDBuilder"
 }
+function Update-OneDriveSetupOS {
+    <#
+    .SYNOPSIS
+    Replaces OneDriveSetup.exe of the mounted install.wim with the one in the OneDrive Content directory
+
+    .DESCRIPTION
+    Windows 10 x64 has OneDriveSetup.exe in SysWOW64, Windows 11 x64 and x86 images have it in System32.
+    Every copy of OneDriveSetup.exe that exists in the image is updated, no copy is added to an image without one.
+    Uses $MountDirectory, $Info, $OSMajorVersion, $OSInstallationType and $GetOSDBuilderPathContentOneDrive of the calling scope.
+    #>
+    [CmdletBinding()]
+    param ()
+    #=================================================
+    #   Abort
+    #=================================================
+    if ($OSMajorVersion -ne 10) {Return}
+    if ($OSInstallationType -ne 'Client') {Return}
+    $ImageFolders = @('System32', 'SysWOW64') | Where-Object {Test-Path "$MountDirectory\Windows\$_\OneDriveSetup.exe"}
+    if (!($ImageFolders)) {Return}
+    #=================================================
+    #   Header
+    #=================================================
+    Show-ActionTime
+    Write-Host -ForegroundColor Green "OS: Update OneDriveSetup.exe"
+    #=================================================
+    #   Execute
+    #=================================================
+    $OneDriveSetup = Join-Path $GetOSDBuilderPathContentOneDrive 'OneDriveSetup.exe'
+    foreach ($ImageFolder in $ImageFolders) {
+        $ImageDirectory = "$MountDirectory\Windows\$ImageFolder"
+        $OneDriveSetupInfo = Get-Item -Path "$ImageDirectory\OneDriveSetup.exe"
+        Write-Host -ForegroundColor Gray "  Existing Image Version $($OneDriveSetupInfo.VersionInfo.ProductVersion) in $ImageDirectory"
+        if (Test-Path $OneDriveSetup) {
+            robocopy "$GetOSDBuilderPathContentOneDrive" "$ImageDirectory" OneDriveSetup.exe /ndl /xx /b /np /ts /tee /r:0 /w:0 /Log+:"$Info\logs\$((Get-Date).ToString('yyyy-MM-dd-HHmmss'))-Update-OneDriveSetup.log" | Out-Null
+            $OneDriveSetupInfo = Get-Item -Path "$ImageDirectory\OneDriveSetup.exe"
+            Write-Host -ForegroundColor Gray "  Updating with Version $($OneDriveSetupInfo.VersionInfo.ProductVersion)"
+        }
+    }
+    Write-Host -ForegroundColor Cyan "  To update OneDriveSetup.exe use one of the following commands:"
+    Write-Host -ForegroundColor Cyan "  Save-OSDBuilderDownload -ContentDownload 'OneDriveSetup Enterprise'"
+    Write-Host -ForegroundColor Cyan "  Save-OSDBuilderDownload -ContentDownload 'OneDriveSetup Production'"
+}
 function Update-OptionalOS {
     [CmdletBinding()]
     param ()

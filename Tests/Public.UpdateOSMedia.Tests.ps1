@@ -677,6 +677,12 @@ Describe 'Update-OSMedia' {
                 Should -Invoke robocopy -Times 1 -Exactly -ParameterFilter {((@($InputObject) + @($RemainingArguments)) -join ' ') -like '*OneDrive *System32 OneDriveSetup.exe /ndl*'}
             }
 
+            It 'copies the downloaded OneDriveSetup.exe to System32 of x64 Windows 11 that has it in System32 only' {
+                $script:OneDriveFolder = 'System32'
+                Invoke-UpdateOSMedia -Parameters $Parameters | Out-Null
+                Should -Invoke robocopy -Times 1 -Exactly -ParameterFilter {((@($InputObject) + @($RemainingArguments)) -join ' ') -like '*OneDrive *System32 OneDriveSetup.exe /ndl*'}
+            }
+
             It 'keeps OneDriveSetup.exe of the image when it was not downloaded' {
                 Remove-Item -Path (Join-Path $global:GetOSDBuilderPathContentOneDrive 'OneDriveSetup.exe')
                 Invoke-UpdateOSMedia -Parameters $Parameters | Out-Null
